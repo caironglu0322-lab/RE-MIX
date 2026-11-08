@@ -1070,7 +1070,7 @@
             <div class="layout-controls-bar">
                 <div class="layout-flow-text">
                     <span>觀展動線：</span>
-                    <span style="background: var(--accent-cyan); color:#121820; padding:2px 8px; border-radius:10px;">從右至左 ⬅️ （右入口 L1 ➔ 左出口 L8）</span>
+                    <span style="background: var(--accent-cyan); color:#121820; padding:2px 8px; border-radius:10px;">從右至左 ⬅️ （左出口⬅️右入口)</span>
                 </div>
                 <div class="btn-group">
                     <button class="btn-ctrl active" id="btn-show-all" onclick="setMode('all')">👁️ 全貌模式</button>
