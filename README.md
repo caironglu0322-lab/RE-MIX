@@ -989,7 +989,6 @@
 </style>
 </head>
 <body>
-
     <!-- 置頂導覽列 -->
     <nav class="navbar">
         <div class="nav-title">
@@ -999,12 +998,9 @@
             <li><a href="#overview">📜 策展論述</a></li>
             <li><a href="#layout">🏛️ 展場配置</a></li>
             <li><a href="#artworks">🎨 9大作品說明</a></li>
-            
         </ul>
     </nav>
-
     <div class="main-container">
-
         <!-- ========================================================= -->
         <!-- SECTION 1: 策展總論與三大子題                             -->
         <!-- ========================================================= -->
@@ -1061,7 +1057,7 @@
         <section id="layout" class="section-block">
             <div class="section-header">
                 <h2 class="section-title">
-                    <span>🏛️ 屏東王船館 2F 走廊展場佈置互動圖</span>
+                    <span style="white-space: nowrap;">🏛️ 屏東王船館 2F 走廊展場佈置互動圖</span>
                 </h2>
                 <div class="section-subtitle">牆面 940cm × 300cm ｜ 從右至左 (Right to Left) 觀展動線 ｜ 零卷軸 100% 物理向量畫布</div>
             </div>
@@ -1070,7 +1066,7 @@
             <div class="layout-controls-bar">
                 <div class="layout-flow-text">
                     <span>觀展動線：</span>
-                    <span style="background: var(--accent-cyan); color:#121820; padding:2px 8px; border-radius:10px;">從右至左 ⬅️ （左出口⬅️右入口)</span>
+                    <span style="background: var(--accent-cyan); color:#121820; padding:2px 8px; border-radius:10px;">左 ⬅️ 右（左出口⬅️右入口)</span>
                 </div>
                 <div class="btn-group">
                     <button class="btn-ctrl active" id="btn-show-all" onclick="setMode('all')">👁️ 全貌模式</button>
