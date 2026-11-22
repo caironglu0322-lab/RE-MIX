@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>編織我們的數位未來｜實體展板 240×150 cm</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* 1:1 print file. Trim size 240 × 150 cm, plus 2 cm bleed on every side → page 244 × 154 cm.
+   All positions are in cm from the TRIM top-left corner (the .trim box). */
+:root {
+  --paper: #EFE7DD; --paper-deep: #E3D8CA; --ink: #23201C; --ink-soft: #6E655B;
+  --opt-a: #6F93B4; --opt-b: #C49A62; --opt-c: #7FA57E;
+  --display: "Noto Serif TC", serif; --body: "Noto Sans TC", sans-serif;
+}
+@page { size: 244cm 154cm; margin: 0; }
+html, body { margin: 0; padding: 0; }
+body { width: 244cm; height: 154cm; background: var(--paper); color: var(--ink); font-family: var(--body);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact; position: relative; overflow: hidden; }
+.trim { position: absolute; left: 2cm; top: 2cm; width: 240cm; height: 150cm; }
+.abs { position: absolute; }
+
+/* header */
+.eyebrow { left: 8cm; top: 6.5cm; font-size: 1.5cm; letter-spacing: .25em; color: var(--ink-soft); font-weight: 500; }
+.title { left: 6.5cm; top: 8.6cm; font-family: var(--display); font-weight: 800; font-size: 5.6cm; line-height: 1; letter-spacing: .02em; white-space: nowrap; }
+.lede { left: 86cm; width: 68cm; top: 9.6cm; text-align: center; font-family: var(--display); font-weight: 600; font-size: 2.1cm; line-height: 1.45; }
+.how { left: 164cm; top: 6cm; width: 68cm; }
+.how h3 { margin: 0 0 .8cm; font-size: 1.7cm; letter-spacing: .2em; font-weight: 700; }
+.how ol { margin: 0; padding: 0; list-style: none; display: grid; gap: .55cm; }
+.how li { display: flex; gap: .9cm; align-items: center; font-size: 1.8cm; line-height: 1.25; }
+.how li b { flex: none; width: 2.4cm; height: 2.4cm; border-radius: 50%; background: var(--ink); color: var(--paper);
+  font: 800 1.45cm/2.4cm var(--display); text-align: center; }
+
+/* question panels (54 cm wide, centred on each column) */
+.q { top: 27cm; width: 54cm; height: 22cm; box-sizing: border-box; padding: 2.2cm 2.6cm; background: var(--paper-deep); border-radius: 1.6cm; }
+.q .n { font-size: 1.4cm; letter-spacing: .2em; color: var(--ink-soft); font-weight: 700; }
+.q .t { font-family: var(--display); font-weight: 600; font-size: 2.1cm; margin-top: .3cm; }
+.q .qq { font-size: 2.5cm; line-height: 1.5; margin-top: 1cm; font-weight: 500; }
+.guide { width: 0; border-left: .25cm dotted var(--ink-soft); opacity: .5; top: 49cm; height: 4.2cm; }
+
+/* option pegs: coloured disc = where the wooden block is fixed (block sits on the cross) */
+.disc { width: 11cm; height: 11cm; margin: -5.5cm 0 0 -5.5cm; border-radius: 50%; }
+.disc[data-o="0"] { background: var(--opt-a); } .disc[data-o="1"] { background: var(--opt-b); } .disc[data-o="2"] { background: var(--opt-c); }
+.disc::before, .disc::after { content: ""; position: absolute; left: 50%; top: 50%; background: rgba(255,255,255,.75); }
+.disc::before { width: 3cm; height: .12cm; margin: -.06cm 0 0 -1.5cm; }
+.disc::after { width: .12cm; height: 3cm; margin: -1.5cm 0 0 -.06cm; }
+.letter { width: 4.2cm; height: 4.2cm; margin: -8.6cm 0 0 3.2cm; border-radius: 50%; background: var(--ink); color: var(--paper);
+  font: 800 2.6cm/4.2cm var(--display); text-align: center; }
+.label { width: 40cm; margin-left: -20cm; text-align: center; font-size: 2cm; font-weight: 500; line-height: 1.3; }
+
+/* start / end bars */
+.bar { width: 7cm; height: 34cm; margin: -17cm 0 0 -3.5cm; border-radius: 3.5cm; background: var(--ink); }
+.bar::after { content: ""; position: absolute; left: 50%; top: 4cm; bottom: 4cm; width: .12cm; margin-left: -.06cm; background: rgba(239,231,221,.6); }
+.barlabel { width: 20cm; margin-left: -10cm; text-align: center; font-size: 2.3cm; font-weight: 700; letter-spacing: .3em; }
+
+/* bottom band */
+.band { left: -2cm; top: 125cm; width: 244cm; height: 27cm; background: var(--ink); color: var(--paper); }
+.yarn { left: 8cm; top: 127.5cm; color: var(--paper); }
+.yarn h4, .note h4 { margin: 0; font-size: 1.7cm; letter-spacing: .2em; font-weight: 700; }
+.spool { width: 6cm; height: 6cm; margin: -3cm 0 0 -3cm; border-radius: 50%; border: .5cm solid rgba(239,231,221,.35); box-sizing: border-box; }
+.spool i { position: absolute; inset: .7cm; border-radius: 50%; }
+.sname { width: 10cm; margin-left: -5cm; text-align: center; font-size: 1.4cm; color: var(--paper); letter-spacing: .1em; }
+.note { left: 92cm; top: 127.5cm; width: 66cm; color: var(--paper); }
+.note p { margin: .9cm 0 0; font-size: 1.75cm; line-height: 1.45; }
+.credit { left: 166cm; top: 127.5cm; width: 66cm; text-align: right; color: var(--paper); }
+.credit .big { font-family: var(--display); font-weight: 800; font-size: 4.2cm; letter-spacing: .06em; margin-top: 1.2cm; }
+.credit .small { font-size: 1.6cm; opacity: .75; margin-top: .6cm; }
+</style>
+</head>
+<body>
+<div class="trim" id="trim">
+  <div class="abs eyebrow">RE-MIX ・ 展場互動</div>
+  <div class="abs title">《編織我們的數位未來》</div>
+  <div class="abs lede">每一條線，都是一位觀眾的選擇。<br>獨立的選擇，慢慢交織成一張網。</div>
+  <div class="abs how"><h3>怎麼參與</h3><ol>
+    <li><b>1</b>在下方線材區，挑一種顏色的線</li>
+    <li><b>2</b>把線頭繞在「起點」</li>
+    <li><b>3</b>依序在三題各選一個答案，把線繞過該木塊</li>
+    <li><b>4</b>最後在「終點」繞兩圈打結</li>
+  </ol></div>
+  <div class="abs band"></div>
+  <div id="dyn"></div>
+  <div class="abs yarn"><h4>線材區 — 挑一種顏色</h4></div>
+  <div class="abs note"><h4>小提醒</h4>
+    <p>每個木塊上的線請繞一圈再往下一題，<br>線才不會滑落。完成後，找找你的線<br>和誰交會、又在哪裡分開。</p></div>
+  <div class="abs credit"><div class="small">展覽互動</div><div class="big">RE-MIX</div><div class="small">編織數位時代的創造與想像</div></div>
+</div>
+<script>
+// Single source of truth for positions (cm from trim top-left). The construction plan uses the same numbers.
+const COLX = [50, 120, 190], ROWY = [60, 86, 112], START = [14, 86], END = [226, 86];
+const Q = [
+  { n: '問題 01', t: '創造與再造 Re-making', q: '如果 AI 能在幾秒內完成一幅作品，你認為創作中最重要的是什麼？', o: ['創作者的想法與意圖', '作品最終呈現的成果', '人與 AI 協作的過程'] },
+  { n: '問題 02', t: '數據與再發現 Re-coding', q: '當數據分析的結果與你的生活經驗不同，你會怎麼做？', o: ['優先相信數據', '優先相信自身經驗', '重新檢視數據與經驗的差異'] },
+  { n: '問題 03', t: '應用與再想像 Re-thinking', q: '如果未來 AI 能協助分配公共資源，你最重視哪一項原則？', o: ['分配效率', '公平與弱勢保障', '決策透明與公眾參與'] }
+];
+const YARN = [['天藍', '#6FAED3'], ['珊瑚', '#E58A73'], ['芥黃', '#DDB54E'], ['薄荷', '#6DBB96'], ['藕紫', '#9D8CC4'], ['玫粉', '#DE8FAE']];
+const d = document.getElementById('dyn');
+const add = (cls, x, y, html, extra) => { const e = document.createElement('div'); e.className = 'abs ' + cls; e.style.left = x + 'cm'; e.style.top = y + 'cm'; if (html != null) e.innerHTML = html; if (extra) Object.assign(e.dataset, extra); d.appendChild(e); return e; };
+Q.forEach((q, i) => {
+  add('q', COLX[i] - 27, 27, `<div class="n">${q.n}</div><div class="t">${q.t}</div><div class="qq">${q.q}</div>`).style.top = '27cm';
+  add('guide', COLX[i], 49);
+  q.o.forEach((t, o) => {
+    add('disc', COLX[i], ROWY[o], '', { o });
+    add('letter', COLX[i], ROWY[o], 'ABC'[o]);
+    add('label', COLX[i], ROWY[o] + 6.3, t);
+  });
+});
+add('bar', START[0], START[1]); add('bar', END[0], END[1]);
+add('barlabel', START[0], START[1] - 22, '起點'); add('barlabel', END[0], END[1] - 22, '終點');
+YARN.forEach(([name, c], i) => {
+  const x = 12 + i * 12.5;
+  add('spool', x, 137, `<i style="background:${c}"></i>`);
+  add('sname', x, 141.2, name);
+});
+</script>
+</body>
+</html>
