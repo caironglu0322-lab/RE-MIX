@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>編織我們的數位未來</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: a fixed 1920×1200 (16:10) stage = the 240×150 cm wall, scaled to fit any screen.
+   Threads run left→right from 起點 through three columns of pegs (one per question) to 終點. */
+:root {
+  --paper: #EFE7DD;        /* wall surface, from the Canva deck */
+  --paper-deep: #E4D9CC;   /* card / bar ground */
+  --ink: #23201C;          /* text + start/end nodes */
+  --ink-soft: #6E655B;     /* secondary text */
+  --line: #CDBFAF;         /* hairlines */
+  --opt-a: #6F93B4;        /* option A peg */
+  --opt-b: #C49A62;        /* option B peg */
+  --opt-c: #7FA57E;        /* option C peg */
+  --focus: #23201C;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--font-body);
+  overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#stage {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1200px;
+  transform-origin: 0 0; background: var(--paper); overflow: hidden;
+}
+canvas#weave { position: absolute; inset: 0; width: 1920px; height: 1200px; }
+
+/* header */
+.head { position: absolute; left: 80px; right: 80px; top: 48px; display: flex; justify-content: space-between; align-items: flex-end; }
+.eyebrow { font-size: 22px; letter-spacing: .24em; color: var(--ink-soft); font-weight: 500; }
+.title { font-family: var(--font-display); font-weight: 800; font-size: 64px; margin: 6px 0 0; letter-spacing: .04em; }
+.tally { text-align: right; }
+.tally b { font-family: var(--font-display); font-size: 72px; line-height: 1; font-variant-numeric: tabular-nums; }
+.tally span { display: block; font-size: 22px; color: var(--ink-soft); letter-spacing: .1em; margin-top: 4px; }
+.demo-tag { display: inline-block; font-size: 18px; padding: 4px 12px; border: 1px dashed var(--ink-soft); border-radius: 99px; color: var(--ink-soft); margin-top: 10px; }
+
+/* question cards */
+.qcard {
+  position: absolute; top: 200px; width: 400px; height: 236px; box-sizing: border-box;
+  padding: 22px 26px; background: var(--paper-deep); border-radius: 14px;
+  transition: opacity .4s, transform .4s, box-shadow .4s;
+}
+.qcard .qn { font-size: 20px; letter-spacing: .14em; color: var(--ink-soft); font-weight: 700; }
+.qcard .qt { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin-top: 4px; }
+.qcard .qq { font-size: 24px; line-height: 1.5; margin-top: 12px; text-wrap: balance; }
+.qcard.dim { opacity: .38; }
+.qcard.on { box-shadow: 0 0 0 4px var(--ink); transform: translateY(-4px); }
+.qcard.done { opacity: .7; }
+
+/* nodes */
+.node { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: var(--ink); }
+.node-label { position: absolute; transform: translate(-50%, 0); font-size: 26px; font-weight: 700; letter-spacing: .2em; }
+
+/* pegs */
+.peg {
+  position: absolute; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%;
+  border: 0; padding: 0; color: #fff; font: 800 38px/84px var(--font-display);
+  box-shadow: 0 6px 0 rgba(35,32,28,.22), inset 0 -6px 0 rgba(0,0,0,.12);
+  cursor: pointer; transition: transform .2s, opacity .3s, box-shadow .2s; touch-action: manipulation;
+}
+.peg[data-o="0"] { background: var(--opt-a); }
+.peg[data-o="1"] { background: var(--opt-b); }
+.peg[data-o="2"] { background: var(--opt-c); }
+.peg:disabled { cursor: default; }
+.peg.live { animation: bob 1.6s ease-in-out infinite; }
+.peg.picked { box-shadow: 0 0 0 7px var(--paper), 0 0 0 12px var(--ink); }
+.peg.faded { opacity: .45; }
+.peg:focus-visible { outline: 4px solid var(--focus); outline-offset: 6px; }
+@keyframes bob { 50% { transform: scale(1.1); } }
+.olabel {
+  position: absolute; width: 330px; margin-left: -165px; text-align: center; font-size: 24px; line-height: 1.35;
+  background: rgba(239,231,221,.86); border-radius: 10px; padding: 6px 8px; box-sizing: border-box; pointer-events: none;
+  transition: opacity .3s;
+}
+.olabel.faded { opacity: .45; }
+.count {
+  position: absolute; min-width: 64px; margin-left: 30px; margin-top: -78px; font-size: 19px; font-weight: 700;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums; pointer-events: none;
+}
+
+/* bottom bar */
+.bar {
+  position: absolute; left: 80px; right: 80px; bottom: 40px; height: 116px; border-radius: 18px;
+  background: var(--ink); color: var(--paper); display: flex; align-items: center; gap: 36px; padding: 0 36px; box-sizing: border-box;
+}
+.step { font-size: 30px; font-weight: 700; letter-spacing: .06em; white-space: nowrap; }
+.step small { display: block; font-size: 20px; font-weight: 400; opacity: .7; letter-spacing: .04em; }
+.swatches { display: flex; gap: 22px; flex: 1; }
+.sw {
+  width: 76px; height: 76px; border-radius: 50%; border: 4px solid rgba(239,231,221,.25); cursor: pointer; padding: 0;
+  position: relative; touch-action: manipulation; transition: transform .15s;
+}
+.sw:active { transform: scale(.92); }
+.sw span { position: absolute; top: 82px; left: 50%; transform: translateX(-50%); font-size: 0; }
+.sw:focus-visible { outline: 4px solid var(--paper); outline-offset: 4px; }
+.chip { display: flex; align-items: center; gap: 14px; font-size: 24px; flex: 1; }
+.chip i { width: 46px; height: 46px; border-radius: 50%; display: inline-block; }
+.trail { display: flex; gap: 10px; }
+.trail em { font-style: normal; width: 46px; height: 46px; border-radius: 50%; border: 2px dashed rgba(239,231,221,.4); font: 800 24px/42px var(--font-display); text-align: center; box-sizing: border-box; }
+.trail em.f { border: 0; line-height: 46px; color: #fff; }
+.btn {
+  font: 700 24px var(--font-body); color: var(--paper); background: transparent; border: 2px solid rgba(239,231,221,.5);
+  border-radius: 99px; padding: 14px 30px; cursor: pointer; white-space: nowrap; touch-action: manipulation;
+}
+.btn.solid { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.btn:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px; }
+.hint { font-size: 24px; opacity: .8; }
+
+/* result */
+.result {
+  position: absolute; left: 50%; top: 196px; transform: translateX(-50%); width: 1300px; min-height: 244px; box-sizing: border-box;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 20px; padding: 18px 40px; text-align: center;
+  box-shadow: 0 20px 60px rgba(35,32,28,.25); animation: rise .5s ease-out;
+}
+.result h2 { font-family: var(--font-display); font-size: 38px; margin: 0 0 6px; }
+.result p { font-size: 26px; margin: 6px 0; line-height: 1.5; }
+.result .path { font: 800 34px var(--font-display); letter-spacing: .12em; }
+@keyframes rise { from { transform: translate(-50%, 30px); opacity: 0; } }
+
+/* admin */
+.admin { position: absolute; inset: 0; background: rgba(35,32,28,.55); display: flex; align-items: center; justify-content: center; }
+.admin .box { background: var(--paper); border-radius: 20px; padding: 40px 48px; width: 760px; box-sizing: border-box; }
+.admin h2 { font-family: var(--font-display); font-size: 36px; margin: 0 0 8px; }
+.admin p { font-size: 22px; color: var(--ink-soft); margin: 0 0 24px; line-height: 1.5; }
+.admin .row { display: flex; flex-wrap: wrap; gap: 16px; }
+.admin .btn { color: var(--ink); border-color: var(--ink); }
+.admin .btn.warn { background: #A4473A; border-color: #A4473A; color: #fff; }
+.admin pre { font-size: 18px; background: var(--paper-deep); padding: 14px; border-radius: 10px; max-height: 260px; overflow: auto; white-space: pre-wrap; user-select: text; -webkit-user-select: text; }
+
+@media (prefers-reduced-motion: reduce) { .peg.live { animation: none; } .result { animation: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="weave"></canvas>
+
+  <header class="head">
+    <div id="titleHold">
+      <div class="eyebrow">RE-MIX ・ 展場互動</div>
+      <h1 class="title">《編織我們的數位未來》</h1>
+    </div>
+    <div class="tally">
+      <b id="total">0</b><span>條線已織進這張網</span>
+      <div id="demoTag" class="demo-tag" hidden>目前為示範線條</div>
+    </div>
+  </header>
+
+  <div id="cards"></div>
+  <div id="pegs"></div>
+
+  <div class="bar" id="bar"></div>
+  <div id="result" class="result" hidden></div>
+  <div id="admin" class="admin" hidden></div>
+</div>
+
+<script>
+(() => {
+  const W = 1920, H = 1200;
+  const START = { x: 130, y: 740 }, END = { x: 1790, y: 740 };
+  const COLX = [520, 960, 1400], ROWY = [540, 740, 940];
+  const LETTERS = ['A', 'B', 'C'];
+  const OPT_COLORS = ['#6F93B4', '#C49A62', '#7FA57E'];
+  const THREADS = [
+    { name: '天藍', c: '#6FAED3' }, { name: '珊瑚', c: '#E58A73' }, { name: '芥黃', c: '#DDB54E' },
+    { name: '薄荷', c: '#6DBB96' }, { name: '藕紫', c: '#9D8CC4' }, { name: '玫粉', c: '#DE8FAE' }
+  ];
+  const QUESTIONS = [
+    { n: '01', t: '創造與再造 Re-making', q: '如果 AI 能在幾秒內完成一幅作品，你認為創作中最重要的是什麼？',
+      o: ['創作者的想法與意圖', '作品最終呈現的成果', '人與 AI 協作的過程'] },
+    { n: '02', t: '數據與再發現 Re-coding', q: '當數據分析的結果與你的生活經驗不同，你會怎麼做？',
+      o: ['優先相信數據', '優先相信自身經驗', '重新檢視數據與經驗的差異'] },
+    { n: '03', t: '應用與再想像 Re-thinking', q: '如果未來 AI 能協助分配公共資源，你最重視哪一項原則？',
+      o: ['分配效率', '公平與弱勢保障', '決策透明與公眾參與'] }
+  ];
+  const KEY = 'remix-weave-v1';
+  const IDLE_MS = 45000, RESULT_MS = 12000;
+
+  // ---------- storage ----------
+  let records;
+  function load() {
+    try { const raw = localStorage.getItem(KEY); if (raw !== null) return JSON.parse(raw); } catch (e) {}
+    return null;
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(records)); } catch (e) {} }
+  function demoRecords(n) {
+    const out = [], r = rng(20261111);
+    const bias = [[.45, .2, .35], [.25, .2, .55], [.2, .45, .35]];
+    const pick = (w) => { const x = r(); return x < w[0] ? 0 : x < w[0] + w[1] ? 1 : 2; };
+    for (let i = 0; i < n; i++) out.push({ id: 'ex' + i, c: Math.floor(r() * THREADS.length), p: bias.map(pick), t: Date.now() - (n - i) * 60000, ex: 1 });
+    return out;
+  }
+  records = load();
+  if (!Array.isArray(records)) { records = demoRecords(42); save(); }
+
+  // ---------- geometry ----------
+  function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function hash(s) { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function anchors(rec) {
+    const r = rng(hash(rec.id));
+    const pts = [{ x: START.x, y: START.y + (r() - .5) * 26 }];
+    rec.p.forEach((o, q) => pts.push({ x: COLX[q] + (r() - .5) * 20, y: ROWY[o] + (r() - .5) * 22 }));
+    pts.push({ x: END.x, y: END.y + (r() - .5) * 26 });
+    return { pts, sags: pts.map(() => 8 + r() * 38) };
+  }
+  function sampleSeg(a, b, sag, out) {
+    const dx = b.x - a.x, N = 48;
+    const c1 = { x: a.x + dx * .42, y: a.y + sag }, c2 = { x: b.x - dx * .42, y: b.y + sag };
+    for (let i = 1; i <= N; i++) {
+      const t = i / N, u = 1 - t;
+      out.push([u*u*u*a.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*b.x, u*u*u*a.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*b.y]);
+    }
+  }
+  function polyline(pts, sags) { const out = [[pts[0].x, pts[0].y]]; for (let i = 0; i < pts.length - 1; i++) sampleSeg(pts[i], pts[i + 1], sags[i], out); return out; }
+
+  // ---------- canvas ----------
+  const stage = document.getElementById('stage');
+  const cv = document.getElementById('weave'), ctx = cv.getContext('2d');
+  const base = document.createElement('canvas'), bctx = base.getContext('2d');
+  let k = 1;
+  function fit() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const s = Math.min(vw / W, vh / H);
+    stage.style.transform = `translate(${(vw - W * s) / 2}px, ${(vh - H * s) / 2}px) scale(${s})`;
+    k = Math.min(3, Math.max(1, s * (window.devicePixelRatio || 1)));
+    for (const c of [cv, base]) { c.width = Math.round(W * k); c.height = Math.round(H * k); }
+    rebuildBase(); render();
+  }
+  function stroke(c, line, upto, color, width, alpha) {
+    const n = Math.min(line.length, Math.max(2, Math.floor(line.length * upto)));
+    if (n < 2) return;
+    c.globalAlpha = alpha; c.strokeStyle = color; c.lineWidth = width; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.beginPath(); c.moveTo(line[0][0], line[0][1]);
+    for (let i = 1; i < n; i++) c.lineTo(line[i][0], line[i][1]);
+    c.stroke(); c.globalAlpha = 1;
+  }
+  const lineCache = new Map();
+  function lineOf(rec) { let l = lineCache.get(rec.id); if (!l) { const a = anchors(rec); l = polyline(a.pts, a.sags); lineCache.set(rec.id, l); } return l; }
+  function rebuildBase() {
+    bctx.setTransform(k, 0, 0, k, 0, 0); bctx.clearRect(0, 0, W, H);
+    const alpha = records.length > 300 ? .45 : records.length > 120 ? .6 : .75;
+    for (const rec of records) if (rec.id !== highlightId) stroke(bctx, lineOf(rec), 1, THREADS[rec.c].c, 3.2, alpha);
+  }
+
+  // ---------- state ----------
+  let step = 0, color = -1, picks = [], highlightId = null;
+  let anim = null; // {line, from, to, start, dur}
+  let activePts = null, activeSags = null, activeLine = null, drawnFrac = 0;
+  let idleTimer = null, resultTimer = null;
+
+  function render(now) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.globalAlpha = (activeLine || highlightId) ? .38 : 1; // fade the crowd so the visitor's own thread reads
+    ctx.drawImage(base, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    if (highlightId) { const rec = records.find(r => r.id === highlightId); if (rec) { stroke(ctx, lineOf(rec), 1, '#23201C', 11, .18); stroke(ctx, lineOf(rec), 1, THREADS[rec.c].c, 7, 1); } }
+    let finished = null;
+    if (activeLine) {
+      let f = drawnFrac;
+      if (anim) {
+        const t = Math.min(1, (now - anim.start) / anim.dur), e = 1 - Math.pow(1 - t, 3);
+        f = anim.from + (anim.to - anim.from) * e;
+        if (t >= 1) { drawnFrac = anim.to; finished = anim.done || null; anim = null; }
+      }
+      stroke(ctx, activeLine, f, '#23201C', 10, .16);
+      stroke(ctx, activeLine, f, THREADS[color].c, 6, 1);
+    }
+    if (finished) finished();
+    looping = !!anim;
+    if (anim) requestAnimationFrame(render);
+  }
+  let looping = false;
+  function animateTo(frac, dur, done) {
+    anim = { from: drawnFrac, to: frac, start: performance.now(), dur: reduced ? 1 : dur, done };
+    if (!looping) { looping = true; requestAnimationFrame(render); }
+  }
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Active thread: anchors for start + picks so far (+ end when finished). Fraction is per segment count.
+  function setActive(withEnd) {
+    const id = 'live';
+    const r = rng(hash(id + records.length));
+    activePts = [{ x: START.x, y: START.y }];
+    picks.forEach((o, q) => activePts.push({ x: COLX[q], y: ROWY[o] }));
+    if (withEnd) activePts.push({ x: END.x, y: END.y });
+    activeSags = activePts.map(() => 10 + r() * 24);
+    activeLine = polyline(activePts, activeSags);
+  }
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const cards = $('cards'), pegsEl = $('pegs'), bar = $('bar'), result = $('result');
+  function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+
+  function buildStatic() {
+    QUESTIONS.forEach((q, i) => {
+      const c = el('div', 'qcard'); c.style.left = (COLX[i] - 200) + 'px'; c.id = 'card' + i;
+      c.innerHTML = `<div class="qn">問題 ${q.n}</div><div class="qt">${q.t}</div><div class="qq">${q.q}</div>`;
+      cards.appendChild(c);
+      q.o.forEach((txt, o) => {
+        const b = el('button', 'peg', LETTERS[o]); b.dataset.q = i; b.dataset.o = o; b.id = `peg${i}${o}`;
+        b.style.left = COLX[i] + 'px'; b.style.top = ROWY[o] + 'px';
+        b.setAttribute('aria-label', `問題${i + 1} 選項 ${LETTERS[o]}：${txt}`);
+        b.addEventListener('click', () => choose(i, o));
+        pegsEl.appendChild(b);
+        const l = el('div', 'olabel', txt); l.id = `lab${i}${o}`; l.style.left = COLX[i] + 'px'; l.style.top = (ROWY[o] + 50) + 'px';
+        pegsEl.appendChild(l);
+        const n = el('div', 'count'); n.id = `cnt${i}${o}`; n.style.left = COLX[i] + 'px'; n.style.top = ROWY[o] + 'px';
+        pegsEl.appendChild(n);
+      });
+    });
+    for (const [p, txt] of [[START, '起點'], [END, '終點']]) {
+      const n = el('div', 'node'); n.style.left = p.x + 'px'; n.style.top = p.y + 'px'; pegsEl.appendChild(n);
+      const l = el('div', 'node-label', txt); l.style.left = p.x + 'px'; l.style.top = (p.y - 74) + 'px'; pegsEl.appendChild(l);
+    }
+  }
+
+  function updateCounts() {
+    $('total').textContent = records.length;
+    $('demoTag').hidden = !records.some(r => r.ex);
+    for (let q = 0; q < 3; q++) {
+      const counts = [0, 0, 0]; records.forEach(r => counts[r.p[q]]++);
+      const tot = records.length || 1;
+      counts.forEach((c, o) => { $(`cnt${q}${o}`).textContent = records.length ? `${Math.round(c / tot * 100)}%` : ''; });
+    }
+  }
+
+  function refreshUI() {
+    for (let q = 0; q < 3; q++) {
+      const card = $('card' + q);
+      card.className = 'qcard' + (step === q + 1 ? ' on' : step >= 1 && step <= 3 ? (q < step - 1 ? ' done' : ' dim') : '');
+      for (let o = 0; o < 3; o++) {
+        const b = $(`peg${q}${o}`), l = $(`lab${q}${o}`);
+        const live = step === q + 1;
+        const picked = picks[q] === o;
+        b.disabled = !live;
+        b.classList.toggle('live', live && !reduced);
+        b.classList.toggle('picked', picked);
+        const fade = (step >= 1 && step <= 4) && !live && !picked;
+        b.classList.toggle('faded', fade); l.classList.toggle('faded', fade);
+      }
+    }
+    renderBar();
+  }
+
+  function renderBar() {
+    bar.innerHTML = '';
+    if (step === 0) {
+      bar.appendChild(el('div', 'step', '拿一條線開始<small>輕觸一個顏色，它就是你的線</small>'));
+      const sws = el('div', 'swatches');
+      THREADS.forEach((t, i) => {
+        const b = el('button', 'sw'); b.style.background = t.c; b.id = 'sw' + i;
+        b.setAttribute('aria-label', `${t.name}色的線`);
+        b.addEventListener('click', () => pickColor(i)); sws.appendChild(b);
+      });
+      bar.appendChild(sws);
+      bar.appendChild(el('div', 'hint', '依序回答三題 → 你的線會連起三個答案'));
+    } else if (step <= 3) {
+      bar.appendChild(el('div', 'step', `第 ${step} / 3 題<small>輕觸上方 A、B 或 C 的釘子</small>`));
+      const chip = el('div', 'chip');
+      chip.innerHTML = `<i style="background:${THREADS[color].c}"></i>你的${THREADS[color].name}色線`;
+      const trail = el('div', 'trail');
+      for (let q = 0; q < 3; q++) {
+        const e = el('em', picks[q] != null ? 'f' : '', picks[q] != null ? LETTERS[picks[q]] : (q + 1));
+        if (picks[q] != null) e.style.background = OPT_COLORS[picks[q]];
+        trail.appendChild(e);
+      }
+      chip.appendChild(trail); bar.appendChild(chip);
+      if (picks.length) { const back = el('button', 'btn', '上一步'); back.id = 'btnBack'; back.addEventListener('click', undo); bar.appendChild(back); }
+      const restart = el('button', 'btn', '重新開始'); restart.id = 'btnRestart'; restart.addEventListener('click', reset); bar.appendChild(restart);
+    } else {
+      bar.appendChild(el('div', 'step', '你的線已經織進網裡<small>看看它和其他人的線在哪裡交會</small>'));
+      bar.appendChild(el('div', 'swatches'));
+      const done = el('button', 'btn solid', '完成，換下一位'); done.id = 'btnDone'; done.addEventListener('click', reset); bar.appendChild(done);
+    }
+  }
+
+  // ---------- flow ----------
+  function pickColor(i) {
+    color = i; step = 1; picks = []; drawnFrac = 0; setActive(false); poke(); refreshUI(); render(performance.now());
+  }
+  function choose(q, o) {
+    if (step !== q + 1 || anim) return;
+    picks[q] = o; poke();
+    setActive(false);
+    drawnFrac = q / (q + 1); // the q segments already drawn stay drawn
+    step = q + 2;
+    refreshUI();
+    animateTo(1, 650, () => { if (step === 4) finish(); });
+  }
+  function undo() {
+    if (anim || !picks.length) return;
+    picks.pop(); step = picks.length + 1; poke();
+    if (picks.length) { setActive(false); drawnFrac = 1; } else { setActive(false); drawnFrac = 0; }
+    refreshUI(); render(performance.now());
+  }
+  function finish() {
+    setActive(true); drawnFrac = 3 / 4;
+    animateTo(1, 800, () => {
+      const rec = { id: 'v' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), c: color, p: picks.slice(), t: Date.now() };
+      records.push(rec); save();
+      highlightId = rec.id; activeLine = null;
+      rebuildBase(); updateCounts(); render(performance.now());
+      showResult(rec);
+    });
+  }
+  function showResult(rec) {
+    const same = records.filter(r => r.p.join() === rec.p.join()).length;
+    const path = rec.p.map(o => LETTERS[o]).join(' → ');
+    const share = Math.round(same / records.length * 100);
+    result.innerHTML = `<h2>你的線已經連上終點</h2>
+      <p class="path">${path}</p>
+      <p>${rec.p.map((o, q) => QUESTIONS[q].o[o]).join('　・　')}</p>
+      <p>在 ${records.length} 條線裡，有 <b>${same}</b> 條和你走同一條路（${share}%）。<br>其他人的線，在哪裡和你交會、又在哪裡分開？</p>`;
+    result.hidden = false;
+    clearTimeout(resultTimer); resultTimer = setTimeout(reset, RESULT_MS);
+    refreshUI();
+  }
+  function reset() {
+    clearTimeout(resultTimer); clearTimeout(idleTimer);
+    step = 0; color = -1; picks = []; activeLine = null; anim = null; drawnFrac = 0;
+    result.hidden = true;
+    if (highlightId) { highlightId = null; rebuildBase(); }
+    refreshUI(); render(performance.now());
+  }
+  function poke() { clearTimeout(idleTimer); if (step >= 1 && step <= 3) idleTimer = setTimeout(reset, IDLE_MS); }
+
+  // ---------- admin (long-press the title for 3 s, or press Shift+A) ----------
+  const admin = $('admin');
+  function openAdmin(msg) {
+    const real = records.filter(r => !r.ex).length;
+    admin.innerHTML = `<div class="box"><h2>管理面板</h2>
+      <p>目前共 ${records.length} 條線（觀眾 ${real} 條、示範 ${records.length - real} 條）。資料只存在這台電腦的瀏覽器裡。</p>
+      <div class="row">
+        <button class="btn" id="aExport">匯出 CSV</button>
+        <button class="btn" id="aDemo">清除示範線條</button>
+        <button class="btn warn" id="aClear">清除全部線條</button>
+        <button class="btn" id="aClose">關閉</button>
+      </div>${msg ? `<p style="margin-top:20px">${msg}</p>` : ''}</div>`;
+    admin.hidden = false;
+    $('aClose').onclick = () => { admin.hidden = true; };
+    $('aDemo').onclick = () => { records = records.filter(r => !r.ex); save(); lineCache.clear(); rebuildBase(); updateCounts(); render(performance.now()); openAdmin('已清除示範線條。'); };
+    $('aClear').onclick = () => {
+      const b = $('aClear');
+      if (b.dataset.armed) { records = []; save(); lineCache.clear(); reset(); rebuildBase(); updateCounts(); render(performance.now()); openAdmin('已清除全部線條，牆面重新開始。'); }
+      else { b.dataset.armed = 1; b.textContent = '再按一次確認清除'; }
+    };
+    $('aExport').onclick = exportCsv;
+  }
+  function exportCsv() {
+    const rows = [['時間', '線色', 'Q1', 'Q2', 'Q3', '示範'].join(',')];
+    records.forEach(r => rows.push([new Date(r.t).toISOString(), THREADS[r.c].name, ...r.p.map(o => LETTERS[o]), r.ex ? 'Y' : ''].join(',')));
+    const csv = rows.join('\n');
+    let ok = false;
+    try {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' }));
+      a.download = `remix-weave-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove(); ok = true;
+    } catch (e) {}
+    if (navigator.clipboard) navigator.clipboard.writeText(csv).catch(() => {});
+    openAdmin((ok ? '已下載 CSV（若沒有下載，可複製下方內容）。' : '') + `<pre>${csv.replace(/</g, '&lt;')}</pre>`);
+  }
+  let pressT = null;
+  const th = $('titleHold');
+  th.addEventListener('pointerdown', () => { pressT = setTimeout(() => openAdmin(), 3000); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => th.addEventListener(ev, () => clearTimeout(pressT)));
+  window.addEventListener('keydown', (e) => { if (e.shiftKey && (e.key === 'A' || e.key === 'a')) openAdmin(); if (e.key === 'Escape') admin.hidden = true; });
+
+  // kiosk hygiene
+  window.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  async function wake() { try { await navigator.wakeLock.request('screen'); } catch (e) {} }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+  wake();
+
+  buildStatic(); updateCounts(); refreshUI();
+  window.addEventListener('resize', fit); fit();
+})();
+</script>
+</body>
+</html>
