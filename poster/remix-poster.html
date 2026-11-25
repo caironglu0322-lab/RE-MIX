@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RE-MIX Poster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@500;900&family=Playfair+Display:wght@400;900&display=swap" rel="stylesheet">
+<style>
+  /*
+   * RE-MIX 海報 — 設計規則
+   * 色彩 3+1：底 --bg、主色 --ink、圖像 --cream、強調 --accent（只給「線」與編織片）
+   * 格線：1414×2000，四邊邊距 90，12 欄（欄寬 ≈81、欄距 24）
+   * 字體：英文小標一律 IBM Plex Mono；中文 Noto Serif TC；主視覺 Playfair Display
+   * 物件（打孔卡、編織片）有同一種陰影；資料圖（眼圖、標本、功耗）一律平面＋細框
+   */
+  :root {
+    --bg: #8C98D8;
+    --ink: #26307A;
+    --cream: #F4E6AE;
+    --accent: #E6A13A;
+    --accent-dark: #C47F1E;
+  }
+  html, body { margin: 0; background: #2a3060; }
+  body { display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+  #poster { width: min(100vw, calc(100vh * 0.707)); height: auto; display: block; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .serif-tc { font-family: "Noto Serif TC", serif; }
+  .display { font-family: "Playfair Display", serif; }
+  .cap { font-family: "IBM Plex Mono", monospace; font-size: 13px; letter-spacing: 0.12em; fill: var(--ink); font-weight: 500; }
+  .cap-strong { font-weight: 600; }
+  .frame { fill: rgba(38, 48, 122, 0.14); stroke: var(--ink); stroke-width: 1.5; }
+</style>
+</head>
+<body>
+<svg id="poster" viewBox="0 0 1414 2000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+    <filter id="obj-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#26307A" flood-opacity="0.28"/>
+    </filter>
+    <radialGradient id="glow" cx="0.25" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#9AA6E2"/>
+      <stop offset="1" stop-color="#8592D3"/>
+    </radialGradient>
+    <clipPath id="clip-eye1"><rect x="674" y="730" width="200" height="170"/></clipPath>
+    <clipPath id="clip-eye2"><rect x="910" y="730" width="200" height="170"/></clipPath>
+  </defs>
+
+  <!-- 底 -->
+  <rect width="1414" height="2000" fill="url(#glow)"/>
+
+  <!-- 頁首 -->
+  <text class="cap cap-strong" x="90" y="110" style="font-size:16px;letter-spacing:0.24em">RE-MIX</text>
+  <text class="cap cap-strong" x="90" y="134" style="font-size:16px;letter-spacing:0.24em">EXHIBITION</text>
+
+  <!-- 中文標題（次要，直排） -->
+  <g id="title-tc" class="serif-tc" fill="var(--ink)"></g>
+
+  <!-- 一條線：打孔卡 → 編織 → AI -->
+  <g fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round">
+    <path id="thread-a" d="M 648 637 C 664 700, 628 760, 636 860 C 644 960, 690 1050, 770 1082"/>
+    <path id="thread-b" d="M 806 1352 C 770 1380, 730 1420, 730 1500 L 730 1720 C 730 1748, 742 1760, 762 1760"/>
+  </g>
+
+  <!-- Zone A：1804 提花機打孔卡 -->
+  <g id="cards" transform="translate(90 190) rotate(-2)"></g>
+
+  <!-- 標本列：同規格三格 -->
+  <text class="cap cap-strong" x="90" y="712">SPECIMENS · ANALOG → DIGITAL</text>
+  <g id="specimens"></g>
+
+  <!-- 眼圖 -->
+  <text class="cap cap-strong" x="674" y="712">EYE DIAGRAM · 112G SERDES · 0/1 → 00/01/10/11</text>
+  <rect class="frame" x="674" y="730" width="200" height="170"/>
+  <rect class="frame" x="910" y="730" width="200" height="170"/>
+  <g id="eye1" clip-path="url(#clip-eye1)"></g>
+  <g id="eye2" clip-path="url(#clip-eye2)"></g>
+  <g class="cap" style="font-size:11px">
+    <text x="1118" y="760">11</text><text x="1118" y="802">10</text>
+    <text x="1118" y="844">01</text><text x="1118" y="886">00</text>
+  </g>
+  <text class="cap" x="674" y="924"><tspan class="cap-strong">NRZ</tspan>  2 LEVELS · 1 BIT/UI</text>
+  <text class="cap" x="910" y="924"><tspan class="cap-strong">PAM4</tspan>  4 LEVELS · 2 BIT/UI</text>
+
+  <!-- 編織片 -->
+  <g id="knit"></g>
+  <text class="cap" x="800" y="1392">HAND-KNIT · 5×7 BITMAP · RE / MIX</text>
+
+  <!-- 主角：RE MIX -->
+  <g class="display" fill="var(--ink)">
+    <text id="hero-re" x="84" y="1470" font-size="440" font-weight="900" textLength="610" lengthAdjust="spacing">RE</text>
+    <text id="hero-mix" x="90" y="1752" font-size="300" font-weight="400" fill="none" stroke="var(--ink)" stroke-width="3.5" textLength="604" lengthAdjust="spacing">MIX</text>
+  </g>
+  <text class="mono" x="92" y="1818" fill="var(--ink)" style="font-size:22px;letter-spacing:0.08em;font-weight:600">RE: <tspan class="serif-tc" style="font-weight:900">重新</tspan>  /  MIX: <tspan class="serif-tc" style="font-weight:900">交織</tspan></text>
+
+  <!-- Zone D：AI 功耗曲線（線的終點） -->
+  <text class="cap cap-strong" x="760" y="1540">AI TRAINING CLUSTER · POWER DRAW (MW)</text>
+  <text class="cap" x="760" y="1562">STEP / ALL-REDUCE / CHECKPOINT</text>
+  <g id="power"></g>
+
+  <!-- 頁尾 -->
+  <text class="serif-tc" x="90" y="1912" fill="var(--ink)" style="font-size:18px;letter-spacing:0.3em;font-weight:500">科技 · 社會 · 人</text>
+  <text class="cap cap-strong" x="1324" y="1912" text-anchor="end" style="font-size:15px">1804 JACQUARD PUNCH CARD → 0 / 1 → AI</text>
+
+  <!-- 均勻顆粒 -->
+  <rect width="1414" height="2000" filter="url(#grain)" opacity="0.32" style="mix-blend-mode:soft-light" pointer-events="none"/>
+</svg>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+};
+// 固定亂數，讓每次輸出都一樣
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const C = { ink: "#26307A", cream: "#F4E6AE", accent: "#E6A13A", accentDark: "#C47F1E", bg: "#8C98D8" };
+
+/* ---------- 中文標題 ---------- */
+(() => {
+  const g = document.getElementById("title-tc");
+  [..."編織數位時代的創造與想像"].forEach((ch, i) =>
+    el("text", { x: 1278, y: 252 + i * 80, "font-size": 74, "font-weight": 900, "text-anchor": "middle" }, g).textContent = ch);
+  [..."重新拿起手中的線"].forEach((ch, i) =>
+    el("text", { x: 1186, y: 214 + i * 38, "font-size": 24, "font-weight": 500, "text-anchor": "middle" }, g).textContent = ch);
+})();
+
+/* ---------- 打孔卡 ---------- */
+(() => {
+  const g = document.getElementById("cards");
+  const rows = [["R", "01010010"], ["E", "01000101"], ["M", "01001101"], ["I", "01001001"], ["X", "01011000"]];
+  // 卡與卡之間的綁線（線從這裡長出來）
+  for (let i = 0; i < rows.length - 1; i++) {
+    for (const lx of [30, 470]) {
+      el("line", { x1: i * 18 + lx, y1: i * 96 + 78, x2: (i + 1) * 18 + lx, y2: (i + 1) * 96 + 4,
+        stroke: C.accent, "stroke-width": 3, "stroke-linecap": "round" }, g);
+    }
+  }
+  rows.forEach(([ch, bits], i) => {
+    const c = el("g", { transform: `translate(${i * 18} ${i * 96})`, filter: "url(#obj-shadow)" }, g);
+    el("rect", { width: 500, height: 82, rx: 4, fill: C.cream }, c);
+    for (const [x, y] of [[12, 12], [488, 12], [12, 70], [488, 70]])
+      el("circle", { cx: x, cy: y, r: 3.5, fill: C.ink, opacity: 0.55 }, c);
+    const t = el("text", { x: 44, y: 56, "font-size": 34, "font-weight": 600, fill: C.ink, "text-anchor": "middle", class: "mono" }, c);
+    t.textContent = ch;
+    [...bits].forEach((b, j) => {
+      const cx = 100 + j * 40;
+      el("text", { x: cx, y: 24, "font-size": 11, fill: C.ink, "text-anchor": "middle", class: "mono" }, c).textContent = j + 1;
+      el("circle", b === "1"
+        ? { cx, cy: 52, r: 13, fill: C.ink }
+        : { cx, cy: 52, r: 12.25, fill: "none", stroke: C.ink, "stroke-width": 1.5 }, c);
+    });
+    el("text", { x: 412, y: 57, "font-size": 14, fill: C.ink, class: "mono", "letter-spacing": "0.04em" }, c).textContent = bits;
+  });
+})();
+
+/* ---------- 標本列 ---------- */
+(() => {
+  const g = document.getElementById("specimens");
+  const Y = 730, H = 170, W = 152, xs = [90, 266, 442];
+  const caps = [["PUNCHED TAPE", "8-TRACK ASCII"], ["35MM SOUNDTRACK", "SDDS / DOLBY / DTS"], ["PCM ADAPTOR", "1 LINE = 3 SAMPLES"]];
+  xs.forEach((x, k) => {
+    el("rect", { class: "frame", x, y: Y, width: W, height: H }, g);
+    el("text", { class: "cap cap-strong", x, y: Y + H + 24 }, g).textContent = caps[k][0];
+    el("text", { class: "cap", x, y: Y + H + 42, style: "font-size:11px" }, g).textContent = caps[k][1];
+  });
+
+  // 1. 打孔紙帶（直向），內容 "RE-MIX 1804"
+  {
+    const x0 = xs[0] + 36, w = 80;
+    el("rect", { x: x0, y: Y + 6, width: w, height: H - 12, fill: C.cream }, g);
+    [..."RE-MIX 1804"].forEach((ch, r) => {
+      const code = ch.charCodeAt(0), cy = Y + 16 + r * 14.2;
+      for (let b = 0; b < 8; b++) {
+        const cx = x0 + 8 + b * 9.2 + (b > 2 ? 3 : 0);
+        if ((code >> (7 - b)) & 1) el("circle", { cx, cy, r: 3, fill: C.ink }, g);
+      }
+      el("circle", { cx: x0 + 8 + 2 * 9.2 + 6.1, cy, r: 1.4, fill: C.ink, opacity: 0.7 }, g);
+    });
+  }
+
+  // 2. 35mm 電影音軌（直向）
+  {
+    const x0 = xs[1] + 16, w = 120, R = rng(11);
+    el("rect", { x: x0, y: Y + 6, width: w, height: H - 12, fill: C.ink }, g);
+    for (let y = Y + 10; y < Y + H - 12; y += 12) {
+      el("rect", { x: x0 + 6, y, width: 8, height: 7, rx: 1.5, fill: C.cream }, g);
+      el("rect", { x: x0 + w - 14, y, width: 8, height: 7, rx: 1.5, fill: C.cream }, g);
+      // SDDS / Dolby 數位區塊
+      for (let b = 0; b < 3; b++) if (R() > 0.45) el("rect", { x: x0 + 18 + b * 4, y: y + (R() * 4 | 0), width: 3, height: 3, fill: C.cream, opacity: 0.85 }, g);
+    }
+    // 類比立體聲（variable area）
+    for (const cx of [x0 + 52, x0 + 78]) {
+      let L = "", Rt = "";
+      for (let y = Y + 8; y <= Y + H - 8; y += 3) {
+        const a = 4 + 7 * Math.abs(Math.sin(y * 0.11 + cx) * Math.sin(y * 0.031 + cx * 0.3));
+        L += `${cx - a},${y} `; Rt = `${cx + a},${y} ` + Rt;
+      }
+      el("polygon", { points: L + Rt, fill: C.accent }, g);
+    }
+  }
+
+  // 3. PCM 影像位元
+  {
+    const x0 = xs[2] + 10, R = rng(23), cols = 22, rows = 30, cw = 5.4, ch = 5.1;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const v = R();
+      if (v > 0.55) el("rect", { x: x0 + c * cw, y: Y + 8 + r * ch, width: cw - 1.2, height: ch - 1.8, fill: v > 0.93 ? C.accent : C.cream, opacity: v > 0.93 ? 1 : 0.9 }, g);
+    }
+    for (let r = 0; r < rows; r++) el("rect", { x: x0 + cols * cw + 4, y: Y + 8 + r * ch, width: 6, height: ch - 1.8, fill: C.cream }, g);
+  }
+})();
+
+/* ---------- 眼圖 ---------- */
+function eye(id, x0, y0, w, h, levels, seed) {
+  const g = document.getElementById(id), R = rng(seed);
+  const gauss = () => (R() + R() + R() - 1.5) * 0.9;
+  const ss = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  const lv = Array.from({ length: levels }, (_, i) => y0 + h - 22 - i * (h - 44) / (levels - 1));
+  for (let n = 0; n < 320; n++) {
+    const s = [0, 1, 2].map(() => lv[(R() * levels) | 0]);
+    const j1 = 0.5 + gauss() * 0.03, j2 = 1.5 + gauss() * 0.03;
+    let d = "";
+    for (let px = 0; px <= w; px += 2) {
+      const u = (px / w) * 2;
+      const v = s[0] + (s[1] - s[0]) * ss((u - j1) / 0.42 + 0.5) + (s[2] - s[1]) * ss((u - j2) / 0.42 + 0.5) + gauss() * 3.2;
+      d += (px ? "L" : "M") + (x0 + px).toFixed(1) + " " + v.toFixed(1);
+    }
+    el("path", { d, fill: "none", stroke: C.cream, "stroke-width": 0.8, opacity: 0.13 }, g);
+  }
+}
+eye("eye1", 674, 730, 200, 170, 2, 5);
+eye("eye2", 910, 730, 200, 170, 4, 9);
+
+/* ---------- 編織片 ---------- */
+(() => {
+  const g = document.getElementById("knit");
+  const X = 800, Y = 1090, cols = 25, rows = 18, cw = 12, rh = 14.6;
+  const F = {
+    R: ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+    E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+    M: ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+    I: ["111", "010", "010", "010", "010", "010", "111"],
+    X: ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
+  };
+  const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+  const put = (word, r0) => {
+    const w = [...word].reduce((a, ch) => a + F[ch][0].length + 1, -1);
+    let c0 = Math.floor((cols - w) / 2);
+    for (const ch of word) {
+      F[ch].forEach((row, r) => [...row].forEach((b, c) => { if (b === "1") grid[r0 + r][c0 + c] = 1; }));
+      c0 += F[ch][0].length + 1;
+    }
+  };
+  put("RE", 1); put("MIX", 10);
+  const fab = el("g", { filter: "url(#obj-shadow)", transform: `rotate(1.5 ${X + 150} ${Y + 130})` }, g);
+  el("rect", { x: X - 2, y: Y - 4, width: cols * cw + 4, height: rows * rh + 8, rx: 3, fill: C.accent }, fab);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const cx = X + c * cw + cw / 2, cy = Y + r * rh + rh / 2;
+    const fill = grid[r][c] ? C.cream : C.accentDark;
+    // V 字針目
+    el("ellipse", { cx: cx - 2.6, cy, rx: 2.6, ry: 5.6, transform: `rotate(-28 ${cx - 2.6} ${cy})`, fill, opacity: grid[r][c] ? 1 : 0.55 }, fab);
+    el("ellipse", { cx: cx + 2.6, cy, rx: 2.6, ry: 5.6, transform: `rotate(28 ${cx + 2.6} ${cy})`, fill, opacity: grid[r][c] ? 1 : 0.55 }, fab);
+  }
+  // 棒針
+  el("line", { x1: 770, y1: 1082, x2: 1138, y2: 1094, stroke: C.ink, "stroke-width": 7, "stroke-linecap": "round" }, g);
+  el("circle", { cx: 770, cy: 1082, r: 10, fill: C.ink }, g);
+  el("line", { x1: 1122, y1: 1030, x2: 1012, y2: 1372, stroke: C.ink, "stroke-width": 6, "stroke-linecap": "round" }, g);
+})();
+
+/* ---------- AI 功耗曲線（線變成資料） ---------- */
+(() => {
+  const g = document.getElementById("power");
+  const x0 = 762, x1 = 1324, base = 1760, hi = 1600, mid = 1648, low = 1728;
+  const pts = [[x0, base], [790, base], [812, hi]];
+  let x = 812, k = 0;
+  const checkpoints = [968, 1118, 1236];
+  while (x < 1286) {
+    const cp = checkpoints.find(c => x >= c && x < c + 16);
+    if (cp !== undefined) { pts.push([x, low], [x + 16, low]); x += 16; pts.push([x, hi]); continue; }
+    const w = k % 5 === 4 ? 6 : 12;
+    const y = k % 2 ? mid : hi;
+    pts.push([x, y], [x + w, y]);
+    x += w; k++;
+  }
+  pts.push([1292, hi], [1306, base], [x1, base]);
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" ");
+  el("path", { d: d + ` L ${x1} ${base} L ${x0} ${base} Z`, fill: C.ink, opacity: 0.13 }, g);
+  el("line", { x1: x0, y1: base, x2: x1, y2: base, stroke: C.ink, "stroke-width": 1.5 }, g);
+  el("path", { d, fill: "none", stroke: C.accent, "stroke-width": 3, "stroke-linejoin": "round" }, g);
+})();
+</script>
+</body>
+</html>
