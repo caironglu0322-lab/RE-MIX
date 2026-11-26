@@ -1231,6 +1231,22 @@
                     </div>
                 </div>
             </section>
+            <section class="section" id="sec-pol-live">
+                <h2 class="sec-h"><span class="fh-title">🚓 現場派駐情境展示</span><small>中正路口</small></h2>
+                <div class="sec-pad">
+                    <p class="hint" id="polHint" style="margin-bottom:8px"></p>
+                    <button class="btn-main neutral" id="polDemoBtn" type="button" style="margin:0 0 10px">🚓 啟動現場派駐情境展示</button>
+                    <ul class="steps" id="polSteps">
+                        <li><span class="dot">1</span>AI 預測熱點：下班尖峰轉彎與行人衝突偏高</li>
+                        <li><span class="dot">2</span>派駐通知：只傳匿名路況摘要到員警裝置</li>
+                        <li><span class="dot">3</span>員警騎警用機車到場</li>
+                        <li><span class="dot">4</span>平板確認 TITAN 即時路況（號誌照常運作）</li>
+                        <li><span class="dot">5</span>協助行走較慢的長者過馬路</li>
+                        <li><span class="dot">6</span>回報「狀況已改善」，AI 修正預測</li>
+                    </ul>
+                    <p class="footnote">＊ 員警到場是為了確認路況、協助行人與預防事故；TITAN 資料不作為開罰依據。</p>
+                </div>
+            </section>
             <section class="section" id="sec-pol-rank">
                 <h2 class="sec-h"><span class="fh-title">本時段派駐建議</span><small id="polRankSub"></small></h2>
                 <div class="sec-pad">
@@ -1416,6 +1432,9 @@ function main() {
         turn:     { pos: V3(6, 16, -11), target: V3(-14, 0, -0.5) },
         twostage: { pos: V3(-3, 22, 19), target: V3(-17, 0, 1.5) },
         bus:      { pos: V3(44, 17, 22), target: V3(18, 1, 1.5) },
+        police:   { pos: V3(14, 26, 40), target: V3(-12, 0, 10) },
+        policePost:   { pos: V3(3, 6.5, -6.5), target: V3(-6, 1.2, 2.5) },
+        policeEscort: { pos: V3(3, 13, 31), target: V3(-9, 0.5, 11) },
     };
     // 依螢幕比例調整視角距離，直式螢幕拉遠以容納兩支路燈
     function viewScale() {
@@ -3635,6 +3654,7 @@ function main() {
         });
         sveh.forEach((s) => { if (s.active) L.push({ o: s, x: s.x, z: s.z, hx: s.hx, hz: s.hz, half: s.half, w: s.scooter ? 0.5 : 0.95, v: s.v }); });
         buses.forEach((b) => { if (b.active) L.push({ o: b, x: b.x, z: b.z, hx: b.dir, hz: 0, half: b.half, w: b.w, v: b.v }); });
+        if (polScoot.onRoad) L.push({ o: polScoot, x: polScoot.x, z: polScoot.z, hx: polScoot.hx, hz: polScoot.hz, half: polScoot.half, w: 0.5, v: polScoot.v });
         if (ts.active) L.push({ o: ts, x: ts.x, z: ts.z, hx: ts.hx, hz: ts.hz, half: ts.half, w: 0.5, v: ts.v });
         return L;
     }
@@ -3680,7 +3700,7 @@ function main() {
     // 車輛前方路面上的行人
     function pedGap(x, z, hx, hz, half) {
         let lim = Infinity;
-        for (const p of [...peds, ...sidePeds]) {
+        for (const p of [...peds, ...sidePeds, ...extraPeds]) {
             const onRoad = (p.z > ROAD_Z0 && p.z < OPP_Z1) || (p.x > SR_X0 && p.x < SR_X1);
             if (!onRoad) continue;
             const dx = p.x - x, dz = p.z - z;
@@ -3829,6 +3849,7 @@ function main() {
         if (!vis) return;
         let text, css, col;
         if (p.alertT > 0) { text = '⚠ 請注意來車'; css = '#FF7A59'; col = 0xff7a59; }
+        else if (p.state === 'cross' && p.escorted) { text = '🚓 員警護送過馬路'; css = '#7EC8FF'; col = 0x7ec8ff; }
         else if (p.state === 'cross' && p.extT > 0) { text = '🤖 AI 已延長小綠人'; css = '#56E0F0'; col = 0x56e0f0; }
         else if (p.state === 'cross') { text = p.def.slow ? '穿越中・行走較慢' : '穿越中・已提醒來車'; css = PED_CSS; col = PED_COLOR; }
         else if (p.state === 'wait') { text = signal.ped === 'walk' ? '行人綠燈・準備穿越' : '🔴 等待行人綠燈'; css = PED_CSS; col = PED_COLOR; }
@@ -5213,7 +5234,7 @@ function main() {
           wd: [[7.3, 0.6, 52, 'jam'], [17.2, 0.7, 62, 'jam'], [17.2, 0.8, 30, 'turn'], [20, 0.6, 18, 'jam']],
           we: [[8, 1, 14, 'jam']] },
     ];
-    const pol = { day: 'wd', hour: 8, sel: null, playing: false, timer: null };
+    const pol = { day: 'wd', hour: 8, sel: null, playing: false, timer: null, fb: false };
     function polScore(n, h, day) {
         const cats = { turn: 0, jam: 0, ped: 0, park: 0 };
         n[day].forEach(([c, w, a, k]) => {
@@ -5221,7 +5242,9 @@ function main() {
             cats[k] += a * Math.exp(-(d * d) / (2 * w * w));
         });
         const base = h >= 6 && h <= 22 ? 6 : 2;
-        const score = Math.min(99, Math.round(base + cats.turn + cats.jam + cats.ped + cats.park));
+        let score = Math.min(99, Math.round(base + cats.turn + cats.jam + cats.ped + cats.park));
+        // 員警回報「狀況已改善」後，AI 修正此路口下班尖峰的預測
+        if (pol.fb && n.id === 'titan' && day === 'wd' && h >= 16 && h <= 20) score = Math.round(score * 0.64);
         const top = Object.keys(cats).sort((a, b) => cats[b] - cats[a])[0];
         return { score, top, cats };
     }
@@ -5340,6 +5363,10 @@ function main() {
             li.addEventListener('click', () => { pol.sel = pol.sel === r.n.id ? null : r.n.id; renderPolice(); });
             ul.appendChild(li);
         });
+        const tl = polLevel(polScore(NODES[0], h, pol.day).score);
+        $('polHint').textContent = police.active ? '展示進行中：請看 3D 畫面中的員警與 TITAN 互動。'
+            : tl === 'hi' ? '⚠ 中正路口此時段為高風險，可啟動現場派駐展示。'
+                : '展示會自動切換到中正路口的高風險時段（平日 18:00）。';
         $('polRankSub').textContent = pol.sel ? '已選取路口・再點一次取消' : `${pol.day === 'wd' ? '平日' : '假日'} ${String(h).padStart(2, '0')}:00・前 3 名`;
         const nowNeed = rows.reduce((s, r) => s + polOfficers(r.score), 0);
         $('polNow').innerHTML = `${nowNeed}<small>人</small>`;
@@ -5374,6 +5401,306 @@ function main() {
         buildHeat();
         renderPolice();
     }));
+
+    // =====================================================================
+    // 13-2. 現場派駐情境：AI 預測熱點 → 派駐通知 → 員警到場 → 確認路況 → 護送行人 → 回報修正
+    //       AI 號誌照常運作，員警只確認路況、協助行人；TITAN 只提供匿名路況摘要
+    // =====================================================================
+    const extraPeds = [];
+    const POL_STEPS = 6;
+    const police = { active: false, step: -1, state: 'idle', t: 0, side: 0 };
+    // 警用機車
+    const polScoot = (() => {
+        const g = new THREE.Group();
+        const white = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, metalness: 0.4, roughness: 0.35 });
+        const blue = new THREE.MeshStandardMaterial({ color: 0x1d4e89, roughness: 0.5 });
+        const add = (geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; g.add(m); return m; };
+        add(new THREE.BoxGeometry(1.6, 0.48, 0.46), white, 0.1, 0.58, 0);
+        add(new THREE.BoxGeometry(1.62, 0.09, 0.48), blue, 0.1, 0.62, 0);
+        add(new THREE.BoxGeometry(0.75, 0.12, 0.4), carShared.dark, 0.3, 0.88, 0);
+        add(new THREE.BoxGeometry(0.2, 0.85, 0.46), white, -0.65, 0.78, 0);
+        add(new THREE.BoxGeometry(0.5, 0.36, 0.44), white, 0.78, 1.05, 0);   // 後置物箱
+        const wheel = new THREE.CylinderGeometry(0.26, 0.26, 0.13, 14);
+        add(wheel, carShared.tire, -0.6, 0.26, 0, Math.PI / 2);
+        add(wheel, carShared.tire, 0.62, 0.26, 0, Math.PI / 2);
+        const red = new THREE.MeshBasicMaterial({ color: 0x551111 }), blu = new THREE.MeshBasicMaterial({ color: 0x112255 });
+        add(new THREE.BoxGeometry(0.12, 0.1, 0.16), red, 0.78, 1.3, 0.12);
+        add(new THREE.BoxGeometry(0.12, 0.1, 0.16), blu, 0.78, 1.3, -0.12);
+        const wTex = radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
+        const glowR = new THREE.SpriteMaterial({ map: wTex, color: 0xff3030, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const glowB = new THREE.SpriteMaterial({ map: wTex, color: 0x3070ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        [[glowR, 0.12], [glowB, -0.12]].forEach(([m, z]) => { const s = new THREE.Sprite(m); s.scale.setScalar(0.9); s.position.set(0.85, 1.32, z); g.add(s); });
+        g.visible = false;
+        scene.add(g);
+        return { g, red, blu, glowR, glowB, x: 0, z: 0, hx: -1, hz: 0, v: 0, half: 0.95, ext: true, onRoad: false };
+    })();
+    // 員警（深藍制服、白色警帽、反光背心、手持平板）
+    const officer = makePed({ id: 'PO-1', shirt: 0x1d3557, pants: 0x14213d, side: 0, off: 0, speed: 1.7, state: 'officer', x: 0 });
+    (() => {
+        const vest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.3), new THREE.MeshStandardMaterial({ color: 0xc6f432, roughness: 0.6 }));
+        vest.position.y = 1.25;
+        const stripeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, emissive: 0x888888, emissiveIntensity: 0.6 });
+        [1.12, 1.36].forEach((y) => { const s = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.05, 0.32), stripeMat); s.position.y = y; officer.body.add(s); });
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.16, 0.1, 16), new THREE.MeshStandardMaterial({ color: 0xf4f4f4, roughness: 0.5 }));
+        cap.position.y = 1.86;
+        const visor = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.03, 0.14), carShared.dark);
+        visor.position.set(0, 1.82, 0.16);
+        const tab = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, 0.02), new THREE.MeshBasicMaterial({ color: 0x56e0f0 }));
+        tab.position.set(0, -0.48, 0.16);
+        tab.rotation.x = -0.5;
+        officer.arms[0].add(tab);
+        officer.body.add(vest, cap, visor);
+    })();
+    officer.box.visible = officer.ring.visible = false;
+    officer.g.visible = false;
+    officer.label.position.y = 2.6;
+    const tabletTag = makeLabel({ w: 760, h: 170, height: 1.0 });
+    tabletTag.position.set(0, 3.7, 0);
+    tabletTag.visible = false;
+    officer.g.add(tabletTag);
+    // 熱點標示
+    const riskMat = new THREE.MeshBasicMaterial({ color: 0xff5a4f, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const riskRing = new THREE.Mesh(new THREE.RingGeometry(13, 14.2, 72), riskMat);
+    riskRing.rotation.x = -Math.PI / 2;
+    riskRing.position.set(SR_X, 0.12, (ROAD_Z0 + OPP_Z1) / 2);
+    riskRing.visible = false;
+    scene.add(riskRing);
+    const riskTag = makeLabel({ w: 900, h: 170, height: 1.35, depthTest: false });
+    riskTag.position.set(SR_X, 9.5, (ROAD_Z0 + OPP_Z1) / 2);
+    riskTag.visible = false;
+    scene.add(riskTag);
+    const PARK = { x: 6.2, z: -0.8 }, POST = { x: CROSS_X + 2.8, z: ROAD_Z0 - 0.5 };
+    const p4 = () => peds.find((p) => p.def.id === 'P-04');
+
+    function polStepsRender() {
+        document.querySelectorAll('#polSteps li').forEach((li, i) => {
+            const st = !police.active && police.step < POL_STEPS ? '' : i < police.step ? 'done' : i === police.step ? 'active' : '';
+            li.className = st;
+            li.querySelector('.dot').textContent = st === 'done' ? '✓' : String(i + 1);
+        });
+    }
+    function polSetStep(i, msg) {
+        police.step = i;
+        polStepsRender();
+        if (msg) toast(msg, 'info', 4200);
+    }
+    function officerStatus(text, css = '#7EC8FF') {
+        if (officer.lastText === text) return;
+        officer.lastText = text;
+        officer.label.userData.draw(['🚓 員警  ·  中正路口', text], { accent: css });
+    }
+    function startPolice() {
+        pol.fb = false;
+        pol.day = 'wd';
+        document.querySelectorAll('#polDay button').forEach((x) => { const on = x.dataset.day === 'wd'; x.classList.toggle('active', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+        buildHeat();
+        polStop();
+        setPolHour(18);
+        pol.sel = 'titan';
+        renderPolice();
+        const sc = polScore(NODES[0], 18, 'wd').score;
+        police.risk0 = sc;
+        Object.assign(police, { active: true, state: 'alert', t: 0, side: 0 });
+        riskRing.visible = riskTag.visible = true;
+        riskMat.color.setHex(0xff5a4f);
+        riskTag.userData.draw([`⚠ AI 預測熱點：中正路口 風險 ${sc}`, '下班尖峰：轉彎與行人衝突偏高'], { accent: '#FF7A59' });
+        $('polDemoBtn').textContent = '⏹ 結束現場派駐展示';
+        $('polDemoBtn').classList.add('restore');
+        flyView('police');
+        polSetStep(0, `🤖 AI 預測：平日 18:00 中正路口風險 ${sc}（轉彎與行人衝突偏高），建議派駐 2 人`);
+    }
+    function endPolice(done) {
+        Object.assign(police, { active: false, state: 'idle', step: done ? POL_STEPS : -1 });
+        polScoot.g.visible = false; polScoot.onRoad = false;
+        officer.g.visible = false;
+        extraPeds.length = 0;
+        riskRing.visible = riskTag.visible = false;
+        const e = p4(); if (e) e.escorted = false;
+        $('polDemoBtn').textContent = '🚓 啟動現場派駐情境展示';
+        $('polDemoBtn').classList.remove('restore');
+        polStepsRender();
+        renderPolice();
+    }
+    $('polDemoBtn').addEventListener('click', () => (police.active ? endPolice(false) : startPolice()));
+
+    // 員警走路（可跨越直行斑馬線，只在小綠人亮起時起步）
+    function officerWalk(tx, tz, dt) {
+        const mv = walkTo(officer, tx, tz, dt);
+        pedAnim(officer, mv[0], mv[1], dt, officer.yaw);
+        return mv[2];
+    }
+    function scootPlace() {
+        const s = polScoot;
+        s.g.position.set(s.x, 0, s.z);
+        s.g.rotation.y = Math.atan2(s.hz, -s.hx);
+        if (police.riding) {
+            officer.g.position.set(s.x + s.hx * 0.15, 0.42, s.z + s.hz * 0.15);
+            officer.body.rotation.y = Math.atan2(s.hx, s.hz);
+            officer.yaw = officer.body.rotation.y;
+            officer.legs.forEach((l) => { l.rotation.x = -1.35; });
+            officer.arms.forEach((a) => { a.rotation.x = -1.0; });
+        }
+    }
+    function bez(p0, p1, p2, u) {
+        const a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
+        return [a * p0[0] + b * p1[0] + c * p2[0], a * p0[1] + b * p1[1] + c * p2[1],
+            2 * (1 - u) * (p1[0] - p0[0]) + 2 * u * (p2[0] - p1[0]), 2 * (1 - u) * (p1[1] - p0[1]) + 2 * u * (p2[1] - p1[1])];
+    }
+    function tabletInfo() {
+        const wait = peds.filter((p) => p.state === 'wait').length + sidePeds.filter((p) => p.state === 'wait').length;
+        const turning = cars.filter((c) => c.active && c.turnPlan && c.turnPhase === 'main' && c.status !== 'idle').length;
+        let q = 0;
+        cars.forEach((c) => { if (c.active && c.turnPhase === 'main' && c.v < 0.3 && c.x > STOP_X && c.x < 70) q = Math.max(q, c.x + c.half - STOP_X); });
+        tabletTag.userData.draw(['📱 TITAN 即時路況（匿名）', `等候行人 ${wait}・右轉車 ${turning}・回堵 ${Math.round(q)} m`], { accent: '#56E0F0' });
+    }
+
+    function updatePolice(dt, t) {
+        if (!police.active) return;
+        police.t += dt;
+        const s = polScoot, st = police.state;
+        riskMat.opacity = reducedMotion ? 0.5 : 0.35 + 0.25 * Math.sin(t * 3);
+        const flash = Math.floor(t * 6) % 2 === 0;
+        const lightsOn = s.g.visible && (police.riding || st === 'park');
+        s.glowR.opacity = lightsOn && flash ? 0.95 : 0; s.glowB.opacity = lightsOn && !flash ? 0.95 : 0;
+        s.red.color.setHex(lightsOn && flash ? 0xff3030 : 0x551111); s.blu.color.setHex(lightsOn && !flash ? 0x3070ff : 0x112255);
+        if (st === 'alert') {
+            if (police.t > 3) {
+                Object.assign(s, { x: 95, z: laneCenter(0), hx: -1, hz: 0, v: 5.2, onRoad: true });
+                s.g.visible = officer.g.visible = true;
+                police.riding = true;
+                officer.label.visible = showPedLayer;
+                officerStatus('收到 AI 派駐通知・前往路口');
+                spawnLink(pole1.antTip, V3(40, 4, 3), 0xe040fb);
+                polSetStep(1, '📡 派駐通知：TITAN 只傳送「路口位置＋匿名路況摘要」到員警手持裝置，不含任何車輛或個人資料');
+                police.state = 'ride'; police.t = 0;
+            }
+        } else if (st === 'ride') {
+            if (police.step < 2 && s.x < 60) polSetStep(2, '🚓 員警騎警用機車到場，停在 TITAN-01 旁的人行道');
+            let limit = Math.min(aheadGap(s, s.x, s.z, -1, 0, s.half), pedGap(s.x, s.z, -1, 0, s.half));
+            limit = Math.min(limit, s.x - 12);
+            const target = Math.min(5.2, Math.sqrt(2 * CAR_DEC * Math.max(0, limit)) + 1.2);
+            s.v = target < s.v ? target : Math.min(target, s.v + CAR_ACC * dt);
+            s.x -= s.v * dt;
+            s.z += (laneCenter(0) - s.z) * Math.min(1, dt * 2);
+            if (s.x <= 12.2) { police.state = 'pullin'; police.u = 0; police.p0 = [s.x, s.z]; }
+            scootPlace();
+        } else if (st === 'pullin') {
+            police.u = Math.min(1, police.u + dt / 2.4);
+            const [x, z, tx, tz] = bez(police.p0, [PARK.x + 1.5, police.p0[1]], [PARK.x, PARK.z], police.u);
+            const n = Math.hypot(tx, tz) || 1;
+            Object.assign(s, { x, z, hx: tx / n, hz: tz / n });
+            if (police.u > 0.5) s.onRoad = false;
+            scootPlace();
+            if (police.u >= 1) { police.state = 'park'; police.t = 0; }
+        } else if (st === 'park') {
+            if (police.t > 0.8 && police.riding) {
+                police.riding = false;
+                officer.x = PARK.x + 0.2; officer.z = PARK.z + 0.8;
+                officer.legs.forEach((l) => { l.rotation.x = 0; });
+                extraPeds.push(officer);
+                officerStatus('步行前往路口');
+                police.state = 'toPost';
+            }
+        } else if (st === 'toPost') {
+            if (officerWalk(POST.x, POST.z, dt)) {
+                police.state = 'check'; police.t = 0;
+                flyView('policePost');
+                officer.yaw = -Math.PI / 2 - 0.4;
+                tabletTag.visible = true;
+                officerStatus('📱 以平板確認 TITAN 路況');
+                spawnLink(pole1.antTip, V3(POST.x, 2.2, POST.z), 0x56e0f0);
+                polSetStep(3, '📱 員警平板顯示 TITAN 即時匿名路況：等候行人、右轉車數、回堵長度；AI 號誌照常運作');
+            }
+        } else if (st === 'check') {
+            pedAnim(officer, 0, 0, dt, officer.yaw);
+            if (Math.floor(police.t * 2) !== Math.floor((police.t - dt) * 2)) tabletInfo();
+            if (police.t > 6) {
+                tabletVisibleOff();
+                const e = p4();
+                if (e.state === 'pause' || (e.state === 'stroll' && !e.toCross)) { e.state = 'stroll'; e.toCross = true; e.tx = e.cx + e.def.off; }
+                e.escorted = true;
+                officerStatus('前往協助行走較慢的長者');
+                polSetStep(4, '🧓 TITAN 偵測到行走較慢的長者準備過馬路：員警前往協助，護送過斑馬線');
+                police.state = 'toMeet';
+            }
+        } else if (st === 'toMeet' || st === 'escortWait') {
+            const e = p4();
+            if (e.state === 'cross') { police.state = 'escort'; officerStatus('🚓 護送長者過馬路'); flyView('policeEscort'); }
+            else if (e.side === police.side) {
+                const tx = e.tx + 0.9, tz = SIDE_Z[police.side] + (police.side ? 0.3 : -0.3);
+                if (officerWalk(tx, tz, dt)) { police.state = 'escortWait'; officer.yaw = police.side ? Math.PI : 0; }
+            } else if (signal.ped === 'walk' && signal.walkElapsed < 8) police.state = 'crossTo';
+            else { pedAnim(officer, 0, 0, dt, officer.yaw); officerStatus('等候行人綠燈'); }
+        } else if (st === 'crossTo') {
+            if (officerWalk(CROSS_X + 1.1, SIDE_Z[1 - police.side], dt)) { police.side = 1 - police.side; police.state = 'toMeet'; officerStatus('前往協助行走較慢的長者'); }
+        } else if (st === 'escort') {
+            const e = p4();
+            if (e.state === 'cross') {
+                const tz = e.z + Math.sign(e.tz - e.z) * 0.15;
+                walkTo(officer, e.x + 0.85, tz, dt * 1.4);
+                pedAnim(officer, 0, Math.sign(e.tz - e.z), dt, officer.yaw);
+            } else {
+                police.side = e.side;
+                e.escorted = false;
+                police.state = 'report'; police.t = 0;
+                tabletTag.visible = true;
+                tabletTag.userData.draw(['📱 回報 TITAN', '✓ 現場狀況已改善・長者安全通過'], { accent: '#7BC88F' });
+                officerStatus('📱 回報：狀況已改善', '#7BC88F');
+                spawnLink(V3(officer.x, 2.4, officer.z), pole1.antTip, 0x7bc88f);
+                pol.fb = true;
+                buildHeat();
+                renderPolice();
+                const sc = polScore(NODES[0], 18, 'wd').score;
+                riskMat.color.setHex(0x7bc88f);
+                riskTag.userData.draw([`✓ 員警回報：狀況已改善`, `AI 修正中正路口 18:00 風險 ${police.risk0} → ${sc}`], { accent: '#7BC88F' });
+                polSetStep(5, `📊 員警回報「狀況已改善」：AI 依回饋修正預測，中正路口 18:00 風險 ${police.risk0} → ${sc}，下次排班更精準`);
+            }
+        } else if (st === 'report') {
+            pedAnim(officer, 0, 0, dt, officer.yaw);
+            if (police.t > 5) { tabletVisibleOff(); police.state = 'back'; officerStatus('返回警用機車'); }
+        } else if (st === 'back') {
+            if (police.side === 1) {
+                if (signal.ped === 'walk' && signal.walkElapsed < 8) police.state = 'backCross';
+                else { pedAnim(officer, 0, 0, dt, officer.yaw); officerStatus('等候行人綠燈・返回機車'); }
+            } else if (officerWalk(PARK.x + 0.2, PARK.z + 0.8, dt)) {
+                police.state = 'mount'; police.t = 0;
+            }
+        } else if (st === 'backCross') {
+            if (officerWalk(CROSS_X + 1.1, SIDE_Z[0], dt)) { police.side = 0; police.state = 'back'; officerStatus('返回警用機車'); }
+        } else if (st === 'mount') {
+            if (police.t > 0.6) {
+                police.riding = true;
+                extraPeds.length = 0;
+                officerStatus('勤務完成・離開路口', '#7BC88F');
+                police.state = 'leave'; police.u = 0; police.p0 = [s.x, s.z];
+                polSetStep(POL_STEPS);
+            }
+        } else if (st === 'leave') {
+            if (police.u < 1) {
+                police.u = Math.min(1, police.u + dt / 2.2);
+                const [x, z, tx, tz] = bez(police.p0, [PARK.x - 1.2, laneCenter(0)], [PARK.x - 3.6, laneCenter(0)], police.u);
+                const n = Math.hypot(tx, tz) || 1;
+                Object.assign(s, { x, z, hx: tx / n, hz: tz / n, v: 2 });
+                if (police.u > 0.4) s.onRoad = true;
+            } else {
+                Object.assign(s, { hx: -1, hz: 0 });
+                let limit = Math.min(aheadGap(s, s.x, s.z, -1, 0, s.half), pedGap(s.x, s.z, -1, 0, s.half));
+                const dist = s.x - s.half - MOTO_STOP_X;
+                if (dist > -0.3 && signal.car !== 'green') limit = Math.min(limit, dist - 0.1);
+                const target = limit === Infinity ? 5 : Math.min(5, Math.sqrt(2 * CAR_DEC * Math.max(0, limit)));
+                s.v = target < s.v ? target : Math.min(target, s.v + CAR_ACC * dt);
+                s.x -= s.v * dt;
+                if (s.x < -70) { endPolice(true); toast('✅ 現場派駐展示完成：AI 預測 → 派駐 → 確認路況 → 協助行人 → 回報修正', 'good', 4800); return; }
+            }
+            scootPlace();
+        }
+        if (!police.riding && officer.g.visible) {
+            officer.g.position.set(officer.x, 0.18 - (officer.z > ROAD_Z0 + 0.1 && officer.z < OPP_Z1 - 0.1 ? 0.18 : 0), officer.z);
+            officer.body.rotation.y = officer.yaw;
+        }
+        officer.label.visible = officer.g.visible && showPedLayer;
+    }
+    function tabletVisibleOff() { tabletTag.visible = false; }
     buildHeat();
     renderPolice();
 
@@ -5523,6 +5850,7 @@ function main() {
             updateTs(dt);
             buses.forEach((b) => updateBus(b, dt, t));
             ambient.forEach((p) => updateAmbient(p, dt));
+            updatePolice(dt, t);
             cars.forEach((c) => { if (c.active) { updateCar(c, dt, t); if (c.active) updateFade(c, dt); } });
             peds.forEach((p) => updatePed(p, dt));
             sidePeds.forEach((p) => updateSidePed(p, dt));
@@ -5634,8 +5962,8 @@ function main() {
         const labelVis = cars.map((c) => c.label.visible);
         const pedLabelVis = peds.map((p) => p.label.visible);
         const sideLabelVis = sidePeds.map((p) => p.label.visible);
-        const tagVis = [aiTag.visible, lpiTag.visible, turnTag.visible];
-        aiTag.visible = lpiTag.visible = turnTag.visible = false;
+        const tagVis = [aiTag.visible, lpiTag.visible, turnTag.visible, riskTag.visible];
+        aiTag.visible = lpiTag.visible = turnTag.visible = riskTag.visible = false;
         cars.forEach((c) => { c.label.visible = false; });
         peds.forEach((p) => { p.label.visible = false; });
         sidePeds.forEach((p) => { p.label.visible = false; });
@@ -5647,7 +5975,7 @@ function main() {
         cars.forEach((c, i) => { c.label.visible = labelVis[i]; });
         peds.forEach((p, i) => { p.label.visible = pedLabelVis[i]; });
         sidePeds.forEach((p, i) => { p.label.visible = sideLabelVis[i]; });
-        [aiTag.visible, lpiTag.visible, turnTag.visible] = tagVis;
+        [aiTag.visible, lpiTag.visible, turnTag.visible, riskTag.visible] = tagVis;
         poles.forEach((p, i) => { p.cone.visible = coneVis[i]; });
         cloud.visible = true;
         scene.fog = sceneFog;
