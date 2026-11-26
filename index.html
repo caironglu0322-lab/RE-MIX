@@ -992,7 +992,7 @@
                         <div class="pdesc" data-for="thermal" hidden><h3><span class="comp-dot" style="background:#FF5252"></span>3. 紅外線熱感測鏡頭</h3><p>強化夜間與惡劣天候（濃霧、豪雨）下之行人熱源感知，確保路口安全零盲點；夜間也能及早發現穿越斑馬線的行人，提醒來車注意。</p></div>
                         <div class="pdesc" data-for="edgebox" hidden><h3><span class="comp-dot" style="background:#76FF03"></span>4. Edge AI 邊緣運算主機</h3><p>影像只在路燈本地即時分析，只輸出「有無行人、車速、所在車道」等匿名結果；<b>不儲存車牌與人臉影像</b>，畫面分析完即刪除，僅保留匿名的路口安全統計。</p></div>
                         <div class="pdesc" data-for="antenna" hidden><h3><span class="comp-dot" style="background:#E040FB"></span>5. 5G / V2X 專用通訊天線</h3><p>透過路側單元（RSU）車路協同，將「前方行人穿越、號誌狀態、建議車速」傳送到車上的車載裝置或導航；也把前方路況預先通知相鄰路燈。<b>不傳送任何車輛身分資料。</b></p></div>
-                        <div class="pdesc" data-for="board" hidden><h3><span class="comp-dot" style="background:#FF9F43"></span>6. LED 安全提醒看板</h3><p>面向來車的全彩 LED 看板，即時顯示「前方行人」「轉彎注意行人」「目前車速」「請打方向燈」等提醒；駕駛改善後顯示「謝謝減速」「謝謝禮讓」等正向回饋，以提醒取代處罰。</p></div>
+                        <div class="pdesc" data-for="board" hidden><h3><span class="comp-dot" style="background:#FF9F43"></span>6. LED 安全提醒看板</h3><p>面向來車的全彩 LED 看板，即時顯示「前方行人」「轉彎注意行人」「公車進站」「目前車速」「請打方向燈」等提醒；駕駛改善後顯示「謝謝減速」「謝謝禮讓」等正向回饋，以提醒取代處罰。</p></div>
                         <div class="pdesc" data-for="solar" hidden><h3><span class="comp-dot" style="background:#FFC94D"></span>7. 太陽能光電板</h3><p>裝設於燈桿頂端，朝南傾斜約 23°，吸收太陽能並轉換為電能，存入儲能設備，作為市電以外的備用電力來源。</p></div>
                         <div class="pdesc" data-for="battery" hidden><h3><span class="comp-dot" style="background:#4DD0A1"></span>8. 儲能電池組與充放電控制器</h3><p>突發停電時自動接手供電，讓行人偵測與提醒看板持續運作，並將匿名路口統計傳回中央雲端；容量可依地區電力穩定度加大（1–3 組模組）。</p></div>
                     </div>
@@ -1172,6 +1172,7 @@
                         <button class="pchip" type="button" data-view="turn" data-key="turn" aria-pressed="false"><span class="num">5</span>轉彎提醒</button>
                         <button class="pchip" type="button" data-view="yield" data-key="yield" aria-pressed="false"><span class="num">6</span>警示柱與車速</button>
                         <button class="pchip" type="button" data-view="twostage" data-key="twostage" aria-pressed="false"><span class="num">7</span>兩段式左轉</button>
+                        <button class="pchip" type="button" data-view="bus" data-key="bus" aria-pressed="false"><span class="num">8</span>公車進出站</button>
                     </div>
                     <div class="desc-card" id="stepDesc">
                         <div class="pdesc" data-for="lanes"><h3><span class="num">1</span>畫面校正與車道劃分</h3><p>路燈上的攝影機斜向俯拍道路後，系統會先做透視校正（將斜拍畫面轉成接近俯視的角度），再沿著真實車道邊界（如 a、b、c 車道）在軟體畫面中標定出虛擬車道區域與分界線。如果路面標線模糊，也可透過車流經過的軌跡推估出車道位置。</p></div>
@@ -1181,6 +1182,7 @@
                         <div class="pdesc" data-for="turn" hidden><h3><span class="num">5</span>轉彎前提醒與行人早開</h3><p>右轉車與同時亮綠燈的行人最容易衝突，加上 A 柱死角、大型車內輪差，駕駛常看不到行人。TITAN 偵測到轉彎斑馬線上有行人時，吊掛在號誌懸臂下的<b>「轉彎注意行人」預警號誌燈</b>會閃爍（十字路口四個方向都有設置），看板與車載裝置同步提醒；沒有行人時燈號不亮，避免駕駛習慣後忽略。另外採用<b>「行人早開時相」</b>：轉彎斑馬線的小綠人比車輛綠燈早 3 秒亮，讓行人先走進駕駛的視線。若駕駛仍未及時反應，地面燈改為紅色快閃，提醒行人注意來車。</p></div>
                         <div class="pdesc" data-for="yield" hidden><h3><span class="num">6</span>直立警示柱與車速提醒</h3><p>斑馬線兩端設有<b>直立式 LED 警示柱</b>，行人穿越時閃爍並顯示行人圖示，駕駛平視就能看到，不必低頭找地面標線；地面燈也從小燈點改為沿斑馬線與停止線的<b>連續寬燈帶</b>。雷達同時量測來車速度，超過 50 km/h 時看板顯示目前車速並提醒減速，駕駛改善後顯示「謝謝減速」。<b>系統不記錄車牌、不做違規判定。</b></p></div>
                         <div class="pdesc" data-for="twostage" hidden><h3><span class="num">7</span>機車兩段式左轉與台灣路口標線</h3><p>機車左轉時先直行進入路口，停進右前方的<b>「機車待轉區」</b>並轉向，等次要幹道綠燈再直行，完成左轉，避免與對向直行車衝突。路口也畫出停止線前的<b>「機車停等區」</b>、機慢車道與機車圖示、地面「慢」字與方向箭頭、路口紅線、次要幹道的<b>路邊停車格</b>，以及人行道上的<b>機車停車格</b>與導盲磚；兩側店面為台灣常見的<b>騎樓</b>。</p></div>
+                        <div class="pdesc" data-for="bus" hidden><h3><span class="num">8</span>公車進出站提醒</h3><p>公車進站時要切入機慢車道，後方機車常來不及反應；TITAN 偵測到公車打燈切入「公車停靠區」時，看板與車載裝置提醒後方機車<b>「公車進站 請減速」</b>。公車上下客後起步切回車道時，提醒後方車輛<b>「公車起步 請禮讓」</b>，被提醒的車輛停在公車後方，等公車回到車道再通行。候車亭的到站資訊也由 TITAN 即時更新。只辨識「公車」這個類別，<b>不辨識車牌或乘客</b>。</p></div>
                     </div>
                 </div></div></div>
             </section>
@@ -1413,6 +1415,7 @@ function main() {
         signal:   { pos: V3(7, 11, 25), target: V3(-9, 2.6, 6) },
         turn:     { pos: V3(6, 16, -11), target: V3(-14, 0, -0.5) },
         twostage: { pos: V3(-3, 22, 19), target: V3(-17, 0, 1.5) },
+        bus:      { pos: V3(44, 17, 22), target: V3(18, 1, 1.5) },
     };
     // 依螢幕比例調整視角距離，直式螢幕拉遠以容納兩支路燈
     function viewScale() {
@@ -1700,7 +1703,7 @@ function main() {
         paint(PAINT[k], k === 'straight' ? 0.7 : 1.4, 2.8, 6, z, -1, 0);
     });
     paint(PAINT.straightRight, 1.2, 2.4, 6, 2.85, -1, 0);
-    [24, 60, -44, -80].forEach((x) => paint(PAINT.moto, 1.0, 2.0, x, 2.85, -1, 0));
+    [34, 60, -44, -80].forEach((x) => paint(PAINT.moto, 1.0, 2.0, x, 2.85, -1, 0));
     paint(PAINT.motoBox, 8.6, 1.6, (STOP_X + MOTO_STOP_X) / 2, RZ, -1, 0);
     // 對向（往 +X）
     [[15.45, 'straight'], [19.35, 'straightRight']].forEach(([z, k]) => {
@@ -1708,7 +1711,7 @@ function main() {
         paint(PAINT[k], k === 'straight' ? 0.7 : 1.4, 2.8, 2 * SR_X - 6, z, 1, 0);
     });
     paint(PAINT.straightRight, 1.2, 2.4, 2 * SR_X - 6, 22.65, 1, 0);
-    [-54, -90, 20, 56].forEach((x) => paint(PAINT.moto, 1.0, 2.0, x, 22.65, 1, 0));
+    [-66, -90, 20, 56].forEach((x) => paint(PAINT.moto, 1.0, 2.0, x, 22.65, 1, 0));
     paint(PAINT.motoBox, 8.6, 1.6, (OPP_STOP_X + OPP_MOTO_STOP_X) / 2, OZ, 1, 0);
     // 次要幹道
     paint(PAINT.slow, 1.3, 2.6, NB_X, NB_STOP_Z - 12, 0, 1);
@@ -2350,6 +2353,8 @@ function main() {
         idle:   { color: '#7BC88F', top: '安全駕駛', sub: '禮讓行人 保持速限', icon: 'limit' },
         ped:    { color: '#F0B44C', top: '前方行人', sub: '請減速停讓', icon: 'warn' },
         turn:   { color: '#F0B44C', top: '轉彎注意', sub: '右側行人穿越中', icon: 'warn' },
+        busIn:  { color: '#F0B44C', top: '公車進站', sub: '後方機車請注意', icon: 'warn' },
+        busOut: { color: '#56E0F0', top: '公車起步', sub: '請禮讓公車', icon: 'warn' },
         speed:  { color: '#FF9F43', top: '', sub: '超過速限 請減速', icon: 'limit' },
         signal: { color: '#56E0F0', top: '變換車道', sub: '請打方向燈', icon: 'warn' },
         thanks: { color: '#7BC88F', top: '謝謝您', sub: '', icon: 'limit' },
@@ -2382,7 +2387,7 @@ function main() {
     }
     // 看板訊息：針對個別車輛的提醒會停留數秒；其餘時間顯示路口狀態
     const boardMsgs = {};
-    const BOARD_PRI = ['turn', 'speed', 'signal', 'thanks'];
+    const BOARD_PRI = ['turn', 'busOut', 'busIn', 'speed', 'signal', 'thanks'];
     function boardPush(kind, data, hold = 2.8) { boardMsgs[kind] = { until: simT + hold, data: data || {} }; }
     let boardKey = '', boardKind = 'idle';
     function updateBoard() {
@@ -2502,7 +2507,7 @@ function main() {
     // 8. 車輛與追蹤
     // =====================================================================
     const CAR_SPEED = 5.4;
-    const X_START = 95, X_END = -100, DETECT_START = 14, DETECT_END = -40;
+    const X_START = 95, X_END = -100, DETECT_START = 46, DETECT_END = -40;   // TITAN-03（公車站旁）～ TITAN-02 偵測範圍
     const FADE_LEN = 14;    // 車輛在道路遠端淡入／淡出的距離
     const CHANGE_LEN = 8;
     const CAR_ACC = 3.5, CAR_DEC = 5;      // 起步加速度、煞車減速度
@@ -2742,6 +2747,7 @@ function main() {
         c.turnReacted = false;
         c.turnMissed = false;
         c.turnWaitLbl = false;
+        c.busSlowT = 0; c.busEntry = c.busOutEntry = null; c.yieldBus = null;
         c.speedEntry = c.stopEntry = c.laneEntry = null;
         c.speedReactT = null;
         c.stopT = 0;
@@ -2820,7 +2826,7 @@ function main() {
         if (def.scooter) buildScooter(g, def, tailMat); else buildCarBody(g, def, tailMat);
         scene.add(g);
         const v = {
-            def, g, tailMat, mats: cloneMats(g, [tailMat]), scooter: !!def.scooter, half: def.scooter ? 0.95 : 1.9,
+            def, g, tailMat, mats: cloneMats(g, [tailMat]), ext: true, scooter: !!def.scooter, half: def.scooter ? 0.95 : 1.9,
             axisX: def.axis === 'x', dir: def.dir, s: def.s, active: true, faded: false,
             maxV: def.scooter ? 4.6 : 5.0, hx: def.axis === 'x' ? def.dir : 0, hz: def.axis === 'x' ? 0 : def.dir,
         };
@@ -2861,7 +2867,7 @@ function main() {
     tsG.add(tsLabel);
     scene.add(tsG);
     const WAIT_CZ = (WAIT_BOX.z0 + WAIT_BOX.z1) / 2;
-    const ts = { g: tsG, tailMat: tsTail, mats: cloneMats(tsG, [tsTail]), faded: false, half: 0.95, active: true, label: tsLabel, lastText: '', toastShown: false };
+    const ts = { ext: true, g: tsG, tailMat: tsTail, mats: cloneMats(tsG, [tsTail]), faded: false, half: 0.95, active: true, label: tsLabel, lastText: '', toastShown: false };
     function resetTs() {
         Object.assign(ts, { state: 'approach', x: X_START + 22, z: laneCenter(0), hx: -1, hz: 0, v: 4.4, yaw: 0, u: 0 });
     }
@@ -3628,6 +3634,7 @@ function main() {
             L.push({ o: c, x: c.x, z: c.z, hx, hz, half: c.half, w: c.scooter ? 0.5 : 0.95, v: c.v, arc: c.turnPhase === 'arc' });
         });
         sveh.forEach((s) => { if (s.active) L.push({ o: s, x: s.x, z: s.z, hx: s.hx, hz: s.hz, half: s.half, w: s.scooter ? 0.5 : 0.95, v: s.v }); });
+        buses.forEach((b) => { if (b.active) L.push({ o: b, x: b.x, z: b.z, hx: b.dir, hz: 0, half: b.half, w: b.w, v: b.v }); });
         if (ts.active) L.push({ o: ts, x: ts.x, z: ts.z, hx: ts.hx, hz: ts.hz, half: ts.half, w: 0.5, v: ts.v });
         return L;
     }
@@ -3966,6 +3973,380 @@ function main() {
         c.yieldState = 'done';
     }
 
+    // =====================================================================
+    // 8-D. 公車：進站（切入機慢車道）→ 停靠上下客 → 出站（切回車道）
+    //      TITAN 在公車進站時提醒後方機車、出站時提醒後方車輛禮讓
+    // =====================================================================
+    const busMats = {
+        glass: new THREE.MeshStandardMaterial({ color: 0x1b2632, metalness: 0.6, roughness: 0.15 }),
+        roof: new THREE.MeshStandardMaterial({ color: 0xd9dde2, roughness: 0.6 }),
+        bumper: new THREE.MeshStandardMaterial({ color: 0x2b2f36, roughness: 0.7 }),
+    };
+    function ledTex(lines, color = '#ffb020', w = 512, h = 96) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const x = c.getContext('2d');
+        const t = new THREE.CanvasTexture(c);
+        t.minFilter = THREE.LinearFilter;
+        t.generateMipmaps = false;
+        const draw = (ls, col = color) => {
+            x.fillStyle = '#07090c'; x.fillRect(0, 0, w, h);
+            x.fillStyle = col; x.textAlign = 'center'; x.textBaseline = 'middle';
+            if (ls.length === 1) { x.font = `800 ${Math.round(h * 0.56)}px ${FONT}`; x.fillText(ls[0], w / 2, h / 2 + 2, w - 16); }
+            else {
+                x.font = `800 ${Math.round(h * 0.34)}px ${FONT}`; x.fillText(ls[0], w / 2, h * 0.3, w - 16);
+                x.font = `700 ${Math.round(h * 0.3)}px ${FONT}`; x.fillStyle = '#F4F0EA'; x.fillText(ls[1], w / 2, h * 0.72, w - 16);
+            }
+            t.needsUpdate = true;
+        };
+        draw(lines);
+        return { tex: t, draw };
+    }
+    // 公車模型：車頭朝 -X，車門在右側（-Z，靠路緣）
+    function makeBusModel(color, route) {
+        const g = new THREE.Group();
+        const paint = new THREE.MeshStandardMaterial({ color, metalness: 0.35, roughness: 0.45 });
+        const add = (geo, mat, x, y, z, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = shadow; g.add(m); return m; };
+        add(new THREE.BoxGeometry(11.2, 2.55, 2.5), paint, 0, 1.75, 0);
+        add(new THREE.BoxGeometry(11.0, 0.35, 2.52), busMats.bumper, 0, 0.62, 0);
+        [-1.26, 1.26].forEach((z) => add(new THREE.BoxGeometry(9.4, 0.95, 0.04), busMats.glass, 0.6, 2.25, z, false));
+        add(new THREE.BoxGeometry(0.06, 1.45, 2.2), busMats.glass, -5.62, 2.05, 0, false);
+        add(new THREE.BoxGeometry(3.2, 0.4, 1.8), busMats.roof, 0.8, 3.22, 0);
+        const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.34, 16);
+        [-3.6, 3.4].forEach((x) => [-1.1, 1.1].forEach((z) => { const w = add(wheelGeo, carShared.tire, x, 0.5, z); w.rotation.x = Math.PI / 2; }));
+        // 車門（右側）：開門時變亮
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x24303c, emissive: 0xfff2c8, emissiveIntensity: 0, roughness: 0.3 });
+        [-4.2, 0.6].forEach((x) => add(new THREE.BoxGeometry(1.1, 2.1, 0.05), doorMat, x, 1.55, -1.27, false));
+        // 路線 LED 看板（車頭）
+        const led = ledTex([route]);
+        const ledPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.38), new THREE.MeshBasicMaterial({ map: led.tex }));
+        ledPlane.rotation.y = -Math.PI / 2;
+        ledPlane.position.set(-5.66, 2.86, 0);
+        g.add(ledPlane);
+        // 頭燈、尾燈、左側方向燈
+        [-0.85, 0.85].forEach((z) => add(new THREE.BoxGeometry(0.06, 0.2, 0.4), carShared.head, -5.62, 0.95, z, false));
+        const tailMat = carShared.tail.clone();
+        [-0.85, 0.85].forEach((z) => add(new THREE.BoxGeometry(0.06, 0.25, 0.35), tailMat, 5.62, 0.95, z, false));
+        const sigMat = new THREE.MeshBasicMaterial({ color: SIG_OFF.clone() });
+        [-5.5, 5.5].forEach((x) => add(new THREE.BoxGeometry(0.25, 0.18, 0.06), sigMat, x, 1.05, 1.27, false));
+        scene.add(g);
+        return { g, doorMat, tailMat, sigMat };
+    }
+    // 候車亭：雨遮、背板、座椅、站牌與 TITAN 到站顯示
+    function makeShelter(x, z, rotY, route) {
+        const g = new THREE.Group();
+        g.position.set(x, 0.18, z);
+        g.rotation.y = rotY;
+        const metal = new THREE.MeshStandardMaterial({ color: 0x8f99a3, metalness: 0.6, roughness: 0.4 });
+        const add = (geo, mat, px, py, pz) => { const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz); m.castShadow = true; g.add(m); return m; };
+        add(new THREE.BoxGeometry(4.6, 0.12, 1.5), metal, 0, 2.6, 0.1);
+        [-2.2, 2.2].forEach((px) => add(new THREE.BoxGeometry(0.1, 2.6, 0.1), metal, px, 1.3, -0.5));
+        add(new THREE.BoxGeometry(4.4, 1.9, 0.05), new THREE.MeshStandardMaterial({ color: 0x9fc4d6, transparent: true, opacity: 0.35, roughness: 0.1 }), 0, 1.45, -0.55);
+        add(new THREE.BoxGeometry(2.6, 0.08, 0.45), metal, -0.4, 0.5, -0.3);
+        const disp = ledTex(['🚌 ' + route, '路線資訊'], '#ffb020', 512, 128);
+        const dm = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.38), new THREE.MeshBasicMaterial({ map: disp.tex }));
+        dm.position.set(1.2, 2.3, 0.82);
+        g.add(dm);
+        add(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 8), metal, 2.75, 1.4, 0.7);
+        const sign = ledTex(['公車站', route], '#7ec8ff', 256, 128);
+        const sm = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.38), new THREE.MeshBasicMaterial({ map: sign.tex, side: THREE.DoubleSide }));
+        sm.position.set(2.75, 2.6, 0.7);
+        sm.rotation.y = Math.PI / 2;
+        g.add(sm);
+        scene.add(g);
+        return disp;
+    }
+    // 路面「公車停靠區」
+    const busBoxTex = (() => {
+        const c = document.createElement('canvas'); c.width = 512; c.height = 96;
+        const x = c.getContext('2d');
+        x.fillStyle = '#f2c230'; x.font = `900 64px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText('公 車 停 靠 區', 256, 52);
+        const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
+        const m = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 0.6, depthWrite: false, opacity: 1 });
+        paintMats.push(m);
+        return m;
+    })();
+    function busBay(cx, z0, z1, hx) {
+        const x0 = cx - 7.5, x1 = cx + 7.5;
+        lineX(x0, x1, z0, 0.15, yellowMat); lineX(x0, x1, z1, 0.15, yellowMat);
+        lineZ(z0, z1, x0, 0.15, yellowMat); lineZ(z0, z1, x1, 0.15, yellowMat);
+        for (let x = x0 + 1.2; x < x1 - 0.8; x += 1.4) {
+            if (Math.abs(x - cx) < 5) continue;
+            const m = flatPlane(2.6, 0.12, yellowMat);
+            m.rotation.z = 0.75;
+            m.position.set(x, MY, (z0 + z1) / 2);
+            realMarks.add(m);
+        }
+        const tm = flatPlane(9, 1.7, busBoxTex);
+        tm.position.set(cx, MY + 0.002, (z0 + z1) / 2);
+        realMarks.add(tm);
+    }
+
+    const BUS_STOP_X = 19, OPP_BUS_STOP_X = 2 * SR_X - BUS_STOP_X;
+    busBay(BUS_STOP_X, ROAD_Z0 + 0.15, 4.05, -1);
+    busBay(OPP_BUS_STOP_X, 21.45, OPP_Z1 - 0.15, 1);
+    const busDefs = [
+        { id: 'B-15', route: '15 市政府', color: 0x2f6eb5, dir: -1, stopX: BUS_STOP_X, shelter: [BUS_STOP_X + 0.5, ROAD_Z0 - 4.1, 0], wait: -1.5, titan: true, offT: 3 },
+        { id: 'B-27', route: '27 火車站', color: 0xc0392b, dir: 1, stopX: OPP_BUS_STOP_X, shelter: [OPP_BUS_STOP_X - 0.5, OPP_Z1 + 4.1, Math.PI], wait: OPP_Z1 + 1.5, titan: false, offT: 18 },
+    ];
+    const BUS_HALF = 5.6;
+    const buses = busDefs.map((def) => {
+        const m = makeBusModel(def.color, def.route);
+        const b = {
+            def, ...m, ext: true, half: BUS_HALF, w: 1.0, dir: def.dir, hx: def.dir, hz: 0, v: 0, x: 999, z: 0, active: false,
+            state: 'off', t: def.offT, mats: cloneMats(m.g, [m.tailMat, m.sigMat, m.doorMat]), faded: false, signal: false,
+            display: makeShelter(def.shelter[0], def.shelter[1], def.shelter[2], def.route), dispKey: '', passengers: [],
+        };
+        b.g.rotation.y = Math.atan2(0, -def.dir);
+        b.g.visible = false;
+        return b;
+    });
+    const busLaneZ = (b) => (b.dir < 0 ? laneCenter(1) : 19.35);
+    const busStopZ = (b) => (b.dir < 0 ? laneCenter(0) - 0.15 : 22.8);
+    const smooth = (p) => p * p * (3 - 2 * p);
+
+    // 乘客：在候車亭等車 → 走到前門上車；下車乘客從後門下車走開，之後又回到候車亭等下一班
+    const PASS_COLORS = [[0x6a4c93, 0x22223b], [0xf28482, 0x3d405b], [0x84a59d, 0x2b2d42], [0xf6bd60, 0x264653], [0x4ea8de, 0x3b3f46]];
+    buses.forEach((b, bi) => {
+        const d = b.def;
+        for (let i = 0; i < 5; i++) {
+            const [shirt, pants] = PASS_COLORS[(i + bi * 2) % PASS_COLORS.length];
+            const p = makePed({ id: `Q-${bi}${i}`, shirt, pants, side: 0, off: 0, speed: 1.25 + Math.random() * 0.3, state: 'stop', x: 0 });
+            p.box.visible = p.ring.visible = p.label.visible = false;
+            p.slot = d.shelter[0] - 1.6 + (i % 3) * 1.5;
+            p.state = i < 3 ? 'waitStop' : 'onBus';
+            p.x = p.slot; p.z = d.wait;
+            p.g.visible = p.state !== 'onBus';
+            p.yaw = d.dir < 0 ? 0 : Math.PI;
+            b.passengers.push(p);
+        }
+    });
+    function walkTo(p, tx, tz, dt) {
+        const dx = tx - p.x, dz = tz - p.z, dist = Math.hypot(dx, dz), step = p.speed * dt;
+        if (dist <= Math.max(step, 0.05)) { p.x = tx; p.z = tz; return [0, 0, true]; }
+        const look = Math.min(step + 0.4, dist);
+        if (dist > 0.8 && pedDangerAt(p.x + dx / dist * look, p.z + dz / dist * look)) return [0, 0, false];
+        p.x += dx / dist * step; p.z += dz / dist * step;
+        return [dx / dist, dz / dist, false];
+    }
+    function updatePassengers(b, dt) {
+        const d = b.def, curbZ = d.dir < 0 ? ROAD_Z0 - 0.4 : OPP_Z1 + 0.4;
+        const frontDoorX = d.stopX + d.dir * (BUS_HALF - 1.4), midDoorX = d.stopX - d.dir * 0.6;
+        b.passengers.forEach((p) => {
+            let mv = [0, 0, false];
+            p.timer = (p.timer || 0) - dt;
+            if (p.state === 'toDoor' && p.timer <= 0) {
+                mv = walkTo(p, frontDoorX, curbZ, dt);
+                if (mv[2]) { p.state = 'onBus'; p.g.visible = false; }
+            } else if (p.state === 'alight') {
+                mv = walkTo(p, p.tx, p.tz, dt);
+                if (mv[2]) { p.state = 'away'; p.tx = d.stopX + d.dir * (6 + Math.random() * 10) * (Math.random() < 0.5 ? 1 : -1); }
+            } else if (p.state === 'away') {
+                mv = walkTo(p, p.tx, d.wait + (d.dir < 0 ? -0.9 : 0.9), dt);
+                if (mv[2]) { p.state = 'back'; p.timer = 2 + Math.random() * 6; }
+            } else if (p.state === 'back' && p.timer <= 0) {
+                mv = walkTo(p, p.slot, d.wait, dt);
+                if (mv[2]) p.state = 'waitStop';
+            }
+            pedAnim(p, mv[0], mv[1], dt, d.dir < 0 ? 0 : Math.PI);
+            p.g.position.set(p.x, 0.18, p.z);
+            p.body.rotation.y = p.yaw;
+        });
+    }
+    function busStartDwell(b) {
+        const d = b.def;
+        let k = 0;
+        b.passengers.forEach((p) => { if (p.state === 'waitStop') { p.state = 'toDoor'; p.timer = 0.6 + k * 1.1; k++; } });
+        let n = 0;
+        b.passengers.forEach((p) => {
+            if (p.state !== 'onBus' || n >= 2) return;
+            n++;
+            p.state = 'alight';
+            p.g.visible = true;
+            p.x = d.stopX - d.dir * 0.6 + n * 0.3 * d.dir;
+            p.z = d.dir < 0 ? ROAD_Z0 - 0.4 : OPP_Z1 + 0.4;
+            p.tx = p.x - d.dir * 1.5; p.tz = d.wait + (d.dir < 0 ? -0.9 : 0.9);
+        });
+    }
+
+    // TITAN 公車進站提醒：切入機慢車道時，提醒後方機車減速
+    function busPullInRemind(b) {
+        boardPush('busIn', {}, 3.2);
+        const zLane = laneCenter(0);
+        const behind = cars.filter((c) => c.active && c.turnPhase === 'main' && Math.abs(c.z - zLane) < 1.1 && c.x > b.x + b.half && c.x - b.x < 50);
+        if (!behind.length) return;
+        behind.forEach((c) => {
+            c.busEntry = logReminder(c, { type: 'busIn', lane: laneNames[0] });
+            c.busSlowT = 4;
+            setCarStatus(c, 'remind', `💡 前方公車進站，${c.scooter ? '機車' : '車輛'}請減速`);
+        });
+        b.inRemind = behind;
+        toast(`🚌 公車 ${b.def.route.split(' ')[0]} 號進站切入機慢車道：TITAN 提醒後方 ${behind.map((c) => c.def.id).join('、')} 減速注意`, 'warn', 3800);
+    }
+    // TITAN 公車出站提醒：公車起步切回車道時，提醒後方車輛禮讓
+    function busPullOutRemind(b) {
+        boardPush('busOut', {}, 3.2);
+        const zLane = laneCenter(1);
+        const behind = cars.filter((c) => c.active && c.turnPhase === 'main' && !c.scooter && Math.abs(c.z - zLane) < 1.1 && c.x > b.x + b.half && c.x - b.x < 45)
+            .sort((a, c) => a.x - c.x);
+        if (!behind.length) return;
+        const c = behind[0];
+        c.busOutEntry = logReminder(c, { type: 'busOut', lane: laneNames[1] });
+        c.yieldBus = b;
+        setCarStatus(c, 'remind', '💡 公車起步，請禮讓');
+        toast(`🚌 公車起步切回車道：TITAN 看板與車載裝置提醒後方車輛 ${c.def.id}「請禮讓公車」`, 'warn', 3800);
+    }
+
+    function updateBus(b, dt, t) {
+        const d = b.def;
+        if (b.state === 'off') {
+            b.t -= dt;
+            // TITAN 展示用：公車在機慢車道的機車前方出發，進站時後方正好有機車（最多多等 30 秒）
+            let sx = -d.dir * 120;
+            if (d.titan && b.t > -30) {
+                const sc = cars.find((c) => c.active && c.scooter && c.x > 78 && c.x < 96);
+                sx = sc ? sc.x - 16 : NaN;
+            }
+            if (b.t <= 0 && !isNaN(sx) && !frameAgents.some((a) => Math.abs(a.x - sx) < 14 && Math.abs(a.z - busLaneZ(b)) < 1.5)) {
+                Object.assign(b, { state: 'cruise1', x: sx, z: busLaneZ(b), v: 4.4, active: true, inRemind: null, app: 0 });
+                b.g.visible = true;
+            }
+            updatePassengers(b, dt);
+            return;
+        }
+        let limit = Math.min(aheadGap(b, b.x, b.z, b.dir, 0, b.half), pedGap(b.x, b.z, b.dir, 0, b.half));
+        // 號誌
+        const stopLine = d.dir < 0 ? STOP_X : OPP_STOP_X;
+        const dist = (stopLine - (b.x + d.dir * b.half)) * d.dir;
+        if (dist > -0.3 && (signal.car === 'red' || (signal.car === 'yellow' && dist >= (b.v * b.v) / (2 * CAR_DEC) - 0.3))) limit = Math.min(limit, dist - 0.1);
+        const mergeStart = d.stopX - d.dir * 22;
+        if (b.state === 'cruise1') {
+            b.z += (busLaneZ(b) - b.z) * Math.min(1, dt * 2);
+            if ((b.x - mergeStart) * d.dir >= 0) {
+                b.state = 'pullin'; b.mx0 = b.x; b.signal = 'R';
+                if (d.titan) busPullInRemind(b);
+            }
+        } else if (b.state === 'pullin') {
+            const p = clamp((b.x - b.mx0) * d.dir / 13, 0, 1);
+            b.z = lerp(busLaneZ(b), busStopZ(b), smooth(p));
+            limit = Math.min(limit, (d.stopX - b.x) * d.dir);
+            if (b.v < 0.06 && Math.abs(b.x - d.stopX) < 0.6) {
+                b.state = 'dwell'; b.t = 0; b.signal = false; b.doorMat.emissiveIntensity = 0.9;
+                busStartDwell(b);
+                (b.inRemind || []).forEach((c) => {
+                    if (c.busEntry && !c.busEntry.result) { resolveReminder(c.busEntry, true); if (c.status === 'remind') setCarStatus(c, 'ok', '✓ 減速讓公車進站'); }
+                });
+                b.inRemind = null;
+            }
+        } else if (b.state === 'dwell') {
+            b.t += dt;
+            limit = 0;
+            const busy = b.passengers.some((p) => p.state === 'toDoor');
+            const laneZ = busLaneZ(b);
+            const alongside = frameAgents.some((a) => a.o !== b && Math.abs(a.z - laneZ) < 1.4 && Math.abs(a.x - b.x) < b.half + 4);
+            if (b.t > 7 && !busy) {
+                b.signal = 'L';
+                b.doorMat.emissiveIntensity = 0;
+                if (!alongside && b.t > 8) {
+                    b.state = 'pullout'; b.mx0 = b.x;
+                    if (d.titan) busPullOutRemind(b);
+                }
+            }
+        } else if (b.state === 'pullout') {
+            const p = clamp((b.x - b.mx0) * d.dir / 15, 0, 1);
+            b.z = lerp(busStopZ(b), busLaneZ(b), smooth(p));
+            if (p >= 1) {
+                b.state = 'cruise2'; b.signal = false;
+                cars.forEach((c) => {
+                    if (c.yieldBus !== b) return;
+                    c.yieldBus = null;
+                    if (c.busOutEntry && !c.busOutEntry.result) {
+                        resolveReminder(c.busOutEntry, true);
+                        setCarStatus(c, 'ok', '✓ 禮讓公車起步');
+                        boardPush('thanks', { top: '謝謝禮讓', sub: '公車安全起步' }, 2.4);
+                    }
+                });
+            }
+        } else if (b.state === 'cruise2') {
+            if ((b.x - d.dir * 125) * d.dir > 0) {
+                b.state = 'off'; b.t = 22 + Math.random() * 16; b.active = false; b.g.visible = false; b.x = 999;
+                updatePassengers(b, dt);
+                return;
+            }
+        }
+        const maxV = b.state === 'pullin' || b.state === 'pullout' ? 3.6 : 4.6;
+        const target = limit === Infinity ? maxV : Math.min(maxV, Math.sqrt(2 * 3.6 * Math.max(0, limit)));
+        b.v = target < b.v ? target : Math.min(target, b.v + 2.2 * dt);
+        b.x += d.dir * b.v * dt;
+        b.g.position.set(b.x, 0, b.z);
+        b.tailMat.color.setHex(target < maxV - 0.3 || b.v < 0.2 ? 0xff3b2f : 0xb3241c);
+        const blink = Math.floor(t * 3.2) % 2 === 0;
+        // 左側方向燈（出站）；進站切右側時以尾燈閃爍代表
+        b.sigMat.color.copy(b.signal === 'L' && blink ? SIG_ON : SIG_OFF);
+        b.app = Math.min(1, (b.app ?? 1) + dt * 1.2);
+        fadeMats(b, Math.min(b.app, clamp((b.x * d.dir + 120) / FADE_LEN, 0, 1), clamp((125 - b.x * d.dir) / FADE_LEN, 0, 1)));
+        updatePassengers(b, dt);
+    }
+    function updateBusDisplays() {
+        buses.forEach((b) => {
+            const s = b.state;
+            const txt = s === 'off' ? `約 ${Math.max(1, Math.ceil(b.t / 10))} 分鐘` : s === 'cruise1' ? '即將進站' : s === 'pullin' || s === 'dwell' ? '進站中・請準備上車' : '已離站';
+            if (txt === b.dispKey) return;
+            b.dispKey = txt;
+            b.display.draw(['🚌 ' + b.def.route, 'TITAN 到站資訊：' + txt]);
+        });
+    }
+
+    // =====================================================================
+    // 8-E. 人行道與騎樓下的一般行人（街景，不在斑馬線上）
+    // =====================================================================
+    const AMB_LINES = [
+        { axis: 'x', c: NEAR_WALK_Z + 1.2, lo: -60, hi: -23, n: 2 },
+        { axis: 'x', c: NEAR_WALK_Z + 1.2, lo: 9.5, hi: 60, n: 3 },
+        { axis: 'x', c: FAR_WALK_Z - 1.2, lo: -70, hi: -23, n: 2 },
+        { axis: 'x', c: FAR_WALK_Z - 1.2, lo: -7, hi: 60, n: 2 },
+        { axis: 'z', c: SR_X0 - 4.9, lo: -80, hi: -9, n: 2 },
+        { axis: 'z', c: SR_X1 + 4.9, lo: -80, hi: -9, n: 2 },
+        { axis: 'z', c: SR_X0 - 4.9, lo: 34, hi: 85, n: 1 },
+        { axis: 'z', c: SR_X1 + 4.9, lo: 34, hi: 85, n: 1 },
+    ];
+    const AMB_COLORS = [0xe63946, 0x457b9d, 0xa8dadc, 0xffb703, 0x8338ec, 0x06d6a0, 0xef476f, 0x118ab2, 0xf4a261, 0x6c757d, 0x2b9348, 0xb5838d, 0x3a86ff, 0xfb8500, 0x9d4edd];
+    const ambient = [];
+    AMB_LINES.forEach((ln) => {
+        for (let i = 0; i < ln.n; i++) {
+            const k = ambient.length;
+            const p = makePed({ id: 'A' + k, shirt: AMB_COLORS[k % AMB_COLORS.length], pants: [0x2b2d42, 0x3d405b, 0x264653][k % 3], side: 0, off: 0, speed: 1.0 + Math.random() * 0.5, state: 'amb', x: 0 });
+            p.box.visible = p.ring.visible = p.label.visible = false;
+            p.ln = ln;
+            p.pos = lerp(ln.lo, ln.hi, (i + 0.3 + Math.random() * 0.4) / ln.n);
+            p.goal = lerp(ln.lo, ln.hi, Math.random());
+            p.timer = Math.random() * 3;
+            ambient.push(p);
+        }
+    });
+    function updateAmbient(p, dt) {
+        const ln = p.ln;
+        let m = 0;
+        p.timer -= dt;
+        if (p.timer <= 0) {
+            const d = p.goal - p.pos, step = p.speed * dt;
+            if (Math.abs(d) <= step) {
+                p.pos = p.goal;
+                p.timer = Math.random() < 0.5 ? 1 + Math.random() * 4 : 0;
+                p.goal = clamp(p.pos + (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 18), ln.lo, ln.hi);
+            } else {
+                const nx = ln.axis === 'x' ? p.pos + Math.sign(d) * (step + 0.5) : ln.c, nz = ln.axis === 'x' ? ln.c : p.pos + Math.sign(d) * (step + 0.5);
+                if (!pedDangerAt(nx, nz)) { m = Math.sign(d); p.pos += m * step; }
+            }
+        }
+        p.x = ln.axis === 'x' ? p.pos : ln.c;
+        p.z = ln.axis === 'x' ? ln.c : p.pos;
+        pedAnim(p, ln.axis === 'x' ? m : 0, ln.axis === 'z' ? m : 0, dt, p.yaw);
+        p.g.position.set(p.x, 0.18, p.z);
+        p.body.rotation.y = p.yaw;
+    }
+
     function updateCar(c, dt, t) {
         if (c.turnPhase !== 'main') { updateTurningCar(c, dt, t); return; }
         // 速度：跟車距離、避讓路面行人、禮讓斑馬線行人
@@ -3978,7 +4359,14 @@ function main() {
             if (o.x >= c.x || Math.abs(oz - c.z) > 1.6) continue;
             limit = Math.min(limit, front - orx - (c.scooter ? 1.0 : 1.3));
         }
-        limit = Math.min(limit, aheadGap(c, c.x, c.z, -1, 0, c.half, (a) => a.o === ts || sveh.includes(a.o)));
+        limit = Math.min(limit, aheadGap(c, c.x, c.z, -1, 0, c.half, (a) => a.o.ext));
+        // 公車：進站時後方車輛減速；出站時被提醒的車輛停在公車後方禮讓
+        if (c.busSlowT > 0) { c.busSlowT -= dt; limit = Math.min(limit, 0.8); }
+        if (c.yieldBus) {
+            const b = c.yieldBus;
+            if ((b.state === 'pullout' || b.state === 'dwell') && c.x > b.x) limit = Math.min(limit, front - (b.x + b.half) - 2.5);
+            else c.yieldBus = null;
+        }
         // 右轉：接近轉彎點時減速；轉彎斑馬線有行人時，注意到的駕駛停在轉彎點前等候
         let turnCap = Infinity, turnYield = false, xs = 0;
         if (c.turnPlan) {
@@ -4770,10 +5158,12 @@ function main() {
         speed: (e) => `🚗 車速 ${e.kmh} km/h・減速提醒`,
         ped: () => '🚶 前方行人穿越・停讓提醒',
         turn: () => '↱ 右轉・轉彎注意行人提醒',
+        busIn: () => '🚌 公車進站・後方減速提醒',
+        busOut: () => '🚌 公車起步・禮讓提醒',
         lane: (e) => `↔ 變換車道 ${e.from}→${e.to}・方向燈提醒`,
     };
-    const LOG_OK = { speed: '✓ 駕駛已減速至速限以下', ped: '✓ 駕駛已停車禮讓行人', turn: '✓ 駕駛已停讓行人後再轉彎', lane: '✓ 駕駛已打方向燈' };
-    const LOG_MISS = { speed: '⋯ 尚未減速', ped: '⚠ 未及時反應：已閃爍地面燈提醒行人', turn: '⚠ 未及時反應：地面燈轉紅提醒行人', lane: '⚠ 未打方向燈：已提醒後方來車' };
+    const LOG_OK = { speed: '✓ 駕駛已減速至速限以下', ped: '✓ 駕駛已停車禮讓行人', turn: '✓ 駕駛已停讓行人後再轉彎', busIn: '✓ 已減速讓公車進站', busOut: '✓ 已禮讓公車起步', lane: '✓ 駕駛已打方向燈' };
+    const LOG_MISS = { speed: '⋯ 尚未減速', ped: '⚠ 未及時反應：已閃爍地面燈提醒行人', turn: '⚠ 未及時反應：地面燈轉紅提醒行人', busIn: '⋯ 未減速', busOut: '⋯ 未禮讓', lane: '⚠ 未打方向燈：已提醒後方來車' };
     function renderLog() {
         const ul = $('remLog');
         if (!remLog.length) { ul.innerHTML = '<li class="empty">尚無提醒紀錄</li>'; return; }
@@ -5130,6 +5520,8 @@ function main() {
             frameAgents = collectAgents();
             sveh.forEach((v) => updateSimple(v, dt));
             updateTs(dt);
+            buses.forEach((b) => updateBus(b, dt, t));
+            ambient.forEach((p) => updateAmbient(p, dt));
             cars.forEach((c) => { if (c.active) { updateCar(c, dt, t); if (c.active) updateFade(c, dt); } });
             peds.forEach((p) => updatePed(p, dt));
             sidePeds.forEach((p) => updateSidePed(p, dt));
@@ -5157,6 +5549,7 @@ function main() {
         });
         turnTag.visible = showPedLayer;
         updateSigPanel(dt);
+        updateBusDisplays();
         updateBoard();
         updateCounters();
         updateLanes(dt, t);
@@ -5203,7 +5596,7 @@ function main() {
         const r = aiCanvas.getBoundingClientRect(), pb = $('panelBody').getBoundingClientRect();
         return r.width > 40 && r.bottom > pb.top + 10 && r.top < pb.bottom - 10;
     }
-    const BOARD_TEXT = { idle: '安全駕駛', ped: '前方行人', turn: '轉彎注意行人', speed: '車速提醒', signal: '請打方向燈', thanks: '謝謝您', alert: '注意行人' };
+    const BOARD_TEXT = { idle: '安全駕駛', ped: '前方行人', turn: '轉彎注意行人', busIn: '公車進站', busOut: '公車起步', speed: '車速提醒', signal: '請打方向燈', thanks: '謝謝您', alert: '注意行人' };
     function updateAiHud(dt) {
         aiHudT -= dt;
         if (aiHudT > 0) return;
