@@ -9,15 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@500;900&family=Playfair+Display:wght@400;900&display=swap" rel="stylesheet">
 <style>
   /*
-   * RE-MIX 海報 v2 — 交融版
-   * 圖層（由後到前）：
-   *   1. 底色 + 原稿式米黃刷痕（以噪點溶解，呈印刷顆粒）
-   *   2. 背景圖紋：眼圖、打孔紙帶、35mm 音軌、PCM 位元、功耗曲線、二進位字
-   *      → 無外框、低透明度、混合模式、噪點溶解、互相重疊、出血
-   *   3. 物件：打孔卡、編織片、橘線（輕度溶解，無陰影）
-   *   4. 文字：RE MIX 主角、中文標題
-   *   5. 全幅底噪（覆蓋所有圖層）
-   * 色彩 3+1：--bg / --ink / --cream / --accent
+   * RE-MIX 海報 v3 — 織布版
+   * 所有圖紋被「織」成一塊布：
+   *   緯線（橫）＝ 打孔紙帶 / 眼圖 / 35mm 音軌 / PCM 位元 / 二進位 / 功耗曲線
+   *   經線（直）＝ 打孔卡條 / 二進位條 / 橘色的「線」
+   *   平織：每個交叉點一上一下交錯
+   * 緯線兩端不剪斷，延伸出血並漸淡，從 RE 與中文標題後方穿過 → 圖紋成為背景
+   * 圖層：底色 + 刷痕 → 織布 → 打孔卡 + 橘線 → 文字 → 全幅底噪
    */
   :root { --bg:#8C98D8; --ink:#26307A; --cream:#F4E6AE; --accent:#E6A13A; }
   html, body { margin:0; background:#2a3060; }
@@ -27,15 +25,12 @@
   .serif-tc { font-family:"Noto Serif TC", serif; }
   .display { font-family:"Playfair Display", serif; }
   .cap { font-family:"IBM Plex Mono", monospace; font-size:13px; letter-spacing:0.14em; fill:var(--ink); font-weight:500; }
-  .ghost { opacity:0.55; }
-  .screen { mix-blend-mode:screen; }
-  .multiply { mix-blend-mode:multiply; }
+  .ghost { opacity:0.6; }
 </style>
 </head>
 <body>
 <svg id="poster" viewBox="0 0 1414 2000" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- 米黃刷痕：模糊形狀 × 噪點 → 邊緣漸散的顆粒 -->
     <filter id="smudge" x="-30%" y="-80%" width="160%" height="260%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="34" result="b"/>
       <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n"/>
@@ -45,23 +40,16 @@
       <feFlood flood-color="#F4E6AE"/>
       <feComposite in2="m" operator="in"/>
     </filter>
-    <!-- 噪點溶解：圖形保留自身顏色，但被顆粒打散 -->
-    <filter id="dissolve-light" x="0" y="0" width="100%" height="100%" filterUnits="userSpaceOnUse">
+    <filter id="dissolve-light" x="-200" y="0" width="2000" height="2000" filterUnits="userSpaceOnUse">
       <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="9" result="n"/>
       <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.2 0 0 0 -0.75" result="m"/>
       <feComposite in="SourceGraphic" in2="m" operator="in"/>
     </filter>
-    <filter id="dissolve" x="0" y="0" width="100%" height="100%" filterUnits="userSpaceOnUse">
+    <filter id="dissolve" x="-200" y="0" width="2000" height="2000" filterUnits="userSpaceOnUse">
       <feTurbulence type="fractalNoise" baseFrequency="1.0" numOctaves="2" seed="13" result="n"/>
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.85" result="m"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.8" result="m"/>
       <feComposite in="SourceGraphic" in2="m" operator="in"/>
     </filter>
-    <filter id="dissolve-heavy" x="0" y="0" width="100%" height="100%" filterUnits="userSpaceOnUse">
-      <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" seed="21" result="n"/>
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.4 0 0 0 -1.05" result="m"/>
-      <feComposite in="SourceGraphic" in2="m" operator="in"/>
-    </filter>
-    <!-- 全幅底噪：明暗顆粒 + 稀疏的米黃 / 靛藍點 -->
     <filter id="grain-tone" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
       <feColorMatrix type="saturate" values="0"/>
@@ -79,59 +67,63 @@
     <radialGradient id="glow" cx="0.3" cy="0.25" r="0.95">
       <stop offset="0" stop-color="#97A3E0"/><stop offset="1" stop-color="#8490D2"/>
     </radialGradient>
-    <!-- 左右漸隱，讓背景圖紋沒有硬邊 -->
-    <linearGradient id="fade-x" x1="0" x2="1"><stop offset="0" stop-color="#000"/><stop offset="0.18" stop-color="#fff"/><stop offset="0.82" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
-    <linearGradient id="fade-r" x1="0" x2="1"><stop offset="0" stop-color="#fff"/><stop offset="0.7" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
-    <linearGradient id="fade-l" x1="0" x2="1"><stop offset="0" stop-color="#000"/><stop offset="0.25" stop-color="#fff"/><stop offset="1" stop-color="#fff"/></linearGradient>
-    <mask id="m-eye" maskContentUnits="userSpaceOnUse"><rect x="340" y="660" width="880" height="340" fill="url(#fade-x)"/></mask>
-    <mask id="m-tape" maskContentUnits="userSpaceOnUse"><rect x="-20" y="980" width="780" height="120" fill="url(#fade-r)"/></mask>
-    <mask id="m-pcm" maskContentUnits="userSpaceOnUse"><rect x="640" y="1380" width="780" height="300" fill="url(#fade-l)"/></mask>
+    <!-- 緯線：布內全亮，往兩側出血漸淡 -->
+    <linearGradient id="g-weft" gradientUnits="userSpaceOnUse" x1="-300" x2="1700" y1="0" y2="0">
+      <stop offset="0" stop-color="#222"/>
+      <stop offset="0.3" stop-color="#666"/>
+      <stop offset="0.5" stop-color="#fff"/>
+      <stop offset="0.77" stop-color="#fff"/>
+      <stop offset="0.86" stop-color="#555"/>
+      <stop offset="1" stop-color="#2a2a2a"/>
+    </linearGradient>
+    <!-- 經線：上下鬚邊漸淡 -->
+    <linearGradient id="g-warp" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="380" y2="1600">
+      <stop offset="0" stop-color="#000"/>
+      <stop offset="0.2" stop-color="#fff"/>
+      <stop offset="0.85" stop-color="#fff"/>
+      <stop offset="1" stop-color="#000"/>
+    </linearGradient>
+    <mask id="m-weft" maskUnits="userSpaceOnUse" x="-300" y="0" width="2000" height="2000" maskContentUnits="userSpaceOnUse"><rect x="-300" y="0" width="2000" height="2000" fill="url(#g-weft)"/></mask>
+    <mask id="m-warp" maskUnits="userSpaceOnUse" x="-300" y="0" width="2000" height="2000" maskContentUnits="userSpaceOnUse"><rect x="-300" y="0" width="2000" height="2000" fill="url(#g-warp)"/></mask>
+    <clipPath id="c-over" clipPathUnits="userSpaceOnUse"></clipPath>
   </defs>
 
   <!-- 1. 底 + 刷痕 -->
   <rect width="1414" height="2000" fill="url(#glow)"/>
   <g filter="url(#smudge)" opacity="0.85">
     <ellipse cx="160" cy="170" rx="260" ry="26"/>
-    <ellipse cx="330" cy="1045" rx="420" ry="34"/>
-    <ellipse cx="250" cy="1180" rx="300" ry="20"/>
+    <ellipse cx="300" cy="900" rx="380" ry="30"/>
     <ellipse cx="560" cy="1600" rx="620" ry="40"/>
-    <ellipse cx="1260" cy="560" rx="200" ry="22"/>
+    <ellipse cx="1260" cy="360" rx="200" ry="22"/>
     <ellipse cx="1180" cy="1880" rx="300" ry="26"/>
   </g>
 
-  <!-- 2. 背景圖紋 -->
-  <g id="bg-eye" mask="url(#m-eye)" class="screen" filter="url(#dissolve)"></g>
-  <g id="bg-binary" class="mono screen" fill="var(--cream)" opacity="0.38" filter="url(#dissolve)"></g>
-  <g id="bg-tape" mask="url(#m-tape)" opacity="0.82"></g>
-  <g id="bg-film" class="multiply" filter="url(#dissolve)"></g>
-  <g id="bg-pcm" mask="url(#m-pcm)" class="screen" opacity="0.6" filter="url(#dissolve)"></g>
-  <g id="bg-power"></g>
-
-  <!-- 小字：低對比，貼著圖紋 -->
-  <g class="ghost">
-    <text class="cap" x="700" y="676">EYE DIAGRAM · 112G SERDES · NRZ → PAM4 · 0/1 → 00/01/10/11</text>
-    <text class="cap" x="90" y="1108" transform="rotate(-1.5 90 1108)">PUNCHED TAPE · 8-TRACK · ASCII "RE-MIX 1804"</text>
-    <text class="cap" x="1324" y="1384" text-anchor="end">35MM · SDDS / DOLBY / DTS</text>
-    <text class="cap" x="1324" y="1420" text-anchor="end">PCM ADAPTOR · 1 VIDEO LINE = 3 STEREO SAMPLES</text>
-    <text class="cap" x="1324" y="1500" text-anchor="end">AI TRAINING CLUSTER · POWER DRAW (MW) · STEP / ALL-REDUCE / CHECKPOINT</text>
+  <!-- 2. 織布 -->
+  <g id="cloth" transform="rotate(-3 990 1050)" filter="url(#dissolve-light)" opacity="0.93">
+    <g id="warps-under" mask="url(#m-warp)"></g>
+    <g id="wefts" mask="url(#m-weft)"></g>
+    <use href="#warps-under" clip-path="url(#c-over)"/>
   </g>
 
-  <!-- 頁首 -->
-  <text class="cap" x="90" y="110" style="font-size:16px;letter-spacing:0.24em;font-weight:600">RE-MIX</text>
-  <text class="cap" x="90" y="134" style="font-size:16px;letter-spacing:0.24em;font-weight:600">EXHIBITION</text>
-
-  <!-- 3. 物件 + 一條線 -->
+  <!-- 3. 打孔卡 + 一條線 -->
   <g filter="url(#dissolve-light)">
     <g fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round">
-      <path d="M 648 637 C 664 700, 628 760, 636 860 C 644 960, 690 1050, 770 1082"/>
-      <path d="M 806 1352 C 770 1380, 730 1420, 730 1500 L 730 1800 C 730 1828, 742 1840, 762 1840"/>
+      <path id="thread-in"/>
+      <path id="thread-out"/>
     </g>
     <g id="cards" transform="translate(90 190) rotate(-2)" opacity="0.86"></g>
-    <g id="knit" opacity="0.95"></g>
+  </g>
+  <g id="power"></g>
+
+  <g class="ghost">
+    <text class="cap" x="1324" y="1530" text-anchor="end">WOVEN FROM · PUNCHED TAPE / EYE DIAGRAM / 35MM / PCM / BINARY</text>
+    <text class="cap" x="1324" y="1552" text-anchor="end">→ AI TRAINING CLUSTER · POWER DRAW (MW)</text>
   </g>
 
   <!-- 4. 文字 -->
-  <g id="title-tc" class="serif-tc" fill="var(--ink)"></g>
+  <text class="cap" x="90" y="110" style="font-size:16px;letter-spacing:0.24em;font-weight:600">RE-MIX</text>
+  <text class="cap" x="90" y="134" style="font-size:16px;letter-spacing:0.24em;font-weight:600">EXHIBITION</text>
+  <g id="title-tc" class="serif-tc" fill="var(--ink)" stroke="#8E9AD8" stroke-width="7" stroke-linejoin="round" style="paint-order:stroke"></g>
   <g class="display" fill="var(--ink)">
     <text x="84" y="1470" font-size="440" font-weight="900" textLength="610" lengthAdjust="spacing">RE</text>
     <text x="90" y="1752" font-size="300" font-weight="400" fill="none" stroke="var(--ink)" stroke-width="3.5" textLength="604" lengthAdjust="spacing">MIX</text>
@@ -157,7 +149,10 @@ const el = (tag, attrs = {}, parent) => {
   return n;
 };
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-const C = { ink: "#26307A", cream: "#F4E6AE", accent: "#E6A13A", accentDark: "#C47F1E", bg: "#8C98D8" };
+const C = { ink: "#26307A", cream: "#F4E6AE", accent: "#E6A13A", bg: "#8C98D8" };
+const R = rng(42);
+const gauss = () => (R() + R() + R() - 1.5) * 0.9;
+const ss = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 
 /* ---------- 中文標題 ---------- */
 (() => {
@@ -168,95 +163,144 @@ const C = { ink: "#26307A", cream: "#F4E6AE", accent: "#E6A13A", accentDark: "#C
     el("text", { x: 1186, y: 214 + i * 38, "font-size": 24, "font-weight": 500, "text-anchor": "middle" }, g).textContent = ch);
 })();
 
-/* ---------- 背景：眼圖（NRZ 漸變為 PAM4，無外框） ---------- */
-(() => {
-  const g = document.getElementById("bg-eye"), R = rng(5);
-  const gauss = () => (R() + R() + R() - 1.5) * 0.9;
-  const ss = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
-  const field = (x0, w, levels, n) => {
-    const y0 = 690, h = 290, UI = 130;
-    const lv = Array.from({ length: levels }, (_, i) => y0 + h - 20 - i * (h - 40) / (levels - 1));
-    const nUI = Math.ceil(w / UI) + 1;
-    for (let k = 0; k < n; k++) {
-      const s = Array.from({ length: nUI + 1 }, () => lv[(R() * levels) | 0]);
-      const jit = s.map(() => gauss() * 0.035);
+/* ================= 織布 ================= */
+const X0 = -300, X1 = 1700;            // 緯線範圍（出血）
+const WY0 = 640, WH = 62, WP = 74;     // 緯線起點、寬、間距
+const VY0 = 380, VY1 = 1600;           // 經線範圍
+const weftTypes = ["tape", "eye2", "film", "pcm", "binary", "eye4", "tape", "power", "film", "binary", "pcm"];
+const warps = [
+  { x: 752, w: 10, type: "thread" },
+  { x: 776, w: 50, type: "punch" }, { x: 842, w: 50, type: "bin" },
+  { x: 908, w: 50, type: "punch" }, { x: 974, w: 50, type: "bin" },
+  { x: 1040, w: 50, type: "punch" }, { x: 1106, w: 50, type: "bin" },
+  { x: 1172, w: 50, type: "punch" },
+];
+
+const weft = {
+  tape(g, y, h) {
+    el("rect", { x: X0, y, width: X1 - X0, height: h, fill: C.cream }, g);
+    const msg = "RE-MIX 1804 JACQUARD -> 0/1 -> AI  ";
+    for (let i = 0, x = X0 + 6; x < X1; i++, x += 10) {
+      const code = msg.charCodeAt(i % msg.length);
+      for (let b = 0; b < 8; b++) if ((code >> (7 - b)) & 1)
+        el("circle", { cx: x, cy: y + 7 + b * 6.3 + (b > 2 ? 2 : 0), r: 2.3, fill: C.bg }, g);
+    }
+  },
+  eye(g, y, h, levels) {
+    el("rect", { x: X0, y, width: X1 - X0, height: h, fill: C.ink, opacity: 0.78 }, g);
+    const UI = 46, lv = Array.from({ length: levels }, (_, i) => y + h - 9 - i * (h - 18) / (levels - 1));
+    const n = Math.ceil((X1 - X0) / UI) + 2;
+    for (let k = 0; k < 34; k++) {
+      const s = Array.from({ length: n }, () => lv[(R() * levels) | 0]);
       let d = "";
-      for (let px = 0; px <= w; px += 3) {
-        const u = px / UI;
-        let v = s[0];
-        for (let b = 1; b < s.length; b++) v += (s[b] - s[b - 1]) * ss((u - (b - 0.5) - jit[b]) / 0.42 + 0.5);
-        v += gauss() * 3.5;
-        d += (px ? "L" : "M") + (x0 + px).toFixed(1) + " " + v.toFixed(1);
+      for (let px = 0; px <= X1 - X0; px += 4) {
+        const u = px / UI, b = Math.floor(u + 0.5);
+        const lo = s[Math.max(0, b - 1)], hi = s[Math.min(n - 1, b)];
+        const v = lo + (hi - lo) * ss((u - (b - 0.5)) / 0.45 + 0.5) + gauss() * 1.2;
+        d += (px ? "L" : "M") + (X0 + px) + " " + v.toFixed(1);
       }
-      el("path", { d, fill: "none", stroke: C.cream, "stroke-width": 1.4, opacity: 0.11 }, g);
+      el("path", { d, fill: "none", stroke: C.cream, "stroke-width": 1, opacity: 0.22 }, g);
     }
-  };
-  field(340, 460, 2, 260);
-  field(800, 420, 4, 320);
-})();
-
-/* ---------- 背景：二進位字 ---------- */
-(() => {
-  const g = document.getElementById("bg-binary");
-  [[640, 760, 22, "01010010 · R   01000101 · E"],
-   [690, 800, 20, "0100 1101 · M   01001001 · I"],
-   [650, 866, 22, "01011000 · X   10001 1110110 11"],
-   [700, 946, 20, "1101 11 10001 0000 01000"],
-   [660, 976, 18, "11 010 1001 110 1 00 101 0"]]
-    .forEach(([x, y, s, t]) => el("text", { x, y, "font-size": s, "font-weight": 600, "letter-spacing": "0.06em" }, g).textContent = t);
-})();
-
-/* ---------- 背景：打孔紙帶（左側出血） ---------- */
-(() => {
-  const g = el("g", { transform: "rotate(-1.5 380 1040)", filter: "url(#dissolve)" }, document.getElementById("bg-tape"));
-  const y0 = 1008, h = 66;
-  el("rect", { x: -20, y: y0, width: 800, height: h, fill: C.cream }, g);
-  const msg = 'RE-MIX 1804 JACQUARD -> 0/1 -> AI  RE-MIX 1804 JACQUARD -> 0/1 -> AI ';
-  [...msg].forEach((ch, i) => {
-    const cx = -8 + i * 11.5, code = ch.charCodeAt(0);
-    if (cx > 780) return;
-    for (let b = 0; b < 8; b++) {
-      const cy = y0 + 9 + b * 6.6 + (b > 2 ? 2.5 : 0);
-      if ((code >> (7 - b)) & 1) el("circle", { cx, cy, r: 2.6, fill: C.bg }, g);
+  },
+  film(g, y, h) {
+    el("rect", { x: X0, y, width: X1 - X0, height: h, fill: C.ink, opacity: 0.85 }, g);
+    for (let x = X0; x < X1; x += 14) {
+      el("rect", { x, y: y + 4, width: 8, height: 8, rx: 1.5, fill: C.cream, opacity: 0.8 }, g);
+      el("rect", { x, y: y + h - 12, width: 8, height: 8, rx: 1.5, fill: C.cream, opacity: 0.8 }, g);
+      if (R() > 0.4) el("rect", { x: x + (R() * 8 | 0), y: y + 15, width: 3, height: 3, fill: C.cream }, g);
     }
-    el("circle", { cx, cy: y0 + 9 + 2 * 6.6 + 4.5, r: 1.2, fill: C.bg }, g);
+    for (const cy of [y + h / 2 - 8, y + h / 2 + 8]) {
+      let T = "", B = "";
+      for (let x = X0; x <= X1; x += 4) {
+        const a = 1.5 + 5 * Math.abs(Math.sin(x * 0.045 + cy) * Math.sin(x * 0.013 + cy * 0.2));
+        T += `${x},${cy - a} `; B = `${x},${cy + a} ` + B;
+      }
+      el("polygon", { points: T + B, fill: C.accent }, g);
+    }
+  },
+  pcm(g, y, h) {
+    el("rect", { x: X0, y, width: X1 - X0, height: h, fill: C.ink, opacity: 0.7 }, g);
+    for (let x = X0 + 3; x < X1; x += 8) for (let r = 0; r < 8; r++) {
+      const v = R();
+      if (v > 0.52) el("rect", { x, y: y + 4 + r * 7, width: 6, height: 4.5, fill: v > 0.95 ? C.accent : C.cream }, g);
+    }
+  },
+  binary(g, y, h) {
+    el("rect", { x: X0, y, width: X1 - X0, height: h, fill: C.cream, opacity: 0.92 }, g);
+    const s = "01010010 01000101 01001101 01001001 01011000 · ";
+    for (const [dy, fs, op] of [[22, 17, 1], [44, 14, 0.6]]) {
+      const t = el("text", { x: X0 + (dy === 44 ? 40 : 0), y: y + dy, "font-size": fs, fill: C.ink, opacity: op, class: "mono", "font-weight": 600, "letter-spacing": "0.08em" }, g);
+      t.textContent = s.repeat(14);
+    }
+  },
+  power(g, y, h) {
+    el("rect", { x: X0, y, width: X1 - X0, height: h, fill: C.ink, opacity: 0.6 }, g);
+    const hi = y + 10, mid = y + 26, low = y + h - 8;
+    let d = `M ${X0} ${low}`, k = 0;
+    for (let x = X0; x < X1;) {
+      const w = k % 5 === 4 ? 6 : 12, v = k % 23 === 22 ? low : (k % 2 ? mid : hi);
+      d += ` L ${x} ${v} L ${x + w} ${v}`; x += w; k++;
+    }
+    el("path", { d, fill: "none", stroke: C.accent, "stroke-width": 2.2 }, g);
+  },
+};
+
+const warp = {
+  punch(g, x, w) {
+    el("rect", { x, y: VY0, width: w, height: VY1 - VY0, fill: C.cream }, g);
+    const msg = "REMIX";
+    for (let y = VY0 + 12, i = 0; y < VY1; y += 19, i++) {
+      const code = msg.charCodeAt(i % 5) ^ (i * 37);
+      for (let b = 0; b < 3; b++) {
+        const cx = x + 11 + b * 14, cy = y;
+        if ((code >> b) & 1) el("circle", { cx, cy, r: 5, fill: C.bg }, g);
+        else el("circle", { cx, cy, r: 4.4, fill: "none", stroke: C.ink, "stroke-width": 1.1 }, g);
+      }
+    }
+  },
+  bin(g, x, w) {
+    el("rect", { x, y: VY0, width: w, height: VY1 - VY0, fill: C.ink, opacity: 0.88 }, g);
+    for (let y = VY0 + 14, i = 0; y < VY1; y += 15, i++)
+      for (let c = 0; c < 3; c++)
+        el("text", { x: x + 9 + c * 14, y, "font-size": 12, fill: C.cream, opacity: c === 1 ? 0.55 : 0.95, class: "mono", "font-weight": 600 }, g).textContent = R() > 0.5 ? "1" : "0";
+  },
+  thread(g, x, w) {
+    el("rect", { x: x + 2, y: VY0 + 240, width: 6, height: VY1 - VY0 - 360, fill: C.accent }, g);
+  },
+};
+
+(() => {
+  const wg = document.getElementById("wefts"), vg = document.getElementById("warps-under"), clip = document.getElementById("c-over");
+  weftTypes.forEach((t, i) => {
+    const y = WY0 + i * WP, g = el("g", {}, wg);
+    if (t === "eye2") weft.eye(g, y, WH, 2);
+    else if (t === "eye4") weft.eye(g, y, WH, 4);
+    else weft[t](g, y, WH);
   });
+  warps.forEach(w => warp[w.type](el("g", {}, vg), w.x, w.w));
+  // 平織：經線在上的交叉點
+  warps.forEach((w, j) => weftTypes.forEach((_, i) => {
+    if ((i + j) % 2) el("rect", { x: w.x - 1, y: WY0 + i * WP - 1, width: w.w + 2, height: WH + 2 }, clip);
+  }));
+  // 經線在緯線之間的空隙也露出
+  warps.forEach(w => weftTypes.forEach((_, i) => el("rect", { x: w.x, y: WY0 + i * WP + WH, width: w.w, height: WP - WH }, clip)));
+  el("rect", { x: -400, y: VY0 - 10, width: 2400, height: WY0 - VY0 + 10 }, clip);
+  el("rect", { x: -400, y: WY0 + weftTypes.length * WP - (WP - WH), width: 2400, height: 400 }, clip);
 })();
 
-/* ---------- 背景：35mm 音軌（全幅出血，壓在 RE 後方） ---------- */
+/* ---------- 橘線：打孔卡 → 織入布 → AI 功耗 ---------- */
 (() => {
-  const g = document.getElementById("bg-film"), R = rng(11);
-  const y0 = 1250, h = 92;
-  el("rect", { x: 0, y: y0, width: 1414, height: h, fill: C.ink, opacity: 0.2 }, g);
-  for (let x = 4; x < 1414; x += 14) {
-    el("rect", { x, y: y0 + 6, width: 8, height: 9, rx: 1.5, fill: C.ink, opacity: 0.35 }, g);
-    el("rect", { x, y: y0 + h - 15, width: 8, height: 9, rx: 1.5, fill: C.ink, opacity: 0.35 }, g);
-    for (let b = 0; b < 3; b++) if (R() > 0.45) el("rect", { x: x + (R() * 8 | 0), y: y0 + 20 + b * 4, width: 3, height: 3, fill: C.ink, opacity: 0.4 }, g);
-  }
-  for (const cy of [y0 + 46, y0 + 64]) {
-    let T = "", B = "";
-    for (let x = 0; x <= 1414; x += 4) {
-      const a = 2 + 7 * Math.abs(Math.sin(x * 0.045 + cy) * Math.sin(x * 0.013 + cy * 0.2));
-      T += `${x},${cy - a} `; B = `${x},${cy + a} ` + B;
-    }
-    el("polygon", { points: T + B, fill: C.accent, opacity: 0.5 }, g);
-  }
+  const th = -3 * Math.PI / 180, cx = 990, cy = 1050;
+  const G = (x, y) => [cx + (x - cx) * Math.cos(th) - (y - cy) * Math.sin(th), cy + (x - cx) * Math.sin(th) + (y - cy) * Math.cos(th)];
+  const [ax, ay] = G(757, VY0 + 240), [bx, by] = G(757, VY1 - 120);
+  document.getElementById("thread-in").setAttribute("d", `M 648 637 C 700 640, ${ax} ${ay - 30}, ${ax} ${ay}`);
+  document.getElementById("thread-out").setAttribute("d", `M ${bx} ${by} C ${bx} ${by + 80}, 740 1740, 740 1800 C 740 1828, 748 1840, 768 1840`);
 })();
 
-/* ---------- 背景：PCM 位元場 ---------- */
+/* ---------- AI 功耗曲線 ---------- */
 (() => {
-  const g = document.getElementById("bg-pcm"), R = rng(23);
-  const x0 = 640, y0 = 1420, cw = 9, ch = 7;
-  for (let r = 0; r < 34; r++) for (let c = 0; c < 86; c++) {
-    const v = R();
-    if (v > 0.55) el("rect", { x: x0 + c * cw, y: y0 + r * ch, width: cw - 2, height: ch - 2.5, fill: v > 0.94 ? C.accent : C.cream }, g);
-  }
-})();
-
-/* ---------- 背景：AI 功耗曲線（橘線的終點，右側出血） ---------- */
-(() => {
-  const g = document.getElementById("bg-power");
-  const x0 = 762, x1 = 1414, base = 1840, hi = 1560, mid = 1630, low = 1790;
+  const g = document.getElementById("power");
+  const x0 = 768, x1 = 1414, base = 1840, hi = 1600, mid = 1660, low = 1800;
   const pts = [[x0, base], [800, base], [826, hi]];
   let x = 826, k = 0;
   const cps = [990, 1150, 1290];
@@ -268,10 +312,10 @@ const C = { ink: "#26307A", cream: "#F4E6AE", accent: "#E6A13A", accentDark: "#C
   }
   const d = pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" ");
   el("path", { d: d + ` L ${x1} ${base} L ${x0} ${base} Z`, fill: C.ink, opacity: 0.22, filter: "url(#dissolve)" }, g);
-  el("path", { d, fill: "none", stroke: C.accent, "stroke-width": 2.5, "stroke-linejoin": "round", opacity: 0.55, filter: "url(#dissolve-light)" }, g);
+  el("path", { d, fill: "none", stroke: C.accent, "stroke-width": 2.5, "stroke-linejoin": "round", opacity: 0.6, filter: "url(#dissolve-light)" }, g);
 })();
 
-/* ---------- 打孔卡（無陰影） ---------- */
+/* ---------- 打孔卡 ---------- */
 (() => {
   const g = document.getElementById("cards");
   const rows = [["R", "01010010"], ["E", "01000101"], ["M", "01001101"], ["I", "01001001"], ["X", "01011000"]];
@@ -290,40 +334,6 @@ const C = { ink: "#26307A", cream: "#F4E6AE", accent: "#E6A13A", accentDark: "#C
     });
     el("text", { x: 412, y: 57, "font-size": 14, fill: C.ink, class: "mono", "letter-spacing": "0.04em" }, c).textContent = bits;
   });
-})();
-
-/* ---------- 編織片（無陰影） ---------- */
-(() => {
-  const g = document.getElementById("knit");
-  const X = 800, Y = 1090, cols = 25, rows = 18, cw = 12, rh = 14.6;
-  const F = {
-    R: ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
-    E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
-    M: ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
-    I: ["111", "010", "010", "010", "010", "010", "111"],
-    X: ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
-  };
-  const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
-  const put = (word, r0) => {
-    const w = [...word].reduce((a, ch) => a + F[ch][0].length + 1, -1);
-    let c0 = Math.floor((cols - w) / 2);
-    for (const ch of word) {
-      F[ch].forEach((row, r) => [...row].forEach((b, c) => { if (b === "1") grid[r0 + r][c0 + c] = 1; }));
-      c0 += F[ch][0].length + 1;
-    }
-  };
-  put("RE", 1); put("MIX", 10);
-  const fab = el("g", { transform: `rotate(1.5 ${X + 150} ${Y + 130})` }, g);
-  el("rect", { x: X - 2, y: Y - 4, width: cols * cw + 4, height: rows * rh + 8, rx: 3, fill: C.accent }, fab);
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const cx = X + c * cw + cw / 2, cy = Y + r * rh + rh / 2, on = grid[r][c];
-    const a = { fill: on ? C.cream : C.accentDark, opacity: on ? 1 : 0.55 };
-    el("ellipse", { cx: cx - 2.6, cy, rx: 2.6, ry: 5.6, transform: `rotate(-28 ${cx - 2.6} ${cy})`, ...a }, fab);
-    el("ellipse", { cx: cx + 2.6, cy, rx: 2.6, ry: 5.6, transform: `rotate(28 ${cx + 2.6} ${cy})`, ...a }, fab);
-  }
-  el("line", { x1: 770, y1: 1082, x2: 1138, y2: 1094, stroke: C.ink, "stroke-width": 7, "stroke-linecap": "round" }, g);
-  el("circle", { cx: 770, cy: 1082, r: 10, fill: C.ink }, g);
-  el("line", { x1: 1122, y1: 1030, x2: 1012, y2: 1372, stroke: C.ink, "stroke-width": 6, "stroke-linecap": "round" }, g);
 })();
 </script>
 </body>
