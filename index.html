@@ -1117,9 +1117,10 @@
                 <h2 class="sec-h"><span class="fh-title">🤖 AI 號誌控制</span><small>依人車流量即時調整</small></h2>
                 <div class="sec-pad">
                     <div class="sig-live">
-                        <div class="sig-cell"><span>車輛號誌</span><b id="sigCar"><i></i>—</b></div>
-                        <div class="sig-cell"><span>直行斑馬線</span><b id="sigPed"><i></i>—</b></div>
-                        <div class="sig-cell"><span>轉彎斑馬線</span><b id="sigSide"><i></i>—</b></div>
+                        <div class="sig-cell"><span>主幹道</span><b id="sigCar"><i></i>—</b></div>
+                        <div class="sig-cell"><span>次要幹道</span><b id="sigCross"><i></i>—</b></div>
+                        <div class="sig-cell"><span>橫越主幹道斑馬線</span><b id="sigPed"><i></i>—</b></div>
+                        <div class="sig-cell"><span>橫越次要幹道斑馬線</span><b id="sigSide"><i></i>—</b></div>
                         <div class="sig-cell"><span>等候過馬路</span><b id="sigWait">0 人</b></div>
                     </div>
                     <ul class="log" id="sigLog"><li class="empty">AI 尚未調整號誌秒數</li></ul>
@@ -1153,8 +1154,8 @@
                     <div class="blur-status" id="blurStatus"></div>
                     <div class="ctl-label">車道配置</div>
                     <div class="seg" id="laneSeg">
-                        <button type="button" data-lanes="std" class="active" aria-pressed="true">a / b / c 三車道</button>
-                        <button type="button" data-lanes="alt" aria-pressed="false">2 車道＋機慢車道</button>
+                        <button type="button" data-lanes="std" aria-pressed="false">a / b / c 三車道</button>
+                        <button type="button" data-lanes="alt" class="active" aria-pressed="true">2 車道＋機慢車道</button>
                     </div>
                     <p class="hint">只需更新軟體參數就能重新定義車道；機慢車道僅供機車行駛。</p>
                 </div></div></div>
@@ -1170,14 +1171,16 @@
                         <button class="pchip" type="button" data-view="signal" data-key="signal" aria-pressed="false"><span class="num">4</span>AI 號誌</button>
                         <button class="pchip" type="button" data-view="turn" data-key="turn" aria-pressed="false"><span class="num">5</span>轉彎提醒</button>
                         <button class="pchip" type="button" data-view="yield" data-key="yield" aria-pressed="false"><span class="num">6</span>警示柱與車速</button>
+                        <button class="pchip" type="button" data-view="twostage" data-key="twostage" aria-pressed="false"><span class="num">7</span>兩段式左轉</button>
                     </div>
                     <div class="desc-card" id="stepDesc">
                         <div class="pdesc" data-for="lanes"><h3><span class="num">1</span>畫面校正與車道劃分</h3><p>路燈上的攝影機斜向俯拍道路後，系統會先做透視校正（將斜拍畫面轉成接近俯視的角度），再沿著真實車道邊界（如 a、b、c 車道）在軟體畫面中標定出虛擬車道區域與分界線。如果路面標線模糊，也可透過車流經過的軌跡推估出車道位置。</p></div>
                         <div class="pdesc" data-for="tracking" hidden><h3><span class="num">2</span>變換車道與方向燈提醒</h3><p>系統以「暫時編號」偵測每輛車的位置與移動軌跡（不辨識車牌）。當車輛開始偏向車道線、準備變換車道卻沒有打方向燈時，提醒看板與車載裝置會即時提示「請打方向燈」；駕駛打燈後再變換車道，後方來車也能及早察覺。若仍未打燈，系統會改為提醒目標車道的後方來車注意，不做違規判定。</p></div>
                         <div class="pdesc" data-for="relay" hidden><h3><span class="num">3</span>前方路況預警</h3><p>車輛接近下一組路燈前，TITAN-01 會把「前方是否有行人穿越、號誌狀態、建議車速」等路況資訊傳給相鄰的 TITAN-02，讓後段路燈提前提醒駕駛。傳送的只有路況，<b>不包含車輛身分</b>；車輛離開路段後，暫時編號與軌跡隨即刪除。</p></div>
                         <div class="pdesc" data-for="signal" hidden><h3><span class="num">4</span>AI 號誌控制（取代紅燈提醒）</h3><p>直行車輛已有紅綠燈管制，紅燈本身就是提醒，所以 TITAN 不再另外顯示「前方紅燈」，而是把偵測到的人流、車流即時交給路口號誌控制器：<b>等候的行人多</b>時提早切換小綠人；<b>沒有行人等候</b>時延長車輛綠燈，減少空等；偵測到<b>行走較慢的行人</b>（如長者、推嬰兒車）還沒走完時，自動延長小綠人秒數。每次調整的原因都會顯示在號誌上方與「AI 號誌控制」區。</p></div>
-                        <div class="pdesc" data-for="turn" hidden><h3><span class="num">5</span>轉彎前提醒與行人早開</h3><p>右轉車與同時亮綠燈的行人最容易衝突，加上 A 柱死角、大型車內輪差，駕駛常看不到行人。TITAN 偵測到轉彎斑馬線上有行人時，路口轉角的<b>「轉彎注意行人」預警號誌燈</b>會閃爍，看板與車載裝置同步提醒；沒有行人時燈號不亮，避免駕駛習慣後忽略。另外採用<b>「行人早開時相」</b>：轉彎斑馬線的小綠人比車輛綠燈早 3 秒亮，讓行人先走進駕駛的視線。若駕駛仍未及時反應，地面燈改為紅色快閃，提醒行人注意來車。</p></div>
+                        <div class="pdesc" data-for="turn" hidden><h3><span class="num">5</span>轉彎前提醒與行人早開</h3><p>右轉車與同時亮綠燈的行人最容易衝突，加上 A 柱死角、大型車內輪差，駕駛常看不到行人。TITAN 偵測到轉彎斑馬線上有行人時，吊掛在號誌懸臂下的<b>「轉彎注意行人」預警號誌燈</b>會閃爍（十字路口四個方向都有設置），看板與車載裝置同步提醒；沒有行人時燈號不亮，避免駕駛習慣後忽略。另外採用<b>「行人早開時相」</b>：轉彎斑馬線的小綠人比車輛綠燈早 3 秒亮，讓行人先走進駕駛的視線。若駕駛仍未及時反應，地面燈改為紅色快閃，提醒行人注意來車。</p></div>
                         <div class="pdesc" data-for="yield" hidden><h3><span class="num">6</span>直立警示柱與車速提醒</h3><p>斑馬線兩端設有<b>直立式 LED 警示柱</b>，行人穿越時閃爍並顯示行人圖示，駕駛平視就能看到，不必低頭找地面標線；地面燈也從小燈點改為沿斑馬線與停止線的<b>連續寬燈帶</b>。雷達同時量測來車速度，超過 50 km/h 時看板顯示目前車速並提醒減速，駕駛改善後顯示「謝謝減速」。<b>系統不記錄車牌、不做違規判定。</b></p></div>
+                        <div class="pdesc" data-for="twostage" hidden><h3><span class="num">7</span>機車兩段式左轉與台灣路口標線</h3><p>機車左轉時先直行進入路口，停進右前方的<b>「機車待轉區」</b>並轉向，等次要幹道綠燈再直行，完成左轉，避免與對向直行車衝突。路口也畫出停止線前的<b>「機車停等區」</b>、機慢車道與機車圖示、地面「慢」字與方向箭頭、路口紅線、次要幹道的<b>路邊停車格</b>，以及人行道上的<b>機車停車格</b>與導盲磚；兩側店面為台灣常見的<b>騎樓</b>。</p></div>
                     </div>
                 </div></div></div>
             </section>
@@ -1398,17 +1401,18 @@ function main() {
     scene.fog = sceneFog;
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1100);
-    const OVERVIEW_TARGET = V3(-6, 3.5, 5);
-    const OVERVIEW_OFFSET = V3(30, 13.5, 29);
+    const OVERVIEW_TARGET = V3(-13, 1, 9);
+    const OVERVIEW_OFFSET = V3(30, 34, 40);
     const VIEWS = {
         overview: { pos: V3(24, 17, 34), target: OVERVIEW_TARGET.clone() },
         lanes:    { pos: V3(5, 25, 25),  target: V3(-1, 0, 6.5) },
         tracking: { pos: V3(15, 7.5, 22), target: V3(0, 1, 6.5) },
-        relay:    { pos: V3(-4, 21, 36), target: V3(-14, 4, 5) },
+        relay:    { pos: V3(-8, 24, 42), target: V3(-22, 4, 5) },
         power:    { pos: V3(17, 12, 19), target: V3(-2, 8.5, -2) },
         yield:    { pos: V3(5, 9.5, 23), target: V3(-6.5, 0.8, 6.5) },
         signal:   { pos: V3(7, 11, 25), target: V3(-9, 2.6, 6) },
-        turn:     { pos: V3(-4, 13, 8.5), target: V3(-17, 0.3, -2.4) },
+        turn:     { pos: V3(6, 16, -11), target: V3(-14, 0, -0.5) },
+        twostage: { pos: V3(-3, 22, 19), target: V3(-17, 0, 1.5) },
     };
     // 依螢幕比例調整視角距離，直式螢幕拉遠以容納兩支路燈
     function viewScale() {
@@ -1491,82 +1495,246 @@ function main() {
     gridHelper.position.y = 0.004;
     scene.add(gridHelper);
 
-    const road = flatPlane(ROAD_LEN, ROAD_Z1 - ROAD_Z0, new THREE.MeshStandardMaterial({ color: 0x1d242e, roughness: 0.85, metalness: 0.15 }));
-    road.position.set(0, 0.012, (ROAD_Z0 + ROAD_Z1) / 2);
+    // ── 大型十字路口：主幹道（雙向＋分隔島）× 次要幹道（雙向＋路邊停車）──
+    // 主幹道：近側 z 1.5–12 往 -X（TITAN 展示方向）、分隔島 z 12–13.5、對向 z 13.5–24 往 +X
+    // 次要幹道：x -21 ~ -9.2；北向（+Z）走西半部、南向（-Z）走東半部，靠路緣各有一條停車帶
+    const MED_Z0 = 12, MED_Z1 = 13.5, OPP_Z1 = 24;
+    const NEAR_WALK_Z = -7.3, FAR_WALK_Z = 32.8;            // 人行道（含騎樓）外緣
+    const SR_X0 = -21, SR_X1 = -9.2, SR_X = (SR_X0 + SR_X1) / 2, SR_END = -150, SR_FAR = 150;
+    const SR_PARK = 2.4;
+    const NB_X = SR_X - 1.75, SB_X = SR_X + 1.75;            // 北向、南向車道中心
+    const TURN_X = SB_X;                                     // 主幹道右轉車轉入南向車道
+    const SXW_Z = -2.9, SXW_HALF = 1.1;                      // 近側（右轉車經過）的路口斑馬線
+    const NXW_Z = OPP_Z1 + (ROAD_Z0 - SXW_Z);                // 對側路口斑馬線
+    const SIDE_FADE_END = -60;
+    const CROSS_X = -7, WCROSS_X = SR_X0 - (SR_X1 - CROSS_X);
+    const STOP_X = -1.2, MOTO_STOP_X = -5.0;                 // 汽車停止線、機車停等區前緣
+    const OPP_STOP_X = 2 * SR_X - STOP_X, OPP_MOTO_STOP_X = 2 * SR_X - MOTO_STOP_X;
+    const NB_STOP_Z = SXW_Z - SXW_HALF - 0.6, SB_STOP_Z = NXW_Z + SXW_HALF + 0.6;
+    const MED_E = -4.8, MED_W = 2 * SR_X - MED_E;            // 分隔島端點（避開斑馬線）
+
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x1d242e, roughness: 0.85, metalness: 0.15 });
+    const road = flatPlane(ROAD_LEN, OPP_Z1 - ROAD_Z0, roadMat);
+    road.position.set(0, 0.012, (ROAD_Z0 + OPP_Z1) / 2);
     road.receiveShadow = true;
     scene.add(road);
+    [[SR_END, ROAD_Z0], [OPP_Z1, SR_FAR]].forEach(([a, b]) => {
+        const m = flatPlane(SR_X1 - SR_X0, b - a, roadMat);
+        m.position.set(SR_X, 0.012, (a + b) / 2);
+        m.receiveShadow = true;
+        scene.add(m);
+    });
 
-    // T 字路口：近側（車輛右側）接一條單向巷道，右轉車由此離開主線
-    const SR_X0 = -20.5, SR_X1 = -13.5, SR_X = (SR_X0 + SR_X1) / 2, SR_END = -60;
-    const SXW_Z = -2.9, SXW_HALF = 1.1;        // 轉彎斑馬線（橫越巷道口）
     const walkMat = new THREE.MeshStandardMaterial({ color: 0x2a323d, roughness: 0.9 });
     const curbMat = new THREE.MeshStandardMaterial({ color: 0x55606c, roughness: 0.7 });
     const L0 = -ROAD_LEN / 2, L1 = ROAD_LEN / 2;
+    function slab(x0, x1, z0, z1, h, mat) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, h, z1 - z0), mat);
+        m.position.set((x0 + x1) / 2, h / 2, (z0 + z1) / 2);
+        m.receiveShadow = true;
+        scene.add(m);
+        return m;
+    }
+    // 人行道（主幹道兩側、次要幹道兩側）
     [[L0, SR_X0], [SR_X1, L1]].forEach(([a, b]) => {
-        const w = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.18, 5.5), walkMat);
-        w.position.set((a + b) / 2, 0.09, -1.25);
-        w.receiveShadow = true;
-        scene.add(w);
-        const curb = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.22, 0.2), curbMat);
-        curb.position.set((a + b) / 2, 0.11, ROAD_Z0);
-        scene.add(curb);
+        slab(a, b, NEAR_WALK_Z, ROAD_Z0, 0.18, walkMat);
+        slab(a, b, OPP_Z1, FAR_WALK_Z, 0.18, walkMat);
+        slab(a, b, ROAD_Z0 - 0.1, ROAD_Z0 + 0.1, 0.22, curbMat);
+        slab(a, b, OPP_Z1 - 0.1, OPP_Z1 + 0.1, 0.22, curbMat);
     });
-    const farWalk = new THREE.Mesh(new THREE.BoxGeometry(ROAD_LEN, 0.18, 3.5), walkMat);
-    farWalk.position.set(0, 0.09, 13.75);
-    farWalk.receiveShadow = true;
-    scene.add(farWalk);
-    const farCurb = new THREE.Mesh(new THREE.BoxGeometry(ROAD_LEN, 0.22, 0.2), curbMat);
-    farCurb.position.set(0, 0.11, ROAD_Z1);
-    scene.add(farCurb);
-    const sideRoad = new THREE.Mesh(new THREE.PlaneGeometry(SR_X1 - SR_X0, ROAD_Z0 - SR_END), road.material);
-    sideRoad.rotation.x = -Math.PI / 2;
-    sideRoad.position.set(SR_X, 0.012, (ROAD_Z0 + SR_END) / 2);
-    sideRoad.receiveShadow = true;
-    scene.add(sideRoad);
-    [SR_X0, SR_X1].forEach((x) => {
-        const curb = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, ROAD_Z0 - SR_END), curbMat);
-        curb.position.set(x, 0.11, (ROAD_Z0 + SR_END) / 2);
-        scene.add(curb);
+    [[SR_END, NEAR_WALK_Z], [FAR_WALK_Z, SR_FAR]].forEach(([a, b]) => {
+        slab(SR_X0 - 6.1, SR_X0, a, b, 0.18, walkMat);
+        slab(SR_X1, SR_X1 + 6.1, a, b, 0.18, walkMat);
+    });
+    [[SR_END, ROAD_Z0], [OPP_Z1, SR_FAR]].forEach(([a, b]) => {
+        slab(SR_X0 - 0.1, SR_X0 + 0.1, a, b, 0.22, curbMat);
+        slab(SR_X1 - 0.1, SR_X1 + 0.1, a, b, 0.22, curbMat);
+    });
+    // 分隔島（斑馬線處斷開）
+    const medianMat = new THREE.MeshStandardMaterial({ color: 0x5d6b52, roughness: 0.95 });
+    [[L0, MED_W], [MED_E, L1]].forEach(([a, b]) => {
+        slab(a, b, MED_Z0, MED_Z1, 0.24, curbMat);
+        const top = slab(a + 0.15, b - 0.15, MED_Z0 + 0.12, MED_Z1 - 0.12, 0.26, medianMat);
+        top.position.y = 0.13;
     });
 
     const markMat = new THREE.MeshStandardMaterial({ color: 0xe6e6e6, roughness: 0.6, transparent: true, opacity: 1 });
+    const yellowMat = new THREE.MeshStandardMaterial({ color: 0xf2c230, roughness: 0.6, transparent: true, opacity: 1 });
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xd8352c, roughness: 0.6, transparent: true, opacity: 1 });
+    const tileMat = new THREE.MeshStandardMaterial({ color: 0xe0b828, roughness: 0.8 });
+    const paintMats = [markMat, yellowMat, redMat];
     const realMarks = new THREE.Group();
     scene.add(realMarks);
-    // 斑馬線位於 TITAN-01 前方、畫面中央；車輛往 -X 行駛，停止線在斑馬線上游（+X 側）
-    const CROSS_X = -7;
-    const STOP_X = -4;
-    [[L0, L1, ROAD_Z1 - 0.2], [L0, SR_X0 - 0.3, ROAD_Z0 + 0.2], [SR_X1 + 0.3, L1, ROAD_Z0 + 0.2]].forEach(([a, b, z]) => {
-        const m = flatPlane(b - a, 0.15, markMat);
-        m.position.set((a + b) / 2, 0.022, z);
-        realMarks.add(m);
-    });
-    // 轉彎斑馬線
-    for (let x = SR_X0 + 0.55; x < SR_X1 - 0.3; x += 1.1) {
-        const m = flatPlane(0.6, SXW_HALF * 2, markMat);
-        m.position.set(x + 0.3, 0.022, SXW_Z);
+    const MY = 0.022;
+    function lineX(x0, x1, z, w = 0.15, mat = markMat, y = MY) {
+        if (x1 - x0 < 0.2) return;
+        const m = flatPlane(x1 - x0, w, mat);
+        m.position.set((x0 + x1) / 2, y, z);
         realMarks.add(m);
     }
-    const CLIP_L = CROSS_X - 1.9, CLIP_R = STOP_X + 0.4;
-    [5, 8.5].forEach((z) => {
-        for (let x = -ROAD_LEN / 2 + 1; x < ROAD_LEN / 2 - 3; x += 6) {
-            const pieces = [];
-            const a = x, b = x + 3;
-            if (b <= CLIP_L || a >= CLIP_R) pieces.push([a, b]);
-            else {
-                if (a < CLIP_L) pieces.push([a, CLIP_L]);
-                if (b > CLIP_R) pieces.push([CLIP_R, b]);
-            }
-            pieces.forEach(([p0, p1]) => {
-                if (p1 - p0 < 0.4) return;
-                const m = flatPlane(p1 - p0, 0.15, markMat);
-                m.position.set((p0 + p1) / 2, 0.022, z);
-                realMarks.add(m);
-            });
+    function lineZ(z0, z1, x, w = 0.15, mat = markMat, y = MY) {
+        if (z1 - z0 < 0.2) return;
+        const m = flatPlane(w, z1 - z0, mat);
+        m.position.set(x, y, (z0 + z1) / 2);
+        realMarks.add(m);
+    }
+    function dashX(z, pieces) {
+        pieces.forEach(([a, b]) => {
+            for (let x = Math.ceil(a / 6) * 6; x < b; x += 6) lineX(Math.max(a, x), Math.min(b, x + 3), z);
+        });
+    }
+    // 近側車道（往 -X）：路緣線、機慢車道線、車道虛線、分隔島側邊線
+    const nearPieces = [[L0, WCROSS_X - 1.7], [STOP_X, L1]];
+    const oppPieces = [[L0, OPP_STOP_X], [CROSS_X + 1.6, L1]];
+    lineX(L0, SR_X0 - 0.3, ROAD_Z0 + 0.2); lineX(SR_X1 + 0.3, L1, ROAD_Z0 + 0.2);
+    lineX(L0, SR_X0 - 0.3, OPP_Z1 - 0.2); lineX(SR_X1 + 0.3, L1, OPP_Z1 - 0.2);
+    lineX(L0, MED_W, MED_Z0 - 0.2); lineX(MED_E, L1, MED_Z0 - 0.2);
+    lineX(L0, MED_W, MED_Z1 + 0.2); lineX(MED_E, L1, MED_Z1 + 0.2);
+    nearPieces.forEach(([a, b]) => lineX(a, b, 4.2, 0.18));
+    oppPieces.forEach(([a, b]) => lineX(a, b, 21.3, 0.18));
+    dashX(8.1, nearPieces);
+    dashX(17.4, oppPieces);
+    // 停止線（汽車）＋機車停等區前緣
+    const RW = ROAD_Z1 - ROAD_Z0, RZ = (ROAD_Z0 + ROAD_Z1) / 2, OZ = (MED_Z1 + OPP_Z1) / 2;
+    const stopLine = flatPlane(0.4, RW - 0.2, markMat);
+    stopLine.position.set(STOP_X, MY, RZ);
+    realMarks.add(stopLine);
+    lineZ(ROAD_Z0 + 0.1, ROAD_Z1 - 0.1, MOTO_STOP_X, 0.3);
+    lineZ(MED_Z1 + 0.1, OPP_Z1 - 0.1, OPP_STOP_X, 0.4);
+    lineZ(MED_Z1 + 0.1, OPP_Z1 - 0.1, OPP_MOTO_STOP_X, 0.3);
+    lineX(SR_X0 + SR_PARK, SR_X, NB_STOP_Z, 0.4);
+    lineX(SR_X, SR_X1 - SR_PARK, SB_STOP_Z, 0.4);
+    // 次要幹道：雙黃線、停車帶邊線、停車格、路口紅線
+    [[SR_END, NB_STOP_Z], [SB_STOP_Z, SR_FAR]].forEach(([a, b]) => {
+        lineZ(a, b, SR_X - 0.13, 0.12, yellowMat);
+        lineZ(a, b, SR_X + 0.13, 0.12, yellowMat);
+        lineZ(a, b, SR_X0 + SR_PARK, 0.13);
+        lineZ(a, b, SR_X1 - SR_PARK, 0.13);
+    });
+    const PARK_S = [], PARK_N = [];
+    for (let z = -14; z >= -62; z -= 6) PARK_S.push(z);
+    for (let z = 40; z <= 88; z += 6) PARK_N.push(z);
+    [...PARK_S, ...PARK_N].forEach((z) => {
+        lineX(SR_X0 + 0.1, SR_X0 + SR_PARK, z, 0.12);
+        lineX(SR_X1 - SR_PARK, SR_X1 - 0.1, z, 0.12);
+    });
+    lineZ(PARK_S[0] - 2, NB_STOP_Z, SR_X0 + 0.25, 0.15, redMat);
+    lineZ(PARK_S[0] - 2, NB_STOP_Z, SR_X1 - 0.25, 0.15, redMat);
+    lineZ(SB_STOP_Z, PARK_N[0], SR_X0 + 0.25, 0.15, redMat);
+    lineZ(SB_STOP_Z, PARK_N[0], SR_X1 - 0.25, 0.15, redMat);
+    [ROAD_Z0 + 0.36, OPP_Z1 - 0.36].forEach((z) => {
+        lineX(SR_X1 + 0.3, SR_X1 + 12, z, 0.15, redMat);
+        lineX(SR_X0 - 12, SR_X0 - 0.3, z, 0.15, redMat);
+    });
+    // 斑馬線（四個方向）
+    [CROSS_X, WCROSS_X].forEach((cx) => {
+        for (let z = ROAD_Z0 + 0.6; z < OPP_Z1 - 0.3; z += 1.1) {
+            const m = flatPlane(3.2, 0.6, markMat);
+            m.position.set(cx, MY, z + 0.3);
+            realMarks.add(m);
         }
     });
-    const stopLine = flatPlane(0.4, ROAD_Z1 - ROAD_Z0 - 0.4, markMat);
-    stopLine.position.set(STOP_X, 0.022, (ROAD_Z0 + ROAD_Z1) / 2);
-    realMarks.add(stopLine);
+    [SXW_Z, NXW_Z].forEach((cz) => {
+        for (let x = SR_X0 + 0.55; x < SR_X1 - 0.3; x += 1.1) {
+            const m = flatPlane(0.6, SXW_HALF * 2, markMat);
+            m.position.set(x + 0.3, MY, cz);
+            realMarks.add(m);
+        }
+    });
+
+    // 路面文字與圖示（以 heading 指定「字的上方」朝向行車方向）
+    function paintTex(w, h, draw) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const x = c.getContext('2d');
+        x.fillStyle = '#f2f2f2'; x.strokeStyle = '#f2f2f2';
+        draw(x, w, h);
+        const t = new THREE.CanvasTexture(c);
+        t.anisotropy = 4;
+        const m = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 0.6, depthWrite: false, opacity: 1 });
+        paintMats.push(m);
+        return m;
+    }
+    const PAINT = {
+        slow: paintTex(128, 256, (x, w, h) => {
+            x.save(); x.scale(1, 2.1); x.font = `900 118px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+            x.fillText('慢', w / 2, h / 2 / 2.1 + 4); x.restore();
+        }),
+        straight: paintTex(64, 256, (x) => {
+            x.fillRect(26, 70, 12, 180);
+            x.beginPath(); x.moveTo(32, 4); x.lineTo(58, 76); x.lineTo(6, 76); x.closePath(); x.fill();
+        }),
+        straightRight: paintTex(128, 256, (x) => {
+            x.fillRect(34, 70, 12, 180);
+            x.beginPath(); x.moveTo(40, 4); x.lineTo(64, 76); x.lineTo(16, 76); x.closePath(); x.fill();
+            x.lineWidth = 12; x.beginPath(); x.moveTo(40, 200); x.quadraticCurveTo(40, 130, 92, 130); x.stroke();
+            x.beginPath(); x.moveTo(124, 130); x.lineTo(88, 106); x.lineTo(88, 154); x.closePath(); x.fill();
+        }),
+        moto: paintTex(128, 256, (x) => {
+            x.lineWidth = 9;
+            x.beginPath(); x.arc(64, 40, 22, 0, Math.PI * 2); x.stroke();
+            x.beginPath(); x.arc(64, 210, 22, 0, Math.PI * 2); x.stroke();
+            x.fillRect(54, 60, 20, 130);
+            x.fillRect(30, 70, 68, 12);
+            x.fillRect(46, 130, 36, 50);
+        }),
+        motoBox: paintTex(512, 96, (x, w, h) => {
+            x.font = `900 64px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+            x.fillText('機 車 停 等 區', w / 2, h / 2 + 4);
+        }),
+        waitBox: paintTex(256, 96, (x, w, h) => {
+            x.font = `900 60px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+            x.fillText('機車待轉', w / 2, h / 2 + 4);
+        }),
+    };
+    function paint(mat, w, h, x, z, hx, hz) {
+        const g = new THREE.Group();
+        g.position.set(x, MY + 0.002, z);
+        g.rotation.y = Math.atan2(-hx, -hz);
+        g.add(flatPlane(w, h, mat));
+        realMarks.add(g);
+    }
+    // 近側（往 -X）
+    [[6.15, 'straightRight'], [10.05, 'straight']].forEach(([z, k]) => {
+        paint(PAINT.slow, 1.4, 2.8, 16, z, -1, 0);
+        paint(PAINT[k], k === 'straight' ? 0.7 : 1.4, 2.8, 6, z, -1, 0);
+    });
+    paint(PAINT.straightRight, 1.2, 2.4, 6, 2.85, -1, 0);
+    [24, 60, -44, -80].forEach((x) => paint(PAINT.moto, 1.0, 2.0, x, 2.85, -1, 0));
+    paint(PAINT.motoBox, 8.6, 1.6, (STOP_X + MOTO_STOP_X) / 2, RZ, -1, 0);
+    // 對向（往 +X）
+    [[15.45, 'straight'], [19.35, 'straightRight']].forEach(([z, k]) => {
+        paint(PAINT.slow, 1.4, 2.8, 2 * SR_X - 16, z, 1, 0);
+        paint(PAINT[k], k === 'straight' ? 0.7 : 1.4, 2.8, 2 * SR_X - 6, z, 1, 0);
+    });
+    paint(PAINT.straightRight, 1.2, 2.4, 2 * SR_X - 6, 22.65, 1, 0);
+    [-54, -90, 20, 56].forEach((x) => paint(PAINT.moto, 1.0, 2.0, x, 22.65, 1, 0));
+    paint(PAINT.motoBox, 8.6, 1.6, (OPP_STOP_X + OPP_MOTO_STOP_X) / 2, OZ, 1, 0);
+    // 次要幹道
+    paint(PAINT.slow, 1.3, 2.6, NB_X, NB_STOP_Z - 12, 0, 1);
+    paint(PAINT.straight, 0.6, 2.4, NB_X, NB_STOP_Z - 5, 0, 1);
+    paint(PAINT.slow, 1.3, 2.6, SB_X, SB_STOP_Z + 12, 0, -1);
+    paint(PAINT.straight, 0.6, 2.4, SB_X, SB_STOP_Z + 5, 0, -1);
+    // 機車兩段式左轉待轉區：近側往 -X 的機車在西半部（北向車道前方）等候；對向的在東半部
+    const WAIT_BOX = { x0: NB_X - 1.5, x1: NB_X + 1.5, z0: -1.3, z1: 1.15 };
+    function waitBox(b, hz) {
+        lineX(b.x0, b.x1, b.z0, 0.12); lineX(b.x0, b.x1, b.z1, 0.12);
+        lineZ(b.z0, b.z1, b.x0, 0.12); lineZ(b.z0, b.z1, b.x1, 0.12);
+        paint(PAINT.waitBox, 2.6, 1.0, (b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2, 0, hz);
+    }
+    waitBox(WAIT_BOX, 1);
+    waitBox({ x0: 2 * SR_X - WAIT_BOX.x1, x1: 2 * SR_X - WAIT_BOX.x0, z0: OPP_Z1 + ROAD_Z0 - WAIT_BOX.z1, z1: OPP_Z1 + ROAD_Z0 - WAIT_BOX.z0 }, -1);
+    // 人行道導盲磚
+    const TY = 0.183;
+    function tile(x0, x1, z0, z1) {
+        const m = flatPlane(x1 - x0, z1 - z0, tileMat);
+        m.position.set((x0 + x1) / 2, TY, (z0 + z1) / 2);
+        scene.add(m);
+    }
+    [[L0, SR_X0 - 1.2], [SR_X1 + 1.2, L1]].forEach(([a, b]) => { tile(a, b, -1.2, -0.9); tile(a, b, 26.0, 26.3); });
+    [[SR_END, NEAR_WALK_Z], [FAR_WALK_Z, SR_FAR]].forEach(([a, b]) => { tile(SR_X0 - 2.2, SR_X0 - 1.9, a, b); tile(SR_X1 + 1.9, SR_X1 + 2.2, a, b); });
+    [CROSS_X, WCROSS_X].forEach((cx) => { tile(cx - 0.6, cx + 0.6, 0.4, 1.3); tile(cx - 0.6, cx + 0.6, OPP_Z1 + 0.2, OPP_Z1 + 1.1); });
+    [SXW_Z, NXW_Z].forEach((cz) => { tile(SR_X0 - 1.1, SR_X0 - 0.2, cz - 0.6, cz + 0.6); tile(SR_X1 + 0.2, SR_X1 + 1.1, cz - 0.6, cz + 0.6); });
 
     // 白天／夜晚場景
     const THEMES = {
@@ -1676,11 +1844,14 @@ function main() {
     const awningColors = [0xc0392b, 0x2e86c1, 0x27ae60, 0xd68910, 0x7d3c98, 0x34495e].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 }));
     const tankGeo = new THREE.CylinderGeometry(0.55, 0.55, 1.1, 14);
 
-    // 建物原點在「正面底部中央」，本體往 -Z 延伸、正面朝 +Z
-    function building(x, frontZ, facing, w, floors, d) {
+    // 建物原點在「正面底部中央」，本體往 -Z 延伸、正面朝 +Z；rotY 轉向。騎樓：一樓退縮、二樓以上懸挑、前緣立柱
+    const ARC = 2.4;
+    const colMat = new THREE.MeshStandardMaterial({ color: 0xbdb6aa, roughness: 0.85 });
+    function building(x, frontZ, rotY, w, floors, d, arcade = true) {
         const g = new THREE.Group();
         g.position.set(x, 0, frontZ);
-        if (facing < 0) g.rotation.y = Math.PI;
+        g.rotation.y = rotY;
+        if (arcade) floors = Math.max(2, floors);
         const wall = pick(WALLS);
         const add = (geo, mat, px, py, pz) => {
             const m = new THREE.Mesh(geo, mat);
@@ -1689,16 +1860,23 @@ function main() {
             g.add(m);
             return m;
         };
-        // 一樓店面
-        add(new THREE.BoxGeometry(w, 3, d), wallMat(wall), 0, 1.5, -d / 2);
+        const back = arcade ? ARC : 0;
+        // 一樓店面（騎樓時退縮）
+        add(new THREE.BoxGeometry(w, 3, d - back), wallMat(wall), 0, 1.5, -back - (d - back) / 2);
         const glass = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.78, 2.0), glassMat);
-        glass.position.set(0, 1.2, 0.02);
+        glass.position.set(0, 1.2, -back + 0.02);
         g.add(glass);
-        const aw = add(new THREE.BoxGeometry(w * 0.86, 0.1, 1.2), pick(awningColors), 0, 2.55, 0.5);
-        aw.rotation.x = 0.28;
+        if (arcade) {
+            const xs = [-w / 2 + 0.3, w / 2 - 0.3];
+            if (w > 8) xs.push(0);
+            xs.forEach((cx) => add(new THREE.BoxGeometry(0.45, 3, 0.45), colMat, cx, 1.5, -0.3));
+        } else {
+            const aw = add(new THREE.BoxGeometry(w * 0.86, 0.1, 1.2), pick(awningColors), 0, 2.55, 0.5);
+            aw.rotation.x = 0.28;
+        }
         const [name, bg] = pick(SHOPS);
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w * 0.72, 5.6), 0.8), signMat(name, bg));
-        sign.position.set(0, 3.45, 0.03);
+        sign.position.set(0, arcade ? 3.5 : 3.45, 0.03);
         g.add(sign);
         // 樓上住宅（正面貼窗戶貼圖）
         if (floors > 1) {
@@ -1712,31 +1890,46 @@ function main() {
         if (srand() < 0.45) add(tankGeo, tankMat, (srand() - 0.5) * (w - 2), top + 0.85, -d * 0.6);
         scenery.add(g);
     }
+    const nearCross = (c0, c1) => c1 > SR_X0 - 6.6 && c0 < SR_X1 + 6.6;
 
-    // 近側（燈桿後方）整排店面；燈桿 TITAN-01 後方留一處小廣場
+    // 主幹道近側（燈桿後方）整排騎樓店面；燈桿 TITAN-01 後方留一處小廣場
     for (let x = -150; x < 150;) {
         const w = 7 + srand() * 4;
         const cx = x + w / 2;
-        const nearSide = cx + w / 2 > SR_X0 - 1.2 && cx - w / 2 < SR_X1 + 1.2;
-        if (!(cx > -7 && cx < 9) && !nearSide) building(cx, -4.6, 1, w, 2 + Math.floor(srand() * 3), 8);
+        if (!(cx > -6 && cx < 9) && !nearCross(cx - w / 2, cx + w / 2)) building(cx, NEAR_WALK_Z + ARC + 0.1, 0, w, 2 + Math.floor(srand() * 3), 8);
         x += w + (srand() < 0.2 ? 2.5 : 0.4);
     }
-    // 鏡頭側：避開主要視線，只在兩端設置較矮的店面
+    // 鏡頭側：避開主要視線，只在兩端設置店面
     for (let x = -150; x < 150;) {
         const w = 7 + srand() * 4;
         const cx = x + w / 2;
-        if (cx < -30 || cx > 36) building(cx, 16.4, -1, w, 1 + Math.floor(srand() * 2), 7);
+        if (cx < -36 || cx > 36) building(cx, FAR_WALK_Z - ARC - 0.1, Math.PI, w, 2 + Math.floor(srand() * 2), 7);
         x += w + (srand() < 0.25 ? 3 : 0.5);
     }
+    // 次要幹道兩側騎樓（南段較高、北段靠鏡頭較矮）
+    [[-14.5, -110, -1], [40, 110, 1]].forEach(([z0, z1, dir]) => {
+        for (let z = z0; dir > 0 ? z < z1 : z > z1;) {
+            const w = 7 + srand() * 4;
+            const cz = z + dir * w / 2;
+            const fl = dir < 0 ? 2 + Math.floor(srand() * 3) : 2;
+            building(SR_X0 - 6.1 + ARC + 0.1, cz, Math.PI / 2, w, fl, 8);
+            building(SR_X1 + 6.1 - ARC - 0.1, cz, -Math.PI / 2, w, fl, 8);
+            z += dir * (w + 0.4);
+        }
+    });
 
-    // 行道樹（InstancedMesh）
+    // 行道樹（InstancedMesh）＋分隔島灌木
     const treeSpots = [];
-    const avoidX = [0, -26, 26, 52, -52, -78, CROSS_X - 2.6];
+    const avoidX = [0, -36.5, 26, 52, -52, -78, 40, -40, 78];
     for (let x = -120; x <= 120; x += 9) {
         const jx = x + (srand() - 0.5) * 2;
-        if (!avoidX.some((a) => Math.abs(jx - a) < 3) && !(jx > -11 && jx < -3) && !(jx > SR_X0 - 2 && jx < SR_X1 + 2)) treeSpots.push([jx, -3.6]);
+        if (avoidX.some((a) => Math.abs(jx - a) < 3) || nearCross(jx - 1, jx + 1) || (jx > -6 && jx < 3)) continue;
+        treeSpots.push([jx, -4.0]);
+        if (jx < -40 || jx > 36) treeSpots.push([jx + 2, 29.2]);
     }
-    for (let x = -120; x <= 120; x += 11) if (x < -34 || x > 40) treeSpots.push([x + (srand() - 0.5) * 3, 15.6]);
+    [[-16, -100], [36, 100]].forEach(([a, b]) => {
+        for (let z = a; a < 0 ? z > b : z < b; z += a < 0 ? -10 : 10) { treeSpots.push([SR_X0 - 3.4, z]); treeSpots.push([SR_X1 + 3.4, z - 5]); }
+    });
     const trunkGeo = new THREE.CylinderGeometry(0.13, 0.18, 1.8, 7);
     const crownGeo = new THREE.IcosahedronGeometry(1.15, 0);
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a32, roughness: 0.9 });
@@ -1746,7 +1939,7 @@ function main() {
     const dummy = new THREE.Object3D();
     treeSpots.forEach(([x, z], i) => {
         const s = 0.85 + srand() * 0.4;
-        const baseY = z > ROAD_Z1 && z < 15.5 || z < ROAD_Z0 ? 0.18 : 0;
+        const baseY = 0.18;
         dummy.position.set(x, baseY + 0.9 * s, z); dummy.scale.setScalar(s); dummy.rotation.set(0, 0, 0); dummy.updateMatrix();
         trunks.setMatrixAt(i, dummy.matrix);
         dummy.position.set(x, baseY + 2.5 * s, z); dummy.scale.set(s * 1.1, s * 1.15, s * 1.1); dummy.rotation.set(0, srand() * 3, 0); dummy.updateMatrix();
@@ -1756,13 +1949,13 @@ function main() {
     });
     trunks.castShadow = crowns.castShadow = true;
     scenery.add(trunks, crowns);
-    // 鏡頭側中段只種低矮灌木，避免擋住道路
+    // 分隔島低矮灌木
     const bushSpots = [];
-    for (let x = -30; x <= 36; x += 1.9) if (srand() < 0.8) bushSpots.push([x + (srand() - 0.5) * 0.8, 16.6 + (srand() - 0.5) * 0.5]);
+    for (let x = -120; x <= 120; x += 1.7) if ((x < MED_W - 1 || x > MED_E + 1) && srand() < 0.85) bushSpots.push([x + (srand() - 0.5) * 0.6, (MED_Z0 + MED_Z1) / 2]);
     const bushes = new THREE.InstancedMesh(crownGeo, crownMat, bushSpots.length);
     bushSpots.forEach(([x, z], i) => {
         const s = 0.45 + srand() * 0.2;
-        dummy.position.set(x, 0.32, z); dummy.scale.set(s * 1.2, s * 0.62, s); dummy.rotation.set(0, srand() * 3, 0); dummy.updateMatrix();
+        dummy.position.set(x, 0.52, z); dummy.scale.set(s * 1.2, s * 0.62, s); dummy.rotation.set(0, srand() * 3, 0); dummy.updateMatrix();
         bushes.setMatrixAt(i, dummy.matrix);
     });
     bushes.castShadow = true;
@@ -1831,11 +2024,6 @@ function main() {
         crownMat.color.setHex(night ? 0x2f5a30 : 0x4f8a43);
     });
     themeHooks.forEach((fn) => fn(themeKey));
-    for (let z = 2.1; z < ROAD_Z1 - 0.3; z += 1.1) {
-        const m = flatPlane(3.2, 0.6, markMat);
-        m.position.set(CROSS_X, 0.022, z + 0.3);
-        realMarks.add(m);
-    }
 
     // =====================================================================
     // 4. 材質
@@ -1884,10 +2072,11 @@ function main() {
     // 5. TITAN 路燈模型
     // =====================================================================
     const poleTags = [];
+    const FAR_POLE_ZT = OPP_Z1 + 2.8;   // 對側人行道上的燈桿
     function createTitanPole(px, name, { flows = false, far = false, light = true } = {}) {
         const g = new THREE.Group();
         // far：設在對側人行道，整支燈桿轉 180° 讓燈臂伸向車道
-        g.position.set(px, 0, far ? 13.5 : 0);
+        g.position.set(px, 0, far ? FAR_POLE_ZT : 0);
         if (far) g.rotation.y = Math.PI;
         const parts = {};
         const add = (mesh, parent = g, shadow = true) => {
@@ -2117,7 +2306,7 @@ function main() {
     }
 
     const pole1 = createTitanPole(0, 'TITAN-01', { flows: true });
-    const POLE2_X = -26;
+    const POLE2_X = -36.5;
     const pole2 = createTitanPole(POLE2_X, 'TITAN-02');
     // 沿線增設的 TITAN 安全提醒節點（兩側人行道交錯設置）
     const extraPoles = [
@@ -2200,7 +2389,7 @@ function main() {
         const live = (k) => boardMsgs[k] && boardMsgs[k].until > simT;
         let kind = null, data = {};
         if (live('alert')) kind = 'alert';
-        else if (peds.some((p) => p.state === 'cross')) kind = 'ped';
+        else if (peds.some((p) => p.cw === 'E' && p.state === 'cross')) kind = 'ped';
         else {
             for (const k of BOARD_PRI) if (live(k)) { kind = k; data = boardMsgs[k].data; break; }
         }
@@ -2235,9 +2424,9 @@ function main() {
         std: { bounds: [1.5, 5, 8.5, 12], labels: ['a 車道', 'b 車道', 'c 車道'], names: ['a', 'b', 'c'] },
         alt: { bounds: [1.5, 4.2, 8.1, 12], labels: ['機慢車道', 'a 車道', 'b 車道'], names: ['機慢', 'a', 'b'] },
     };
-    let layoutKey = 'std';
-    const laneBounds = LAYOUTS.std.bounds.slice();
-    let laneNames = LAYOUTS.std.names;
+    let layoutKey = 'alt';   // 預設：機慢車道＋2 車道（與路面實際標線一致）
+    const laneBounds = LAYOUTS[layoutKey].bounds.slice();
+    let laneNames = LAYOUTS[layoutKey].names;
 
     const virtualGroup = new THREE.Group();
     scene.add(virtualGroup);
@@ -2256,7 +2445,7 @@ function main() {
     });
     const laneLabels = [0, 1, 2].map((i) => {
         const s = makeLabel({ w: 300, h: 96, height: 0.85 });
-        s.userData.draw([LAYOUTS.std.labels[i]], { accent: '#3EF0FF' });
+        s.userData.draw([LAYOUTS[layoutKey].labels[i]], { accent: layoutKey === 'std' ? '#3EF0FF' : '#F0B44C' });
         s.position.set(12.5, 0.55, LANE_Z[i]);
         virtualGroup.add(s);
         return s;
@@ -2268,7 +2457,7 @@ function main() {
     roi.computeLineDistances();
     virtualGroup.add(roi);
 
-    const NODE_SPLIT = -13;
+    const NODE_SPLIT = WCROSS_X - 4.5;
     const gate = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_Z1 - ROAD_Z0, 2.6),
         new THREE.MeshBasicMaterial({ color: 0xe040fb, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false }));
     gate.rotation.y = Math.PI / 2;
@@ -2317,10 +2506,11 @@ function main() {
     const FADE_LEN = 14;    // 車輛在道路遠端淡入／淡出的距離
     const CHANGE_LEN = 8;
     const CAR_ACC = 3.5, CAR_DEC = 5;      // 起步加速度、煞車減速度
-    const TURN_P = 0.6;                    // 最右側車道車輛每趟右轉進巷道的機率
+    const TURN_P = 0.6;                    // 最右側車道車輛每趟右轉進次要幹道的機率
     const BLIND_P = 0.6;                   // 右轉時行人落在 A 柱死角、駕駛沒注意到的機率
     const TURN_V = 2.6;                    // 轉彎車速
-    const Z_TURN_END = 0.6;                // 轉彎完成、進入巷道的位置
+    const Z_TURN_END = 0.6;                // 轉彎完成、進入次要幹道的位置（最低）
+    const TURN_XS_MAX = CROSS_X - 2.6;    // 開始轉彎的位置不可在斑馬線上
     const TURN_REMIND = 16;                // 距轉彎點多遠開始提醒
     const SPEEDER_P = 0.35;                // 每趟隨機「車速偏快」的駕駛機率
     const KMH = 8.9;                       // 場景速度換算 km/h（5.4 ≈ 48 km/h）
@@ -2484,7 +2674,7 @@ function main() {
     function updateFade(c, dt) {
         c.appear = Math.min(1, c.appear + dt * 1.2);
         const a = c.turnPhase === 'side'
-            ? Math.min(c.appear, clamp((c.z - (SR_END + 12)) / FADE_LEN, 0, 1))
+            ? Math.min(c.appear, clamp((c.z - SIDE_FADE_END) / FADE_LEN, 0, 1))
             : Math.min(c.appear, clamp((X_START - c.x) / FADE_LEN, 0, 1), clamp((c.x - X_END) / FADE_LEN, 0, 1));
         c.g.visible = a > 0.02;
         if (a >= 0.999) {
@@ -2585,6 +2775,207 @@ function main() {
     }
 
     const cars = carDefs.map(makeCar);
+    // 預設為「機慢車道＋2 車道」配置，機車一開始就在機慢車道上
+    if (layoutKey === 'alt') [10, 40, 70].forEach((x, i) => activate(cars[FIRST_SCOOTER + i], x));
+
+    // =====================================================================
+    // 8-A. 對向與次要幹道車流（正常行駛、依號誌停等，不另外提醒）
+    // =====================================================================
+    function cloneMats(g, keep) {
+        const matMap = new Map(keep.map((m) => [m, m]));
+        g.traverse((o) => {
+            if (!o.isMesh) return;
+            if (!matMap.has(o.material)) matMap.set(o.material, o.material.clone());
+            o.material = matMap.get(o.material);
+        });
+        return [...matMap.values()];
+    }
+    function fadeMats(o, a) {
+        o.g.visible = a > 0.02;
+        if (a >= 0.999) {
+            if (o.faded) { o.mats.forEach((m) => { m.transparent = false; m.opacity = 1; m.needsUpdate = true; }); o.faded = false; }
+            return;
+        }
+        o.mats.forEach((m) => { if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } m.opacity = a; });
+        o.faded = true;
+    }
+    const OPP = { axis: 'x', dir: 1, sig: 'main', stop: OPP_STOP_X, stopMoto: OPP_MOTO_STOP_X, sStart: -115, sEnd: 115 };
+    const NB = { axis: 'z', dir: 1, lat: NB_X, sig: 'cross', stop: NB_STOP_Z, sStart: -100, sEnd: 115 };
+    const SB = { axis: 'z', dir: -1, lat: SB_X, sig: 'cross', stop: SB_STOP_Z, sStart: 115, sEnd: -100 };
+    const simpleDefs = [
+        { ...OPP, lat: 15.45, s: -70, color: 0xc9ccd1 },
+        { ...OPP, lat: 19.35, s: -38, color: 0x8b2635 },
+        { ...OPP, lat: 15.45, s: 12, color: 0x3d5a80 },
+        { ...OPP, lat: 19.35, s: 52, color: 0xf2c230 },          // 計程車
+        { ...OPP, lat: 22.65, s: -55, scooter: true, color: 0x7fb069, jacket: 0x3d405b, helmet: 0xffffff },
+        { ...OPP, lat: 22.65, s: 28, scooter: true, color: 0xe76f51, jacket: 0x264653, helmet: 0xf2c14e },
+        { ...NB, s: -48, color: 0x5c677d },
+        { ...NB, s: -22, color: 0xf2c230 },
+        { ...SB, s: 62, color: 0x2a9d8f },
+        { ...SB, s: 88, color: 0xbcb8b1 },
+    ];
+    function makeSimple(def) {
+        const g = new THREE.Group();
+        const tailMat = carShared.tail.clone();
+        if (def.scooter) buildScooter(g, def, tailMat); else buildCarBody(g, def, tailMat);
+        scene.add(g);
+        const v = {
+            def, g, tailMat, mats: cloneMats(g, [tailMat]), scooter: !!def.scooter, half: def.scooter ? 0.95 : 1.9,
+            axisX: def.axis === 'x', dir: def.dir, s: def.s, active: true, faded: false,
+            maxV: def.scooter ? 4.6 : 5.0, hx: def.axis === 'x' ? def.dir : 0, hz: def.axis === 'x' ? 0 : def.dir,
+        };
+        v.v = v.maxV;
+        placeSimple(v);
+        return v;
+    }
+    function placeSimple(v) {
+        v.x = v.axisX ? v.s : v.def.lat;
+        v.z = v.axisX ? v.def.lat : v.s;
+        v.g.position.set(v.x, 0, v.z);
+        v.g.rotation.y = Math.atan2(v.hz, -v.hx);
+    }
+    function updateSimple(v, dt) {
+        let limit = Math.min(aheadGap(v, v.x, v.z, v.hx, v.hz, v.half), pedGap(v.x, v.z, v.hx, v.hz, v.half));
+        const col = v.def.sig === 'main' ? signal.car : signal.cross;
+        const stopAt = v.scooter && v.def.stopMoto !== undefined ? v.def.stopMoto : v.def.stop;
+        const dist = (stopAt - (v.s + v.dir * v.half)) * v.dir;
+        if (dist > -0.3 && (col === 'red' || (col === 'yellow' && dist >= (v.v * v.v) / (2 * CAR_DEC) - 0.3))) limit = Math.min(limit, dist - 0.1);
+        const target = limit === Infinity ? v.maxV : Math.min(v.maxV, Math.sqrt(2 * CAR_DEC * Math.max(0, limit)));
+        v.v = target < v.v ? target : Math.min(target, v.v + CAR_ACC * dt);
+        v.tailMat.color.setHex(target < v.maxV - 0.3 ? 0xff3b2f : 0xb3241c);
+        v.s += v.dir * v.v * dt;
+        if ((v.s - v.def.sEnd) * v.dir > 0) v.s = v.def.sStart - v.dir * 4;
+        placeSimple(v);
+        fadeMats(v, Math.min(clamp((v.s - v.def.sStart) * v.dir / FADE_LEN, 0, 1), clamp((v.def.sEnd - v.s) * v.dir / FADE_LEN, 0, 1)));
+    }
+    const sveh = simpleDefs.map(makeSimple);
+
+    // =====================================================================
+    // 8-B. 機車兩段式左轉：直行到待轉區 → 轉向 → 等次要幹道綠燈 → 直行完成左轉
+    // =====================================================================
+    const tsG = new THREE.Group();
+    const tsTail = carShared.tail.clone();
+    buildScooter(tsG, { color: 0x4cc9f0, jacket: 0x1d3557, helmet: 0xffd166 }, tsTail);
+    const tsLabel = makeLabel({ w: 640, h: 150, height: 1.0 });
+    tsLabel.position.set(0, 2.55, 0);
+    tsG.add(tsLabel);
+    scene.add(tsG);
+    const WAIT_CZ = (WAIT_BOX.z0 + WAIT_BOX.z1) / 2;
+    const ts = { g: tsG, tailMat: tsTail, mats: cloneMats(tsG, [tsTail]), faded: false, half: 0.95, active: true, label: tsLabel, lastText: '', toastShown: false };
+    function resetTs() {
+        Object.assign(ts, { state: 'approach', x: X_START + 22, z: laneCenter(0), hx: -1, hz: 0, v: 4.4, yaw: 0, u: 0 });
+    }
+    resetTs();
+    function tsStatus(text, css) {
+        if (text === ts.lastText) return;
+        ts.lastText = text;
+        tsLabel.userData.draw(['機車 M-04  ·  兩段式左轉', text], { accent: css });
+    }
+    function updateTs(dt) {
+        const st = ts.state;
+        if (st === 'approach' || st === 'go') {
+            const hx = st === 'go' ? 0 : -1, hz = st === 'go' ? 1 : 0;
+            let limit = Math.min(aheadGap(ts, ts.x, ts.z, hx, hz, ts.half), pedGap(ts.x, ts.z, hx, hz, ts.half));
+            if (st === 'approach') {
+                const dist = ts.x - ts.half - MOTO_STOP_X;
+                if (dist > -0.3 && (signal.car === 'red' || (signal.car === 'yellow' && dist >= (ts.v * ts.v) / (2 * CAR_DEC) - 0.3))) limit = Math.min(limit, dist - 0.1);
+            }
+            const target = limit === Infinity ? 4.4 : Math.min(4.4, Math.sqrt(2 * CAR_DEC * Math.max(0, limit)));
+            ts.v = target < ts.v ? target : Math.min(target, ts.v + CAR_ACC * dt);
+            ts.hx = hx; ts.hz = hz;
+            if (st === 'approach') {
+                ts.x -= ts.v * dt;
+                ts.z += (laneCenter(0) - ts.z) * Math.min(1, dt * 2.5);
+                if (ts.x <= NB_X + 3.4) {
+                    ts.state = 'enter';
+                    ts.u = 0;
+                    ts.p0 = V3(ts.x, 0, ts.z); ts.p1 = V3(NB_X + 0.3, 0, ts.z); ts.p2 = V3(NB_X, 0, WAIT_CZ);
+                    ts.len = ts.p0.distanceTo(ts.p1) + ts.p1.distanceTo(ts.p2);
+                }
+            } else {
+                ts.z += ts.v * dt;
+                if (ts.z > 95) resetTs();
+            }
+            ts.yaw = Math.atan2(ts.hz, -ts.hx);
+        } else if (st === 'enter') {
+            ts.v = Math.max(1.6, ts.v - CAR_DEC * dt);
+            ts.u = Math.min(1, ts.u + ts.v * dt / ts.len);
+            const u = ts.u, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
+            ts.x = a * ts.p0.x + b * ts.p1.x + c * ts.p2.x;
+            ts.z = a * ts.p0.z + b * ts.p1.z + c * ts.p2.z;
+            const tx = 2 * (1 - u) * (ts.p1.x - ts.p0.x) + 2 * u * (ts.p2.x - ts.p1.x);
+            const tz = 2 * (1 - u) * (ts.p1.z - ts.p0.z) + 2 * u * (ts.p2.z - ts.p1.z);
+            const n = Math.hypot(tx, tz) || 1;
+            ts.hx = tx / n; ts.hz = tz / n;
+            ts.yaw = Math.atan2(ts.hz, -ts.hx);
+            if (u >= 1) { ts.state = 'pivot'; ts.v = 0; }
+        } else if (st === 'pivot') {
+            // 在待轉區內原地轉向，車頭朝向次要幹道（+Z）
+            const goal = Math.PI / 2;
+            let d = goal - ts.yaw;
+            if (d < -Math.PI) d += Math.PI * 2;
+            ts.yaw += Math.sign(d) * Math.min(Math.abs(d), dt * 2.4);
+            ts.hx = -Math.cos(ts.yaw); ts.hz = Math.sin(ts.yaw);
+            if (Math.abs(d) < 0.02) {
+                ts.yaw = goal; ts.hx = 0; ts.hz = 1; ts.state = 'wait';
+                if (!ts.toastShown) {
+                    ts.toastShown = true;
+                    toast('🛵 機車兩段式左轉：先直行到「機車待轉區」，轉向等候，次要幹道綠燈後再直行完成左轉', 'info', 4800);
+                }
+            }
+        } else if (st === 'wait') {
+            ts.v = 0;
+            if (signal.cross === 'green') ts.state = 'go';
+        }
+        ts.tailMat.color.setHex(ts.v < 0.5 || st === 'enter' ? 0xff3b2f : 0xb3241c);
+        tsG.position.set(ts.x, 0, ts.z);
+        tsG.rotation.y = ts.yaw;
+        fadeMats(ts, st === 'go' ? clamp((95 - ts.z) / FADE_LEN, 0, 1) : st === 'approach' ? clamp((X_START + 22 - ts.x) / FADE_LEN, 0, 1) : 1);
+        const near = ts.x < 24 && ts.z < 45;
+        tsLabel.visible = near && showPedLayer;
+        if (!near) return;
+        if (st === 'approach') tsStatus(ts.x - ts.half > MOTO_STOP_X + 0.5 && signal.car !== 'green' && ts.v < 0.5 ? '⏸ 機車停等區等候綠燈' : '直行進入路口', '#56E0F0');
+        else if (st === 'enter' || st === 'pivot') tsStatus('進入機車待轉區', '#F0B44C');
+        else if (st === 'wait') tsStatus('⏸ 待轉區等候次要幹道綠燈', '#F0B44C');
+        else tsStatus('✓ 次要幹道綠燈・直行完成左轉', '#7BC88F');
+    }
+
+    // =====================================================================
+    // 8-C. 路邊停車（汽車停車格、人行道機車格）
+    // =====================================================================
+    function parkedCar(x, z, yaw, color) {
+        const g = new THREE.Group();
+        buildCarBody(g, { color }, carShared.tail);
+        g.position.set(x, 0, z);
+        g.rotation.y = yaw;
+        scenery.add(g);
+    }
+    const PW = SR_X0 + SR_PARK / 2, PE = SR_X1 - SR_PARK / 2;
+    [[PW, -17, 0x6c757d], [PW, -35, 0xe9ecef], [PW, -47, 0x9d0208], [PW, 43, 0x495057], [PW, 61, 0xf2c230]].forEach(([x, z, c]) => parkedCar(x, z, Math.PI / 2, c));
+    [[PE, -23, 0x1d3557], [PE, -29, 0xadb5bd], [PE, -53, 0x588157], [PE, 49, 0xe5e5e5], [PE, 73, 0x8d99ae]].forEach(([x, z, c]) => parkedCar(x, z, -Math.PI / 2, c));
+    const pScootGeo = { body: new THREE.BoxGeometry(1.5, 0.45, 0.42), seat: new THREE.BoxGeometry(0.7, 0.12, 0.38), wheel: new THREE.CylinderGeometry(0.24, 0.24, 0.12, 12), front: new THREE.BoxGeometry(0.18, 0.75, 0.42) };
+    const pScootMats = [0xd62828, 0x457b9d, 0xf1faee, 0x2a9d8f, 0xffb703, 0x6d6875, 0x1d3557].map((c) => new THREE.MeshStandardMaterial({ color: c, metalness: 0.4, roughness: 0.4 }));
+    function parkedScooter(x, z, yaw) {
+        const g = new THREE.Group();
+        const paint = pick(pScootMats);
+        const add = (geo, mat, px, py, pz, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz); m.rotation.x = rx; m.castShadow = true; g.add(m); };
+        add(pScootGeo.body, paint, 0.1, 0.55, 0);
+        add(pScootGeo.seat, carShared.dark, 0.25, 0.83, 0);
+        add(pScootGeo.front, paint, -0.6, 0.75, 0);
+        add(pScootGeo.wheel, carShared.tire, -0.55, 0.24, 0, Math.PI / 2);
+        add(pScootGeo.wheel, carShared.tire, 0.6, 0.24, 0, Math.PI / 2);
+        g.position.set(x, 0.18, z);
+        g.rotation.y = yaw;
+        scenery.add(g);
+    }
+    function motoRow(x0, x1, z0, z1, yaw) {
+        for (let z = z0; z <= z1 + 0.01; z += 0.95) lineX(x0, x1, z, 0.07, markMat, 0.186);
+        lineZ(z0, z1, x0, 0.07, markMat, 0.186);
+        for (let z = z0 + 0.475; z < z1; z += 0.95) if (srand() < 0.72) parkedScooter((x0 + x1) / 2, z, yaw + (srand() - 0.5) * 0.15);
+    }
+    motoRow(SR_X1 + 0.35, SR_X1 + 2.15, -20.5, -10.05, 0);
+    motoRow(SR_X0 - 2.15, SR_X0 - 0.35, 36.5, 45.05, Math.PI);
+    motoRow(SR_X1 + 0.35, SR_X1 + 2.15, 36.5, 42.2, 0);
     const stats = { rem: 0, improved: 0, miss: 0, speedRem: 0, pedSafe: 0 };
     const remLog = [];
     const effects = [];
@@ -2612,21 +3003,25 @@ function main() {
     // =====================================================================
     // 8-0. 路口紅綠燈（車輛號誌＋行人號誌）
     // =====================================================================
-    // AI 適應性號誌：時相長度依現場人流、車流即時調整
-    // G 車輛綠燈（轉彎斑馬線同時可走）→ Y 黃燈 → AR1 全紅 → W 直行斑馬線小綠人 → F 小綠人閃爍 → AR2 全紅 → L 行人早開 → G
-    const SIG = { gMin: 12, gBase: 16, gMax: 24, wBase: 7, wMaxExt: 8, sideWalk: 7, sideFlash: 3, lpi: 3 };
+    // AI 適應性號誌（十字路口兩時相）：時相長度依現場人流、車流即時調整
+    // G 主幹道綠燈（橫越次要幹道的斑馬線同時可走）→ Y → AR1 → LW 行人早開 → W 次要幹道綠燈＋橫越主幹道的斑馬線 → F 小綠人閃爍
+    // → CY 次要幹道黃燈 → AR2 → L 行人早開 → G
+    const SIG = { gMin: 14, gBase: 18, gMax: 26, wBase: 12, wMaxExt: 8, sideWalk: 9, sideFlash: 4, lpi: 3 };
     const PHASES = {
-        G:   { car: 'green',  ped: 'red',   side: null,   dur: SIG.gBase, next: 'Y' },
-        Y:   { car: 'yellow', ped: 'red',   side: 'red',  dur: 3,         next: 'AR1' },
-        AR1: { car: 'red',    ped: 'red',   side: 'red',  dur: 1.5,       next: 'W' },
-        W:   { car: 'red',    ped: 'walk',  side: 'red',  dur: SIG.wBase, next: 'F' },
-        F:   { car: 'red',    ped: 'flash', side: 'red',  dur: 4,         next: 'AR2' },
-        AR2: { car: 'red',    ped: 'red',   side: 'red',  dur: 1,         next: 'L' },
-        L:   { car: 'red',    ped: 'red',   side: 'walk', dur: SIG.lpi,   next: 'G' },
+        G:   { car: 'green',  cross: 'red',    ped: 'red',   side: null,   dur: SIG.gBase, next: 'Y' },
+        Y:   { car: 'yellow', cross: 'red',    ped: 'red',   side: 'red',  dur: 3,         next: 'AR1' },
+        AR1: { car: 'red',    cross: 'red',    ped: 'red',   side: 'red',  dur: 1.5,       next: 'LW' },
+        LW:  { car: 'red',    cross: 'red',    ped: 'walk',  side: 'red',  dur: SIG.lpi,   next: 'W' },
+        W:   { car: 'red',    cross: 'green',  ped: 'walk',  side: 'red',  dur: SIG.wBase, next: 'F' },
+        F:   { car: 'red',    cross: 'green',  ped: 'flash', side: 'red',  dur: 6,         next: 'CY' },
+        CY:  { car: 'red',    cross: 'yellow', ped: 'red',   side: 'red',  dur: 3,         next: 'AR2' },
+        AR2: { car: 'red',    cross: 'red',    ped: 'red',   side: 'red',  dur: 1.5,       next: 'L' },
+        L:   { car: 'red',    cross: 'red',    ped: 'red',   side: 'walk', dur: SIG.lpi,   next: 'G' },
     };
     const signal = {
-        phase: 'G', t: 4, dur: SIG.gBase, ext: 0, extNoted: false,
-        car: 'green', ped: 'red', side: 'walk', walkElapsed: 0, sideElapsed: 0, carRemain: 0, pedRemain: 0, sideRemain: 0,
+        phase: 'G', t: 5, dur: SIG.gBase, ext: 0, extNoted: false,
+        car: 'green', cross: 'red', ped: 'red', side: 'walk', walkElapsed: 0, sideElapsed: 0,
+        carRemain: 0, crossRemain: 0, pedRemain: 0, sideRemain: 0,
     };
     const sigNotes = [];
     let sigAdjust = 0, lpiToastShown = false;
@@ -2640,7 +3035,7 @@ function main() {
         signal.extNoted = false;
         if (next === 'L' && !lpiToastShown) {
             lpiToastShown = true;
-            toast('🚶 行人早開：轉彎斑馬線的小綠人比車輛綠燈早 3 秒亮，讓行人先走進右轉駕駛的視線', 'info', 4200);
+            toast('🚶 行人早開：路口斑馬線的小綠人比車輛綠燈早 3 秒亮，讓行人先走進右轉駕駛的視線', 'info', 4200);
         }
     }
 
@@ -2651,10 +3046,10 @@ function main() {
             const waiting = peds.filter((p) => p.state === 'wait').length;
             if (waiting >= 2 && s.t < s.dur) {
                 s.dur = s.t;
-                aiNote(`等候行人 ${waiting} 人：提早 ${Math.round(SIG.gBase - s.t)} 秒切換小綠人`, 'early');
+                aiNote(`等候過主幹道的行人 ${waiting} 人：提早 ${Math.round(SIG.gBase - s.t)} 秒切換小綠人`, 'early');
             } else if (s.t >= s.dur && waiting === 0 && s.dur < SIG.gMax) {
                 s.dur = Math.min(SIG.gMax, s.t + 1);
-                if (!s.extNoted) { s.extNoted = true; aiNote('無行人等候：延長車輛綠燈，減少空等', 'ext'); }
+                if (!s.extNoted) { s.extNoted = true; aiNote('無行人等候：延長主幹道綠燈，減少空等', 'ext'); }
             }
         }
         if (s.phase === 'W' && s.t >= s.dur) {
@@ -2678,21 +3073,23 @@ function main() {
 
         const ph = PHASES[s.phase];
         s.car = ph.car;
+        s.cross = ph.cross;
         s.ped = ph.ped;
         const sideT = s.phase === 'L' ? s.t : s.phase === 'G' ? SIG.lpi + s.t : -1;
         if (s.phase === 'G') s.side = s.t < SIG.sideWalk ? 'walk' : s.t < SIG.sideWalk + SIG.sideFlash ? 'flash' : 'red';
         else s.side = ph.side;
-        s.walkElapsed = s.phase === 'W' ? s.t : 0;
+        s.walkElapsed = s.phase === 'LW' ? s.t : s.phase === 'W' ? SIG.lpi + s.t : 0;
         s.sideElapsed = s.side === 'walk' ? sideT : 0;
         const left = s.dur - s.t;
         // 剩餘秒數（之後的時相以預設長度估計）
         const restUntil = (pred) => {
             let r = left, k = ph.next;
-            for (let i = 0; i < 7 && pred(k); i++) { r += PHASES[k].dur; k = PHASES[k].next; }
+            for (let i = 0; i < 9 && pred(k); i++) { r += PHASES[k].dur; k = PHASES[k].next; }
             return r;
         };
         s.carRemain = s.phase === 'G' || s.phase === 'Y' ? left : restUntil((k) => k !== 'G');
-        s.pedRemain = s.phase === 'W' ? left + PHASES.F.dur : left;
+        s.crossRemain = s.phase === 'W' ? left + PHASES.F.dur : s.phase === 'F' || s.phase === 'CY' ? left : restUntil((k) => k !== 'W');
+        s.pedRemain = s.phase === 'LW' ? left + SIG.wBase + PHASES.F.dur : s.phase === 'W' ? left + PHASES.F.dur : left;
         s.sideRemain = s.phase === 'L' ? left + SIG.sideWalk + SIG.sideFlash
             : s.phase === 'G' ? Math.max(0, SIG.sideWalk + SIG.sideFlash - s.t) : 0;
     }
@@ -2721,20 +3118,19 @@ function main() {
     }
     updateSignal(0);
 
-    const SIG_X = CROSS_X - 2.6;            // 號誌設在斑馬線下游（面向來車）
     const sigPoleMat = new THREE.MeshStandardMaterial({ color: 0x59626e, metalness: 0.6, roughness: 0.4 });
     const sigHeadMat = new THREE.MeshStandardMaterial({ color: 0x1a1e24, metalness: 0.3, roughness: 0.55 });
     const LAMP_ON = { red: 0xff3b30, yellow: 0xffc21a, green: 0x2ef07a };
     const LAMP_OFF = { red: 0x3d1512, yellow: 0x3d320f, green: 0x0f3d22 };
-    const lampMats = {
-        red: new THREE.MeshBasicMaterial({ color: LAMP_OFF.red }),
-        yellow: new THREE.MeshBasicMaterial({ color: LAMP_OFF.yellow }),
-        green: new THREE.MeshBasicMaterial({ color: LAMP_OFF.green }),
-    };
-    const lampGlowMats = ['red', 'yellow', 'green'].reduce((o, k) => {
-        o[k] = new THREE.SpriteMaterial({ map: radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), color: LAMP_ON[k], transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-        return o;
-    }, {});
+    function lampSet() {
+        const mats = {}, glows = {};
+        ['red', 'yellow', 'green'].forEach((k) => {
+            mats[k] = new THREE.MeshBasicMaterial({ color: LAMP_OFF[k] });
+            glows[k] = new THREE.SpriteMaterial({ map: radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), color: LAMP_ON[k], transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        });
+        return { mats, glows, key: '' };
+    }
+    const LAMP_MAIN = lampSet(), LAMP_CROSS = lampSet();
     const sigGroup = new THREE.Group();
     scene.add(sigGroup);
     const sigMesh = (geo, mat, x, y, z, parent = sigGroup) => {
@@ -2745,20 +3141,21 @@ function main() {
         return m;
     };
 
-    // 車輛號誌燈頭：紅黃綠三燈，面向 +X（迎向來車）
-    function vehicleHead(x, y, z) {
+    // 車輛號誌燈頭：紅黃綠三燈；rotY = 0 面向 +X、π 面向 -X、π/2 面向 -Z、-π/2 面向 +Z
+    function vehicleHead(x, y, z, rotY = 0, set = LAMP_MAIN) {
         const h = new THREE.Group();
         h.position.set(x, y, z);
+        h.rotation.y = rotY;
         sigMesh(new THREE.BoxGeometry(0.4, 1.2, 0.44), sigHeadMat, 0, 0, 0, h);
         sigMesh(new THREE.BoxGeometry(0.04, 1.42, 0.66), sigHeadMat, -0.2, 0, 0, h);
         ['red', 'yellow', 'green'].forEach((k, i) => {
             const y0 = 0.38 - i * 0.38;
-            const lamp = new THREE.Mesh(new THREE.CircleGeometry(0.135, 24), lampMats[k]);
+            const lamp = new THREE.Mesh(new THREE.CircleGeometry(0.135, 24), set.mats[k]);
             lamp.rotation.y = Math.PI / 2;
             lamp.position.set(0.205, y0, 0);
             h.add(lamp);
             sigMesh(new THREE.BoxGeometry(0.22, 0.03, 0.34), sigHeadMat, 0.3, y0 + 0.16, 0, h);
-            const glow = new THREE.Sprite(lampGlowMats[k]);
+            const glow = new THREE.Sprite(set.glows[k]);
             glow.scale.setScalar(0.9);
             glow.position.set(0.32, y0, 0);
             h.add(glow);
@@ -2833,78 +3230,159 @@ function main() {
         return h;
     }
 
-    // 遠側（靠鏡頭）懸臂式號誌桿：懸臂跨越車道，掛兩組車輛燈頭
-    const FAR_POLE_Z = 14.4, NEAR_POLE_Z = -0.45;
-    sigMesh(new THREE.CylinderGeometry(0.14, 0.2, 6.5, 14), sigPoleMat, SIG_X, 0.18 + 3.25, FAR_POLE_Z);
-    sigMesh(new THREE.CylinderGeometry(0.32, 0.4, 0.3, 14), sigPoleMat, SIG_X, 0.33, FAR_POLE_Z);
-    const armLen = FAR_POLE_Z - 3.2;
-    sigMesh(new THREE.BoxGeometry(0.16, 0.16, armLen), sigPoleMat, SIG_X, 6.3, FAR_POLE_Z - armLen / 2);
-    [9.6, 5.4].forEach((z) => {
-        sigMesh(new THREE.BoxGeometry(0.06, 0.3, 0.06), sigPoleMat, SIG_X, 6.08, z);
-        vehicleHead(SIG_X, 5.3, z);
+    // 四個路口轉角的懸臂式號誌桿（各管一個方向的來車，設在來車的右前方路角）
+    function mastPole(x, z, armDX, armDZ, armLen) {
+        sigMesh(new THREE.CylinderGeometry(0.15, 0.21, 6.6, 14), sigPoleMat, x, 0.18 + 3.3, z);
+        sigMesh(new THREE.CylinderGeometry(0.32, 0.4, 0.3, 14), sigPoleMat, x, 0.33, z);
+        const arm = sigMesh(new THREE.BoxGeometry(armDX ? armLen : 0.16, 0.16, armDZ ? armLen : 0.16), sigPoleMat,
+            x + armDX * armLen / 2, 6.3, z + armDZ * armLen / 2);
+        return arm;
+    }
+    const hang = (x, z) => sigMesh(new THREE.BoxGeometry(0.06, 0.3, 0.06), sigPoleMat, x, 6.08, z);
+    const P_SE = [SR_X1 + 0.6, ROAD_Z0 - 0.9], P_NW = [SR_X0 - 0.6, OPP_Z1 + 0.9];
+    const P_SW = [SR_X0 - 0.6, ROAD_Z0 - 0.9], P_NE = [SR_X1 + 0.6, OPP_Z1 + 0.9];
+    // 主幹道往 -X 的來車（TITAN 展示方向）
+    mastPole(P_SE[0], P_SE[1], 0, 1, 11);
+    [5.4, 9.6].forEach((z) => { hang(P_SE[0], z); vehicleHead(P_SE[0], 5.3, z, 0, LAMP_MAIN); });
+    // 對向往 +X 的來車
+    mastPole(P_NW[0], P_NW[1], 0, -1, 11);
+    [15.4, 19.6].forEach((z) => { hang(P_NW[0], z); vehicleHead(P_NW[0], 5.3, z, Math.PI, LAMP_MAIN); });
+    // 次要幹道北向（從近側駛來）
+    mastPole(P_SW[0], P_SW[1], 1, 0, 6.4);
+    hang(NB_X, P_SW[1]); vehicleHead(NB_X, 5.3, P_SW[1], Math.PI / 2, LAMP_CROSS);
+    // 次要幹道南向（從對側駛來）
+    mastPole(P_NE[0], P_NE[1], -1, 0, 6.4);
+    hang(SB_X, P_NE[1]); vehicleHead(SB_X, 5.3, P_NE[1], -Math.PI / 2, LAMP_CROSS);
+
+    // 行人號誌：橫越主幹道（東、西兩條）與橫越次要幹道（南、北兩條）的斑馬線兩端
+    const pedPole = (x, z) => sigMesh(new THREE.CylinderGeometry(0.09, 0.12, 3.0, 12), sigPoleMat, x, 0.18 + 1.5, z);
+    [CROSS_X + 2.3, WCROSS_X - 2.3].forEach((x) => {
+        pedPole(x, ROAD_Z0 - 1.4); pedHead(x, 2.6, ROAD_Z0 - 1.4, 0, mainFace);
+        pedPole(x, OPP_Z1 + 1.4); pedHead(x, 2.6, OPP_Z1 + 1.4, Math.PI, mainFace);
     });
-    pedHead(SIG_X, 2.75, FAR_POLE_Z - 0.32, Math.PI);
-
-    // 近側號誌桿：車輛燈頭（柱掛）＋行人號誌
-    sigMesh(new THREE.CylinderGeometry(0.12, 0.17, 4.3, 14), sigPoleMat, SIG_X, 0.18 + 2.15, NEAR_POLE_Z);
-    sigMesh(new THREE.CylinderGeometry(0.3, 0.36, 0.3, 14), sigPoleMat, SIG_X, 0.33, NEAR_POLE_Z);
-    vehicleHead(SIG_X + 0.32, 3.75, NEAR_POLE_Z);
-    pedHead(SIG_X, 2.75, NEAR_POLE_Z + 0.3, 0);
-
-    // 轉彎斑馬線行人號誌（巷道口兩側，彼此相對）
-    const SIDE_SIG_Z = SXW_Z - 0.95;
-    [[SR_X1 + 0.45, -Math.PI / 2], [SR_X0 - 0.45, Math.PI / 2]].forEach(([x, rot]) => {
-        sigMesh(new THREE.CylinderGeometry(0.09, 0.12, 3.0, 12), sigPoleMat, x, 0.18 + 1.5, SIDE_SIG_Z);
-        pedHead(x, 2.6, SIDE_SIG_Z, rot, sideFace);
+    const SIDE_SIG_Z = SXW_Z - 0.95, NORTH_SIG_Z = NXW_Z + 0.95;
+    [SIDE_SIG_Z, NORTH_SIG_Z].forEach((z) => {
+        [[SR_X1 + 0.45, -Math.PI / 2], [SR_X0 - 0.45, Math.PI / 2]].forEach(([x, rot]) => {
+            pedPole(x, z);
+            pedHead(x, 2.6, z, rot, sideFace);
+        });
     });
 
     // 號誌控制器：接收 TITAN 的 AI 分析結果，調整時相秒數
-    sigMesh(new THREE.BoxGeometry(0.7, 1.2, 0.45), sigHeadMat, SIG_X + 1.1, 0.18 + 0.6, -1.7);
-    const SIG_CTRL_TOP = V3(SIG_X + 1.1, 1.45, -1.7);
+    sigMesh(new THREE.BoxGeometry(0.7, 1.2, 0.45), sigHeadMat, CROSS_X + 0.6, 0.18 + 0.6, -1.5);
+    const SIG_CTRL_TOP = V3(CROSS_X + 0.6, 1.45, -1.5);
     const aiTag = makeLabel({ w: 760, h: 150, height: 1.05 });
-    aiTag.position.set(SIG_X, 7.8, 8.6);
+    aiTag.position.set(P_SE[0], 7.8, 8.6);
     sigGroup.add(aiTag);
     const lpiTag = makeLabel({ w: 620, h: 130, height: 0.82 });
     lpiTag.userData.draw(['🚶 行人早開 3 秒', '先走進右轉駕駛的視線'], { accent: '#7BC88F' });
-    lpiTag.position.set(SR_X, 2.9, SXW_Z);
     lpiTag.visible = false;
     scene.add(lpiTag);
     let aiTagKey = '';
     const SIG_ZH = { green: '綠燈', yellow: '黃燈', red: '紅燈' };
 
-    let lastLampKey = '';
-    function updateSignalVisual(t) {
-        const key = signal.car;
-        if (key !== lastLampKey) {
-            lastLampKey = key;
-            ['red', 'yellow', 'green'].forEach((k) => {
-                lampMats[k].color.setHex(k === key ? LAMP_ON[k] : LAMP_OFF[k]);
-            });
+    // 轉彎前預警號誌燈：吊掛在懸臂下、面向右轉來車；所對應的斑馬線有行人時才閃爍
+    function makeTurnSign(x, z, rotY, cw, withTag) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 192;
+        const ctx = canvas.getContext('2d');
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.minFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        const g = new THREE.Group();
+        g.position.set(x, 0, z);
+        g.rotation.y = rotY;
+        sigMesh(new THREE.BoxGeometry(0.05, 0.5, 0.05), sigPoleMat, 0, 5.95, 0, g);
+        sigMesh(new THREE.BoxGeometry(0.14, 1.12, 1.46), sigHeadMat, 0, 5.15, 0, g);
+        const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 1.02), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+        screen.rotation.y = Math.PI / 2;
+        screen.position.set(0.075, 5.15, 0);
+        g.add(screen);
+        const lampMat = new THREE.MeshBasicMaterial({ color: 0x4a3410 });
+        const glowMat = new THREE.SpriteMaterial({ map: radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), color: 0xffb020, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        [-0.86, 0.86].forEach((dz) => {
+            const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), lampMat);
+            lamp.position.set(0.04, 5.15, dz);
+            const glow = new THREE.Sprite(glowMat);
+            glow.position.set(0.14, 5.15, dz);
+            g.add(lamp, glow);
+        });
+        let tag = null;
+        if (withTag) {
+            tag = makeLabel({ w: 520, h: 96, height: 0.66 });
+            tag.userData.draw(['轉彎前預警號誌燈'], { accent: '#FFB020' });
+            tag.position.set(0.3, 4.15, 0);
+            g.add(tag);
         }
-        ['red', 'yellow', 'green'].forEach((k) => {
-            lampGlowMats[k].opacity = k === key ? (themeKey === 'day' ? 0.35 : 0.75) : 0;
+        scene.add(g);
+        const sign = { cw, ctx, tex, lampMat, glowMat, tag, key: '' };
+        sign.draw = (active, on) => {
+            const key = `${active}|${on}`;
+            if (key === sign.key) return;
+            sign.key = key;
+            const x = ctx;
+            const col = active ? (on ? '#FFB020' : '#7a5410') : '#3a3f46';
+            x.fillStyle = '#07090c'; x.fillRect(0, 0, 256, 192);
+            x.strokeStyle = col; x.lineWidth = 8; x.strokeRect(5, 5, 246, 182);
+            x.lineWidth = 12; x.lineCap = 'round'; x.lineJoin = 'round';
+            x.beginPath(); x.moveTo(52, 128); x.lineTo(52, 78); x.quadraticCurveTo(52, 50, 82, 50); x.lineTo(98, 50); x.stroke();
+            x.fillStyle = col;
+            x.beginPath(); x.moveTo(118, 50); x.lineTo(94, 32); x.lineTo(94, 68); x.closePath(); x.fill();
+            x.lineWidth = 9;
+            x.beginPath(); x.arc(176, 40, 11, 0, Math.PI * 2); x.fill();
+            x.beginPath(); x.moveTo(174, 56); x.lineTo(168, 96); x.moveTo(172, 64); x.lineTo(154, 82); x.moveTo(172, 64); x.lineTo(192, 78);
+            x.moveTo(168, 96); x.lineTo(152, 128); x.moveTo(168, 96); x.lineTo(188, 126); x.stroke();
+            x.textAlign = 'center'; x.textBaseline = 'middle';
+            x.font = `800 34px ${FONT}`;
+            x.fillText(active ? '行人穿越中' : '轉彎注意行人', 128, 162, 236);
+            tex.needsUpdate = true;
+        };
+        sign.draw(false, false);
+        return sign;
+    }
+    // 各方向右轉車會經過的斑馬線：往 -X→南側、往 +X→北側、北向→西側、南向→東側
+    const turnSigns = [
+        makeTurnSign(P_SE[0], 3.1, 0, 'S', true),
+        makeTurnSign(P_NW[0], OPP_Z1 - 1.6, Math.PI, 'N', false),
+        makeTurnSign(SR_X0 + 1.6, P_SW[1], Math.PI / 2, 'W', false),
+        makeTurnSign(SR_X1 - 1.6, P_NE[1], -Math.PI / 2, 'E', false),
+    ];
+    const turnTag = turnSigns[0].tag;
+
+    function setLamps(set, key) {
+        if (key === set.key) return;
+        set.key = key;
+        ['red', 'yellow', 'green'].forEach((k) => set.mats[k].color.setHex(k === key ? LAMP_ON[k] : LAMP_OFF[k]));
+    }
+    function updateSignalVisual(t) {
+        setLamps(LAMP_MAIN, signal.car);
+        setLamps(LAMP_CROSS, signal.cross);
+        [[LAMP_MAIN, signal.car], [LAMP_CROSS, signal.cross]].forEach(([set, key]) => {
+            ['red', 'yellow', 'green'].forEach((k) => { set.glows[k].opacity = k === key ? (themeKey === 'day' ? 0.35 : 0.75) : 0; });
         });
         drawPedFace(mainFace, signal.ped, signal.pedRemain, t);
         drawPedFace(sideFace, signal.side, signal.sideRemain, t);
         // 號誌上方的 AI 說明：有調整時顯示原因，其餘時間顯示目前時相
         let line2;
         if (aiTagMsg && aiTagMsg.until > simT) line2 = aiTagMsg.text;
-        else if (signal.phase === 'L') line2 = '行人早開：轉彎斑馬線先亮小綠人';
-        else if (signal.phase === 'W' || signal.phase === 'F') line2 = '直行斑馬線通行中・依行人是否走完調整';
-        else line2 = `車輛${SIG_ZH[signal.car]}・依人車流量即時調整秒數`;
+        else if (signal.phase === 'L' || signal.phase === 'LW') line2 = '行人早開：小綠人比車輛綠燈早 3 秒亮';
+        else if (signal.cross !== 'red') line2 = `次要幹道${SIG_ZH[signal.cross]}・依行人是否走完調整`;
+        else line2 = `主幹道${SIG_ZH[signal.car]}・依人車流量即時調整秒數`;
         const k2 = line2 + (aiTagMsg && aiTagMsg.until > simT);
         if (k2 !== aiTagKey) {
             aiTagKey = k2;
             aiTag.userData.draw(['🤖 AI 號誌控制', line2], { accent: aiTagMsg && aiTagMsg.until > simT ? '#DCAE7A' : '#56E0F0' });
         }
-        lpiTag.visible = signal.phase === 'L' && showPedLayer;
+        const lpi = (signal.phase === 'L' || signal.phase === 'LW') && showPedLayer;
+        lpiTag.visible = lpi;
+        if (lpi) lpiTag.position.set(signal.phase === 'L' ? SR_X : CROSS_X, 2.9, signal.phase === 'L' ? SXW_Z : RZ);
     }
 
     // =====================================================================
     // 8-1. 行人與禮讓行人偵測
     // =====================================================================
-    const SIDE_Z = [0.7, 12.9];                     // 兩側人行道的行走位置
-    const SIDE_RANGE = [[-11.4, -2.4], [-18, 6]];   // 人行道可行走範圍（避開燈桿與巷道口）
+    const SIDE_Z = [0.7, OPP_Z1 + 0.8];             // 主幹道兩側人行道的行走位置
+    const RANGE_E = [[-4.6, -2.4], [-7.6, 6]], RANGE_W = [[-33, -26.5], [-33, -26.5]];   // 人行道可行走範圍（避開燈桿）
     const CW_HALF = 1.6;                            // 斑馬線半寬
     const ENTRY_X = CROSS_X + CW_HALF;              // 車頭駛入斑馬線的位置
     const YIELD_DZ = 5.3;                           // 同車道或相鄰車道的判定距離
@@ -2940,7 +3418,7 @@ function main() {
             icon: null,
         };
     }
-    const mainLights = makeLightSet(), sideLights = makeLightSet();
+    const mainLights = makeLightSet(), sideLights = makeLightSet(), westLights = makeLightSet(), northLights = makeLightSet();
     function lightStrip(set, w, d, x, z) {
         const core = flatPlane(w, d, set.core);
         core.position.set(x, 0.04, z);
@@ -2948,12 +3426,17 @@ function main() {
         glow.position.set(x, 0.036, z);
         scene.add(glow, core);
     }
-    const RW = ROAD_Z1 - ROAD_Z0 - 0.4, RZ = (ROAD_Z0 + ROAD_Z1) / 2;
-    lightStrip(mainLights, 0.45, RW, CROSS_X - CW_HALF - 0.35, RZ);
-    lightStrip(mainLights, 0.45, RW, CROSS_X + CW_HALF + 0.35, RZ);
-    lightStrip(mainLights, 0.35, RW, STOP_X + 0.5, RZ);
-    lightStrip(sideLights, SR_X1 - SR_X0 - 0.4, 0.42, SR_X, SXW_Z + SXW_HALF + 0.32);
-    lightStrip(sideLights, SR_X1 - SR_X0 - 0.4, 0.42, SR_X, SXW_Z - SXW_HALF - 0.32);
+    const XW = OPP_Z1 - ROAD_Z0 - 0.4, XZ = (ROAD_Z0 + OPP_Z1) / 2;
+    [[mainLights, CROSS_X], [westLights, WCROSS_X]].forEach(([set, cx]) => {
+        lightStrip(set, 0.45, XW, cx - CW_HALF - 0.35, XZ);
+        lightStrip(set, 0.45, XW, cx + CW_HALF + 0.35, XZ);
+    });
+    lightStrip(mainLights, 0.35, RW - 0.4, STOP_X + 0.5, RZ);
+    lightStrip(westLights, 0.35, OPP_Z1 - MED_Z1 - 0.4, OPP_STOP_X - 0.5, OZ);
+    [[sideLights, SXW_Z], [northLights, NXW_Z]].forEach(([set, cz]) => {
+        lightStrip(set, SR_X1 - SR_X0 - 0.4, 0.42, SR_X, cz + SXW_HALF + 0.32);
+        lightStrip(set, SR_X1 - SR_X0 - 0.4, 0.42, SR_X, cz - SXW_HALF - 0.32);
+    });
 
     // 直立式 LED 警示柱：駕駛平視就看得到，面向來車一面有行人圖示
     const iconTex = (() => {
@@ -2969,7 +3452,7 @@ function main() {
         const t = new THREE.CanvasTexture(c);
         return t;
     })();
-    [mainLights, sideLights].forEach((s) => { s.icon = new THREE.MeshBasicMaterial({ map: iconTex, color: 0x555555 }); });
+    [mainLights, sideLights, westLights, northLights].forEach((s) => { s.icon = new THREE.MeshBasicMaterial({ map: iconTex, color: 0x555555 }); });
     const bollardBody = new THREE.MeshStandardMaterial({ color: 0x2b323b, metalness: 0.5, roughness: 0.4 });
     const bollardGeo = new THREE.CylinderGeometry(0.12, 0.14, 1.25, 16);
     const bandGeo = new THREE.CylinderGeometry(0.127, 0.127, 0.42, 16);
@@ -2994,71 +3477,16 @@ function main() {
         g.add(body, band, cap, face, halo);
         scene.add(g);
     }
-    // 直行斑馬線：兩側人行道各兩支（面向來車 +X）
-    [ROAD_Z0 - 0.3, ROAD_Z1 + 0.3].forEach((z) => {
-        bollard(mainLights, CROSS_X + CW_HALF + 0.4, z, Math.PI / 2);
-        bollard(mainLights, CROSS_X - CW_HALF - 0.4, z, Math.PI / 2);
+    // 每條斑馬線兩端各兩支，LED 面朝會駛過這條斑馬線的來車
+    [ROAD_Z0 - 0.3, OPP_Z1 + 0.3].forEach((z) => {
+        [CROSS_X + CW_HALF + 0.4, CROSS_X - CW_HALF - 0.4].forEach((x) => bollard(mainLights, x, z, Math.PI / 2));
+        [WCROSS_X + CW_HALF + 0.4, WCROSS_X - CW_HALF - 0.4].forEach((x) => bollard(westLights, x, z, -Math.PI / 2));
     });
-    // 轉彎斑馬線：巷道口兩側（面向右轉進來的車 +Z）
-    bollard(sideLights, SR_X1 + 0.4, SXW_Z + SXW_HALF + 0.15, 0);
-    bollard(sideLights, SR_X0 - 0.4, SXW_Z + SXW_HALF + 0.15, 0);
+    [SR_X1 + 0.4, SR_X0 - 0.4].forEach((x) => {
+        bollard(sideLights, x, SXW_Z + SXW_HALF + 0.15, 0);
+        bollard(northLights, x, NXW_Z - SXW_HALF - 0.15, Math.PI);
+    });
     let crossAlertT = 0, sideAlertT = 0;
-
-    // 轉彎前預警號誌燈：設在路口轉角、面向右轉來車；轉彎斑馬線有行人時才閃爍
-    const turnCanvas = document.createElement('canvas');
-    turnCanvas.width = 256; turnCanvas.height = 192;
-    const tctx = turnCanvas.getContext('2d');
-    const turnTex = new THREE.CanvasTexture(turnCanvas);
-    turnTex.minFilter = THREE.LinearFilter;
-    turnTex.generateMipmaps = false;
-    let turnKey = '';
-    function drawTurnSign(active, on) {
-        const key = `${active}|${on}`;
-        if (key === turnKey) return;
-        turnKey = key;
-        const x = tctx;
-        const col = active ? (on ? '#FFB020' : '#7a5410') : '#3a3f46';
-        x.fillStyle = '#07090c'; x.fillRect(0, 0, 256, 192);
-        x.strokeStyle = col; x.lineWidth = 8; x.strokeRect(5, 5, 246, 182);
-        // 右轉箭頭
-        x.lineWidth = 12; x.lineCap = 'round'; x.lineJoin = 'round';
-        x.beginPath(); x.moveTo(52, 128); x.lineTo(52, 78); x.quadraticCurveTo(52, 50, 82, 50); x.lineTo(98, 50); x.stroke();
-        x.fillStyle = col;
-        x.beginPath(); x.moveTo(118, 50); x.lineTo(94, 32); x.lineTo(94, 68); x.closePath(); x.fill();
-        // 行人
-        x.lineWidth = 9;
-        x.beginPath(); x.arc(176, 40, 11, 0, Math.PI * 2); x.fill();
-        x.beginPath(); x.moveTo(174, 56); x.lineTo(168, 96); x.moveTo(172, 64); x.lineTo(154, 82); x.moveTo(172, 64); x.lineTo(192, 78);
-        x.moveTo(168, 96); x.lineTo(152, 128); x.moveTo(168, 96); x.lineTo(188, 126); x.stroke();
-        x.textAlign = 'center'; x.textBaseline = 'middle';
-        x.font = `800 34px ${FONT}`;
-        x.fillText(active ? '行人穿越中' : '轉彎注意行人', 128, 162, 236);
-        turnTex.needsUpdate = true;
-    }
-    drawTurnSign(false, false);
-    const turnSign = new THREE.Group();
-    turnSign.position.set(SR_X1 + 1.2, 0, ROAD_Z0 - 0.55);
-    sigMesh(new THREE.CylinderGeometry(0.1, 0.13, 4.0, 12), sigPoleMat, 0, 0.18 + 2.0, 0, turnSign);
-    sigMesh(new THREE.BoxGeometry(0.14, 1.12, 1.46), sigHeadMat, 0, 3.55, 0.5, turnSign);
-    const turnScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 1.02), new THREE.MeshBasicMaterial({ map: turnTex, fog: false }));
-    turnScreen.rotation.y = Math.PI / 2;
-    turnScreen.position.set(0.075, 3.55, 0.5);
-    turnSign.add(turnScreen);
-    const turnLampMat = new THREE.MeshBasicMaterial({ color: 0x4a3410 });
-    const turnGlowMat = new THREE.SpriteMaterial({ map: radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), color: 0xffb020, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-    [0.05, 0.95].forEach((z) => {
-        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), turnLampMat);
-        lamp.position.set(0.06, 4.25, z);
-        const glow = new THREE.Sprite(turnGlowMat);
-        glow.scale.setScalar(1.0);
-        glow.position.set(0.14, 4.25, z);
-        turnSign.add(lamp, glow);
-    });
-    const turnTag = makeLabel({ w: 520, h: 96, height: 0.66 });
-    turnTag.userData.draw(['轉彎前預警號誌燈'], { accent: '#FFB020' });
-    turnTag.position.set(0, 5.0, 0.5);
-    turnSign.add(turnTag);
-    scene.add(turnSign);
 
     function updateCrossLights(set, active, alert, t) {
         let op;
@@ -3095,13 +3523,19 @@ function main() {
         { id: 'P-02', shirt: 0xe76f51, pants: 0x3b3f46, side: 1, off: 0.6, speed: 1.65, state: 'stroll', x: CROSS_X + 9, toCross: true },
         { id: 'P-03', shirt: 0x8ecae6, pants: 0x264653, side: 0, off: 0.05, speed: 1.4, state: 'pause', x: CROSS_X + 4, timer: 7 },
         // 行走較慢的行人（例如長者）：AI 會視情況延長小綠人
-        { id: 'P-04', shirt: 0x9aa5b1, pants: 0x4a4e57, hair: 0xd8d8d8, side: 1, off: -0.2, speed: 0.72, state: 'stroll', x: CROSS_X + 5, toCross: true, slow: true },
+        { id: 'P-04', shirt: 0x9aa5b1, pants: 0x4a4e57, hair: 0xd8d8d8, side: 1, off: -0.2, speed: 0.95, state: 'stroll', x: CROSS_X + 5, toCross: true, slow: true },
+        // 西側斑馬線
+        { id: 'P-07', shirt: 0xf4a261, pants: 0x264653, side: 0, off: 0.4, speed: 1.5, state: 'stroll', x: -30, toCross: true, cx: WCROSS_X },
+        { id: 'P-08', shirt: 0x2a9d8f, pants: 0x3b3f46, side: 1, off: -0.5, speed: 1.6, state: 'pause', x: -29, timer: 4, cx: WCROSS_X },
     ];
-    // 轉彎斑馬線的行人：沿近側人行道行走，橫越巷道口
+    // 轉彎斑馬線的行人：沿近側人行道行走，橫越次要幹道
     const SW_CURB_E = SR_X1 + 0.55, SW_CURB_W = SR_X0 - 0.55;
     const sidePedDefs = [
-        { id: 'P-05', shirt: 0x9b5de5, pants: 0x2b2d42, x: -8, dir: -1, speed: 1.45 },
-        { id: 'P-06', shirt: 0x43aa8b, pants: 0x3d405b, x: -27, dir: 1, speed: 1.3 },
+        { id: 'P-05', shirt: 0x9b5de5, pants: 0x2b2d42, x: -6, dir: -1, speed: 1.45 },
+        { id: 'P-06', shirt: 0x43aa8b, pants: 0x3d405b, x: -29, dir: 1, speed: 1.3 },
+        // 對側（北側）斑馬線
+        { id: 'P-09', shirt: 0xffb4a2, pants: 0x3d405b, x: -5, dir: -1, speed: 1.4, cz: NXW_Z },
+        { id: 'P-10', shirt: 0x6d6875, pants: 0x2b2d42, x: -31, dir: 1, speed: 1.5, cz: NXW_Z },
     ];
 
     function makePed(def) {
@@ -3164,7 +3598,7 @@ function main() {
         return {
             def, g, body, legs, arms, box, boxMat, ring, ringMat, label,
             x: def.x, z: SIDE_Z[def.side], side: def.side, speed: def.speed,
-            state: def.state, timer: def.timer || 0, tx: CROSS_X + def.off, toCross: !!def.toCross || def.state === 'pause',
+            state: def.state, timer: def.timer || 0, tx: (def.cx ?? CROSS_X) + (def.off || 0), cx: def.cx ?? CROSS_X, cw: def.cx === WCROSS_X ? 'W' : 'E', toCross: !!def.toCross || def.state === 'pause',
             tz: SIDE_Z[1 - def.side], phase: Math.random() * 6, yaw: def.side === 0 ? 0 : Math.PI,
             alertT: 0, lastText: '', react: rand(0.2, 1.4), extT: 0,
         };
@@ -3172,22 +3606,82 @@ function main() {
     const peds = pedDefs.map(makePed);
     const sidePeds = sidePedDefs.map((def) => {
         const p = makePed({ ...def, side: 0, off: 0, state: 'walk' });
-        Object.assign(p, { z: SXW_Z, dir: def.dir, tx: def.dir < 0 ? SW_CURB_E : SW_CURB_W, next: 'wait', yaw: def.dir < 0 ? -Math.PI / 2 : Math.PI / 2, side: 0 });
+        Object.assign(p, { z: def.cz ?? SXW_Z, cw: def.cz ? 'N' : 'S', dir: def.dir, tx: def.dir < 0 ? SW_CURB_E : SW_CURB_W, next: 'wait', yaw: def.dir < 0 ? -Math.PI / 2 : Math.PI / 2, side: 0 });
         return p;
     });
 
     // 轉彎斑馬線：有行人正在穿越，或小綠人亮著且有人準備穿越
-    function sideConflict() {
-        return sidePeds.some((p) => p.state === 'cross' || (p.state === 'wait' && signal.side === 'walk'));
+    function cwActive(cw) {
+        const main = cw === 'E' || cw === 'W';
+        const sig = main ? signal.ped : signal.side;
+        return (main ? peds : sidePeds).some((p) => p.cw === cw && (p.state === 'cross' || (p.state === 'wait' && sig === 'walk')));
     }
-    // 有右轉車正在轉彎或即將駛入轉彎斑馬線時，行人先不起步
-    function sideBlocked() {
-        return cars.some((c) => c.active && c.v > 0.5 && (c.turnPhase === 'arc' ||
-            (c.turnPhase === 'side' && c.z - c.half < SXW_Z + SXW_HALF + 2.2 && c.z + c.half > SXW_Z - SXW_HALF)));
+    function sideConflict() { return cwActive('S'); }
+
+    // ── 所有行進中的車輛（主幹道 TITAN 追蹤車、對向與次要幹道車流、兩段式左轉機車），每個畫格整理一次 ──
+    let frameAgents = [];
+    function collectAgents() {
+        const L = [];
+        cars.forEach((c) => {
+            if (!c.active) return;
+            const hx = c.turnPhase === 'main' ? -1 : -Math.cos(c.alpha), hz = c.turnPhase === 'main' ? 0 : -Math.sin(c.alpha);
+            L.push({ o: c, x: c.x, z: c.z, hx, hz, half: c.half, w: c.scooter ? 0.5 : 0.95, v: c.v, arc: c.turnPhase === 'arc' });
+        });
+        sveh.forEach((s) => { if (s.active) L.push({ o: s, x: s.x, z: s.z, hx: s.hx, hz: s.hz, half: s.half, w: s.scooter ? 0.5 : 0.95, v: s.v }); });
+        if (ts.active) L.push({ o: ts, x: ts.x, z: ts.z, hx: ts.hx, hz: ts.hz, half: ts.half, w: 0.5, v: ts.v });
+        return L;
     }
-    function sidePedDanger(nx) {
-        return cars.some((c) => c.active && c.turnPhase !== 'main' && Math.abs(c.x - nx) < 1.5 &&
-            c.z - c.half < SXW_Z + 0.7 && c.z + c.half > SXW_Z - 0.7);
+    const CW = {
+        E: { axis: 'z', c: CROSS_X, lo: ROAD_Z0, hi: OPP_Z1 },
+        W: { axis: 'z', c: WCROSS_X, lo: ROAD_Z0, hi: OPP_Z1 },
+        S: { axis: 'x', c: SXW_Z, lo: SR_X0, hi: SR_X1 },
+        N: { axis: 'x', c: NXW_Z, lo: SR_X0, hi: SR_X1 },
+    };
+    // 有車即將駛入或正在斑馬線上時，行人先不起步
+    function crosswalkBlocked(key) {
+        const cw = CW[key];
+        return frameAgents.some((a) => {
+            if (key === 'S' && a.arc && a.v > 0.5) return true;
+            if (a.v <= 0.8) return false;
+            const hn = cw.axis === 'z' ? a.hx : a.hz, pn = cw.axis === 'z' ? a.x : a.z, lat = cw.axis === 'z' ? a.z : a.x;
+            if (Math.abs(hn) < 0.3 || lat < cw.lo - 1 || lat > cw.hi + 1) return false;
+            const d = (cw.c - pn) * Math.sign(hn) - a.half;
+            return d < 6 && d > -(2 * a.half + 3.2);
+        });
+    }
+    // 行人下一步會不會踏進車身或行駛中車輛的路徑
+    function pedDangerAt(nx, nz) {
+        return frameAgents.some((a) => {
+            const dx = nx - a.x, dz = nz - a.z;
+            const along = dx * a.hx + dz * a.hz, lat = Math.abs(dx * a.hz - dz * a.hx);
+            return lat < a.w + 0.5 && along > -a.half - 0.4 && along < a.half + (a.v > 0.5 ? 3.4 : 0.4);
+        });
+    }
+    // 車輛前方的障礙：同車道前車（含轉向中的車）
+    function aheadGap(self, x, z, hx, hz, half, filter) {
+        let lim = Infinity;
+        for (const a of frameAgents) {
+            if (a.o === self || (filter && !filter(a))) continue;
+            const dx = a.x - x, dz = a.z - z;
+            const along = dx * hx + dz * hz, lat = Math.abs(dx * hz - dz * hx);
+            if (along <= 0 || along > 40 || lat > 1.3) continue;
+            const par = Math.abs(a.hx * hx + a.hz * hz);
+            lim = Math.min(lim, along - half - (a.half * par + a.w * (1 - par)) - 1.2);
+        }
+        return lim;
+    }
+    // 車輛前方路面上的行人
+    function pedGap(x, z, hx, hz, half) {
+        let lim = Infinity;
+        for (const p of [...peds, ...sidePeds]) {
+            const onRoad = (p.z > ROAD_Z0 && p.z < OPP_Z1) || (p.x > SR_X0 && p.x < SR_X1);
+            if (!onRoad) continue;
+            const dx = p.x - x, dz = p.z - z;
+            const along = dx * hx + dz * hz, lat = Math.abs(dx * hz - dz * hx);
+            if (along <= half - 0.2 || along > half + 12 || lat > 1.7) continue;
+            lim = Math.min(lim, along - half - 0.9);
+        }
+        return lim;
     }
     function pedAnim(p, mx, mz, dt, waitYaw) {
         const moving = mx !== 0 || mz !== 0;
@@ -3218,17 +3712,17 @@ function main() {
                 if (p.state === 'cross') {
                     stats.pedSafe++;
                     p.state = 'walk';
-                    p.tx = p.dir < 0 ? rand(-31, -24) : rand(-8, -4);
+                    p.tx = p.dir < 0 ? rand(-33, -25) : rand(-6, -2.5);
                     p.next = 'pause';
                 } else if (p.next === 'wait') { p.state = 'wait'; p.timer = rand(0.3, 1.2); p.react = rand(0.2, 0.9); }
                 else { p.state = 'pause'; p.timer = rand(1, 4); }
-            } else if (p.state === 'walk' || !sidePedDanger(p.x + s * (step + 0.5))) {
+            } else if (p.state === 'walk' || !pedDangerAt(p.x + s * (step + 0.5), p.z)) {
                 mx = s;
                 p.x += s * step;
             }
         } else if (p.state === 'wait') {
             p.timer -= dt;
-            if (p.timer <= 0 && signal.side === 'walk' && signal.sideElapsed > p.react && !sideBlocked()) {
+            if (p.timer <= 0 && signal.side === 'walk' && signal.sideElapsed > p.react && !crosswalkBlocked(p.cw)) {
                 p.state = 'cross';
                 p.tx = p.dir < 0 ? SW_CURB_W : SW_CURB_E;
             }
@@ -3249,40 +3743,27 @@ function main() {
         const onRoad = p.x > SR_X0 + 0.1 && p.x < SR_X1 - 0.1;
         p.g.position.set(p.x, onRoad ? 0 : 0.18, p.z);
         p.body.rotation.y = p.yaw;
-        const vis = showPedLayer && p.x > -32 && p.x < -3;
+        const vis = showPedLayer && p.x > -34 && p.x < -2;
         p.box.visible = p.ring.visible = p.label.visible = vis;
         if (!vis) return;
         let text, css, col;
         if (p.alertT > 0) { text = '⚠ 請注意轉彎車'; css = '#FF7A59'; col = 0xff7a59; }
-        else if (p.state === 'cross') { text = signal.phase === 'L' ? '行人早開・先行穿越' : '穿越中・已提醒轉彎車'; css = PED_CSS; col = PED_COLOR; }
+        else if (p.state === 'cross') { text = signal.phase === 'L' ? '行人早開・先行穿越' : (p.cw === 'S' ? '穿越中・已提醒轉彎車' : '穿越中'); css = PED_CSS; col = PED_COLOR; }
         else if (p.state === 'wait') { text = signal.side === 'walk' ? '行人綠燈・準備穿越' : '🔴 等待行人綠燈'; css = PED_CSS; col = PED_COLOR; }
         else { text = '人行道行走'; css = '#56E0F0'; col = 0x56e0f0; }
         if (text !== p.lastText) {
             p.lastText = text;
-            p.label.userData.draw([`行人 ${p.def.id}  ·  轉彎斑馬線`, text], { accent: css });
+            p.label.userData.draw([`行人 ${p.def.id}  ·  ${p.cw === 'S' ? '轉彎斑馬線' : '北側斑馬線'}`, text], { accent: css });
             p.boxMat.color.setHex(col);
             p.ringMat.color.setHex(col);
         }
     }
 
-    // 有車即將駛入或正在斑馬線上時，行人先不起步
-    function pedBlocked() {
-        return cars.some((c) => c.active && c.v > 0.8 && c.x - c.half < STOP_X + 3.5 && c.x + c.half > CROSS_X - CW_HALF - 0.3);
-    }
-    // 行人下一步會不會踏進車身或行駛中車輛的路徑
-    function pedDanger(p, nz) {
-        return cars.some((c) => {
-            if (!c.active || Math.abs(nz - c.z) > (c.scooter ? 1.0 : 1.45)) return false;
-            const front = c.x - c.half, rear = c.x + c.half;
-            if (front < p.x - 0.2 && rear > p.x - 0.45) return true;   // 車身已橫跨行人前方的路線
-            return c.v > 0.5 && front >= p.x && front < p.x + 3.4;
-        });
-    }
-    function pickStrollX(side) {
-        const [a, b] = SIDE_RANGE[side];
+    function pickStrollX(p) {
+        const [a, b] = (p.cw === 'W' ? RANGE_W : RANGE_E)[p.side];
         for (let i = 0; i < 10; i++) {
             const x = rand(a, b);
-            if (Math.abs(x - CROSS_X) > 4) return x;
+            if (Math.abs(x - p.cx) > 2.5) return x;
         }
         return a;
     }
@@ -3292,7 +3773,7 @@ function main() {
         let mx = 0, mz = 0;
         if (p.state === 'pause') {
             p.timer -= dt;
-            if (p.timer <= 0) { p.state = 'stroll'; p.tx = CROSS_X + p.def.off; p.toCross = true; }
+            if (p.timer <= 0) { p.state = 'stroll'; p.tx = p.cx + p.def.off; p.toCross = true; }
         } else if (p.state === 'stroll') {
             const dx = p.tx - p.x;
             if (Math.abs(dx) <= step) {
@@ -3306,7 +3787,7 @@ function main() {
         } else if (p.state === 'wait') {
             // 只有行人綠燈（非閃爍）時才起步，並保留一點反應時間
             p.timer -= dt;
-            if (p.timer <= 0 && signal.ped === 'walk' && signal.walkElapsed > p.react && !pedBlocked()) {
+            if (p.timer <= 0 && signal.ped === 'walk' && signal.walkElapsed > p.react && !crosswalkBlocked(p.cw)) {
                 p.state = 'cross';
                 p.tz = SIDE_Z[1 - p.side];
             }
@@ -3320,8 +3801,8 @@ function main() {
                 p.side = 1 - p.side;
                 p.state = 'stroll';
                 p.toCross = false;
-                p.tx = pickStrollX(p.side);
-            } else if (!pedDanger(p, p.z + s * (step + 0.4))) {
+                p.tx = pickStrollX(p);
+            } else if (!pedDangerAt(p.x, p.z + s * (step + 0.4))) {
                 mz = s;
                 p.z += s * step;
             }
@@ -3332,7 +3813,7 @@ function main() {
     }
 
     function updatePedVisual(p) {
-        const onRoad = p.z > ROAD_Z0 + 0.1 && p.z < ROAD_Z1 - 0.1;
+        const onRoad = p.z > ROAD_Z0 + 0.1 && p.z < OPP_Z1 - 0.1;
         p.g.position.set(p.x, onRoad ? 0 : 0.18, p.z);
         p.body.rotation.y = p.yaw;
         const inRoi = p.x >= -12 && p.x <= 13;
@@ -3347,7 +3828,7 @@ function main() {
         else { text = '人行道行走'; css = '#56E0F0'; col = 0x56e0f0; }
         if (text !== p.lastText) {
             p.lastText = text;
-            p.label.userData.draw([`行人 ${p.def.id}  ·  直行斑馬線`, text], { accent: css });
+            p.label.userData.draw([`行人 ${p.def.id}  ·  ${p.cw === 'E' ? '東側' : '西側'}斑馬線`, text], { accent: css });
             p.boxMat.color.setHex(col);
             p.ringMat.color.setHex(col);
         }
@@ -3355,12 +3836,12 @@ function main() {
 
     // 禮讓規則：斑馬線上、位於同車道或相鄰車道的行人
     function pedsInLane(c) {
-        return peds.filter((p) => p.state === 'cross' && Math.abs(p.z - c.z) < YIELD_DZ);
+        return peds.filter((p) => p.cw === 'E' && p.state === 'cross' && Math.abs(p.z - c.z) < YIELD_DZ);
     }
     // 禮讓的車輛：行人在同車道／相鄰車道，或正朝本車道走來時，停在停止線前
     function yieldConflict(c) {
         return peds.some((p) => {
-            if (p.state !== 'cross') return false;
+            if (p.cw !== 'E' || p.state !== 'cross') return false;
             const dz = p.z - c.z;
             if (Math.abs(dz) < YIELD_DZ + 0.2) return true;
             const toward = Math.sign(p.tz - p.z) === -Math.sign(dz);
@@ -3383,19 +3864,16 @@ function main() {
         setCarStatus(c, 'alert', '⚠ 未及時停讓・已提醒行人');
         sideAlertT = 2.6;
         sidePeds.forEach((p) => { if (p.state === 'cross' || p.state === 'wait') p.alertT = 2.6; });
-        spawnCrossFlash(SR_X, SXW_Z, 0xff7a59);
+        spawnCrossFlash(TURN_X, SXW_Z, 0xff7a59);
         boardPush('alert', {}, 2.4);
         toast(`⚠ 右轉車 ${c.def.id} 未及時反應：轉彎斑馬線地面燈轉紅快閃，提醒行人注意來車`, 'warn');
     }
 
-    // 右轉中的車輛：沿弧線轉入巷道，再沿巷道離開
+    // 右轉中的車輛：沿弧線轉入次要幹道，再沿次要幹道離開
     function updateTurningCar(c, dt, t) {
         let limit = Infinity;
         const frontZ = c.z - c.half * Math.sin(c.alpha);
-        for (const o of cars) {
-            if (o === c || !o.active || o.turnPhase !== 'side' || o.z >= c.z) continue;
-            limit = Math.min(limit, frontZ - (o.z + o.half) - 1.2);
-        }
+        limit = Math.min(limit, aheadGap(c, c.x, c.z, -Math.cos(c.alpha), -Math.sin(c.alpha), c.half));
         // 轉彎斑馬線上有行人：無論駕駛是否注意到，都停在斑馬線前（模擬緊急煞停）
         const edge = SXW_Z + SXW_HALF + 0.35;
         const pedIn = sidePeds.some((p) => p.state === 'cross');
@@ -3415,25 +3893,25 @@ function main() {
             c.x = c.arcXs - c.arcR * Math.sin(c.alpha);
             c.z = c.arcZl - c.arcR + c.arcR * Math.cos(c.alpha);
         } else {
-            c.x = SR_X;
+            c.x = TURN_X;
             c.z -= c.v * dt;
         }
         c.g.position.set(c.x, 0, c.z);
         c.g.rotation.y = -c.alpha;
-        if (c.turnPhase === 'side' && c.z < Z_TURN_END - 3) c.signal = null;
+        if (c.turnPhase === 'side' && c.z < c.arcZl - c.arcR - 3) c.signal = null;
         const blinkOn = Math.floor(t * 3.2) % 2 === 0;
         const rOn = c.signal === 'R' && blinkOn;
         c.sigL.color.copy(SIG_OFF);
         c.sigR.color.copy(rOn ? SIG_ON : SIG_OFF);
         c.halos.L.forEach((hh) => { hh.visible = false; });
         c.halos.R.forEach((hh) => { hh.visible = rOn; });
-        if (c.z < SR_END + 12) {
+        if (c.z < SIDE_FADE_END) {
             if (c.scooter && layoutKey !== 'alt') deactivate(c);
             else resetCar(c, X_START);
             return;
         }
         if (c.status !== 'idle') {
-            if (c.turnMissed && !pedIn && c.status === 'alert' && c.v > 0.5) setCarStatus(c, 'yield', '行人已通過・右轉進入巷道');
+            if (c.turnMissed && !pedIn && c.status === 'alert' && c.v > 0.5) setCarStatus(c, 'yield', '行人已通過・右轉進入次要幹道');
             if (c.z < -14) {
                 c.status = 'idle';
                 c.box.visible = c.label.visible = false;
@@ -3500,11 +3978,12 @@ function main() {
             if (o.x >= c.x || Math.abs(oz - c.z) > 1.6) continue;
             limit = Math.min(limit, front - orx - (c.scooter ? 1.0 : 1.3));
         }
+        limit = Math.min(limit, aheadGap(c, c.x, c.z, -1, 0, c.half, (a) => a.o === ts || sveh.includes(a.o)));
         // 右轉：接近轉彎點時減速；轉彎斑馬線有行人時，注意到的駕駛停在轉彎點前等候
         let turnCap = Infinity, turnYield = false, xs = 0;
         if (c.turnPlan) {
-            const R = c.z - Z_TURN_END;
-            xs = SR_X + R;
+            const R = Math.min(c.z - Z_TURN_END, TURN_XS_MAX - TURN_X);
+            xs = TURN_X + R;
             turnCap = Math.sqrt(TURN_V * TURN_V + 2 * 2.6 * Math.max(0, c.x - xs));
             if (c.x <= xs + 24) c.signal = 'R';
             const conflict = sideConflict();
@@ -3522,7 +4001,7 @@ function main() {
                 resolveReminder(c.turnEntry, true);
                 setCarStatus(c, 'ok', c.blind ? '✓ 收到提醒・停讓行人後再右轉' : '✓ 主動停讓行人後再右轉');
                 boardPush('thanks', { top: '謝謝禮讓', sub: '確認行人後再轉彎' }, 2.4);
-                spawnCrossFlash(SR_X, SXW_Z, 0x7bc88f);
+                spawnCrossFlash(TURN_X, SXW_Z, 0x7bc88f);
             } else if (turnYield && c.v < 0.4 && c.status === 'tracking' && !c.turnWaitLbl) {
                 c.turnWaitLbl = true;
                 setCarStatus(c, 'yield', '⏸ 停讓行人・準備右轉');
@@ -3532,7 +4011,7 @@ function main() {
             if (p.z <= ROAD_Z0 || p.z >= ROAD_Z1 || Math.abs(p.z - c.z) > (c.scooter ? 1.2 : 1.7) || p.x >= front || p.x < front - 14) continue;
             limit = Math.min(limit, front - (p.x + 0.9));
         }
-        const distStop = front - STOP_X;
+        const distStop = front - (c.scooter ? MOTO_STOP_X : STOP_X);
         const yielding = !c.distracted && front > ENTRY_X && yieldConflict(c);
         // 號誌：紅燈停；黃燈若來得及停就停在停止線前
         const signalStop = !c.distracted && front > ENTRY_X && (signal.car === 'red' ||
@@ -3548,19 +4027,19 @@ function main() {
 
         c.x -= c.v * dt;
         if (c.turnPlan && c.x <= xs) {
-            // 開始右轉：以目前車道為起點、轉入巷道中央
+            // 開始右轉：以目前車道為起點、轉入次要幹道南向車道
             if (c.turnEntry && !c.turnEntry.result && !sideConflict()) {
                 resolveReminder(c.turnEntry, true);
                 setCarStatus(c, 'ok', '✓ 行人已通過・右轉');
             }
             c.turnPhase = 'arc';
             c.arcZl = c.z;
-            c.arcR = c.z - Z_TURN_END;
+            c.arcR = xs - TURN_X;
             c.arcXs = xs;
             c.alpha = 0;
             c.x = xs;
             c.signal = 'R';
-            if (c.status === 'tracking' || c.status === 'yield') setCarStatus(c, 'tracking', '右轉進入巷道');
+            if (c.status === 'tracking' || c.status === 'yield') setCarStatus(c, 'tracking', '右轉進入次要幹道');
             c.g.position.set(c.x, 0, c.z);
             return;
         }
@@ -4524,6 +5003,7 @@ function main() {
         sigPanelT = 0.25;
         const s = signal;
         setSigCell('sigCar', LAMP_CSS[s.car], `${SIG_ZH[s.car]}・${Math.ceil(s.carRemain)} 秒`);
+        setSigCell('sigCross', LAMP_CSS[s.cross], `${SIG_ZH[s.cross]}・${Math.ceil(s.crossRemain)} 秒`);
         setSigCell('sigPed', s.ped === 'red' ? LAMP_CSS.red : LAMP_CSS.walk,
             s.ped === 'red' ? '小紅人' : `${s.ped === 'flash' ? '閃爍' : '小綠人'}・${Math.ceil(s.pedRemain)} 秒`);
         setSigCell('sigSide', s.side === 'red' ? LAMP_CSS.red : LAMP_CSS.walk,
@@ -4602,6 +5082,7 @@ function main() {
             }
         }
         markMat.opacity += (markTarget - markMat.opacity) * Math.min(1, dt * 2.5);
+        paintMats.forEach((m) => { if (m !== markMat) m.opacity = markMat.opacity; });
         heatMat.opacity += (heatTarget - heatMat.opacity) * Math.min(1, dt * 2);
         vLines.forEach((l) => {
             const goal = l.userData.grow * growMul;
@@ -4646,6 +5127,9 @@ function main() {
         if (netT <= 0) { netT = 1.2 + Math.random() * 1.6; spawnNetLink(); }
         if (trafficPlaying) {
             updateSignal(dt);
+            frameAgents = collectAgents();
+            sveh.forEach((v) => updateSimple(v, dt));
+            updateTs(dt);
             cars.forEach((c) => { if (c.active) { updateCar(c, dt, t); if (c.active) updateFade(c, dt); } });
             peds.forEach((p) => updatePed(p, dt));
             sidePeds.forEach((p) => updateSidePed(p, dt));
@@ -4653,19 +5137,24 @@ function main() {
         peds.forEach(updatePedVisual);
         sidePeds.forEach(updateSidePedVisual);
         updateSignalVisual(t);
-        const crossing = peds.some((p) => p.state === 'cross');
+        const crossing = peds.some((p) => p.cw === 'E' && p.state === 'cross');
         const zoneGoal = crossing ? 0.26 + (reducedMotion ? 0 : 0.08 * Math.sin(t * 5)) : 0.12;
         zoneMat.opacity += (zoneGoal - zoneMat.opacity) * Math.min(1, dt * 4);
         zoneGroup.visible = showPedLayer;
         crossAlertT = Math.max(0, crossAlertT - dt);
         sideAlertT = Math.max(0, sideAlertT - dt);
-        updateCrossLights(mainLights, crossing, crossAlertT > 0, t);
-        const sideAct = sideConflict();
-        updateCrossLights(sideLights, sideAct, sideAlertT > 0, t);
-        const tOn = sideAct && (reducedMotion || Math.floor(t * 2.4) % 2 === 0);
-        drawTurnSign(sideAct, tOn);
-        turnLampMat.color.setHex(tOn ? 0xffb020 : 0x4a3410);
-        turnGlowMat.opacity = tOn ? (themeKey === 'day' ? 0.6 : 0.95) : 0;
+        const act = { E: crossing, W: cwActive('W'), S: sideConflict(), N: cwActive('N') };
+        updateCrossLights(mainLights, act.E, crossAlertT > 0, t);
+        updateCrossLights(westLights, act.W, false, t);
+        updateCrossLights(sideLights, act.S, sideAlertT > 0, t);
+        updateCrossLights(northLights, act.N, false, t);
+        const blink = reducedMotion || Math.floor(t * 2.4) % 2 === 0;
+        turnSigns.forEach((sg) => {
+            const on = act[sg.cw] && blink;
+            sg.draw(act[sg.cw], on);
+            sg.lampMat.color.setHex(on ? 0xffb020 : 0x4a3410);
+            sg.glowMat.opacity = on ? (themeKey === 'day' ? 0.6 : 0.95) : 0;
+        });
         turnTag.visible = showPedLayer;
         updateSigPanel(dt);
         updateBoard();
