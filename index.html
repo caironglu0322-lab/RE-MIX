@@ -4058,12 +4058,12 @@ function main() {
     }
     // 路面「公車停靠區」
     const busBoxTex = (() => {
-        // 直式書寫、字體縱向拉長（與「慢」相同）；第一個字最靠近駕駛，往行車方向依序讀
+        // 直式書寫、字體縱向拉長（與「慢」相同）；由上往下書寫，第一個字在字頭（行車方向）那一端
         const c = document.createElement('canvas'); c.width = 128; c.height = 1024;
         const x = c.getContext('2d');
         x.fillStyle = '#f2c230'; x.font = `900 112px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle';
         '公車停靠區'.split('').forEach((ch, i) => {
-            x.save(); x.translate(64, 1024 - 102 - i * 205); x.scale(1, 1.7); x.fillText(ch, 0, 4); x.restore();
+            x.save(); x.translate(64, 102 + i * 205); x.scale(1, 1.7); x.fillText(ch, 0, 4); x.restore();
         });
         const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
         const m = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: 0.6, depthWrite: false, opacity: 1 });
