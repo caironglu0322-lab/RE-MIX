@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1016">
+    <title>EmoGuard 情緒守護者</title>
+
+    <!-- 只載入數字用的 Rajdhani，其餘文字使用系統字型（載入快、不跳字） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // 先判斷版面類型，避免載入時版面跳動（與 JS 的 sideMQ 條件相同）
+        (function () {
+            var d = document.documentElement;
+            d.dataset.layout = matchMedia('(min-width: 640px) and (min-aspect-ratio: 11/10)').matches ? 'side' : 'sheet';
+            d.dataset.short = matchMedia('(max-height: 560px) and (min-aspect-ratio: 11/10)').matches ? '1' : '0';
+            d.dataset.sheet = 'closed';
+            d.dataset.hdr = 'closed';
+        })();
+    </script>
+
+    <style>
+        /* =========================================================
+           色彩與尺寸（與 TITAN 作品共用同一套色系）
+           ========================================================= */
+        :root {
+            color-scheme: dark;
+            --bg-deep: #0a0e14;
+            --bg-dark: #121820;
+            --card-bg: rgba(22, 29, 40, 0.88);
+            --accent-blue: #7A93A0;
+            --accent-gold: #DCAE7A;
+            --accent-cyan: #56B6C2;
+            --accent-green: #7BC88F;
+            --accent-red: #E5675F;
+            --accent-amber: #F0B44C;
+            --text-light: #F4F0EA;
+            --text-muted: #98A3B0;
+            --border-color: rgba(138, 163, 176, 0.25);
+
+            --edge: 20px;
+            --panel-w: clamp(296px, 30vw, 352px);
+            --sheet-closed: 62px;
+            --header-h: 60px;
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+
+            --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-num: "Rajdhani", -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+
+        body {
+            height: 100dvh;
+            font-family: var(--font);
+            color: var(--text-light);
+            background-color: var(--bg-deep);
+            background-image: radial-gradient(110% 80% at 50% 36%, #22324a 0%, #141c28 42%, var(--bg-deep) 100%);
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 背景科技網格（只在畫面中央淡淡出現） */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(122, 147, 160, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(122, 147, 160, 0.07) 1px, transparent 1px);
+            background-size: 44px 44px;
+            -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 55%, #000 10%, transparent 75%);
+                    mask-image: radial-gradient(ellipse 60% 55% at 50% 55%, #000 10%, transparent 75%);
+        }
+
+        #canvas-container { position: fixed; inset: 0; z-index: 1; }
+        #canvas-container canvas { display: block; touch-action: none; outline: none; }
+
+        button { font: inherit; color: inherit; }
+        button:focus-visible, [tabindex="0"]:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 2px; }
+
+        .glass-card {
+            background: var(--card-bg);
+            -webkit-backdrop-filter: blur(14px) saturate(130%);
+                    backdrop-filter: blur(14px) saturate(130%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ---------- 共用：收合機制 ---------- */
+        .fold-body {
+            display: grid;
+            grid-template-rows: 1fr;
+            transition: grid-template-rows 0.28s ease;
+        }
+        .closed > .fold-body { grid-template-rows: 0fr; }
+        .fold-inner { min-height: 0; overflow: hidden; }
+        .fold-h { margin: 0; font-size: inherit; font-weight: inherit; }
+        .fchev {
+            width: 8px;
+            height: 8px;
+            flex: none;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: translateY(-2px) rotate(45deg);    /* 展開：向下 */
+            transition: transform 0.25s ease;
+            opacity: 0.75;
+        }
+        [aria-expanded="false"] > .fchev { transform: rotate(-45deg); }   /* 收合：向右 */
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+
+        /* =========================================================
+           標題卡（側邊版面：左上卡片）
+           ========================================================= */
+        .ui-header {
+            position: fixed;
+            z-index: 10;
+            top: calc(var(--edge) + var(--sat));
+            left: calc(var(--edge) + var(--sal));
+            max-width: 400px;
+            padding: 12px 18px 14px;
+        }
+        .project-tag {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+        }
+        .title { font-size: 1.32rem; font-weight: 700; line-height: 1.3; color: #fff; }
+        .title .en { font-family: var(--font-num); letter-spacing: 0.02em; }
+        .subtitle { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-top: 4px; }
+        .safe-tag {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 10px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(123, 200, 143, 0.45);
+            background: rgba(123, 200, 143, 0.12);
+            color: var(--accent-green);
+            font-size: 0.74rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .hdr-toggle, .hdr-tools { display: none; }
+
+        /* 操作提示（數秒後淡出） */
+        .gesture-hint {
+            position: fixed;
+            z-index: 9;
+            left: calc((100vw - var(--panel-w) - var(--edge)) / 2);
+            bottom: calc(var(--edge) + 66px + var(--sab));
+            transform: translateX(-50%);
+            max-width: calc(100vw - 32px);
+            font-size: 0.74rem;
+            color: var(--accent-cyan);
+            background: rgba(86, 182, 194, 0.1);
+            border: 1px solid rgba(86, 182, 194, 0.3);
+            padding: 6px 14px;
+            border-radius: 999px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            -webkit-backdrop-filter: blur(8px);
+                    backdrop-filter: blur(8px);
+            transition: opacity 0.6s ease;
+            pointer-events: none;
+        }
+        .gesture-hint.hide, .gesture-hint:empty { opacity: 0; }
+
+        /* =========================================================
+           右側分頁面板（手機／平板直向改為底部抽屜）
+           ========================================================= */
+        .ui-panel {
+            position: fixed;
+            z-index: 12;
+            top: calc(var(--edge) + var(--sat));
+            right: calc(var(--edge) + var(--sar));
+            width: var(--panel-w);
+            max-height: calc(100vh - 2 * var(--edge));
+            max-height: calc(100dvh - 2 * var(--edge) - var(--sat) - var(--sab));
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sheet-handle {
+            display: none;
+            width: 100%;
+            height: 16px;
+            flex: none;
+            border: 0;
+            background: none;
+            cursor: grab;
+            touch-action: none;
+        }
+        .sheet-handle::before {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 4px;
+            margin: 7px auto 0;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .panel-top {
+            flex: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tabs { display: flex; flex: 1; gap: 2px; align-self: stretch; }
+        .tab {
+            flex: 1;
+            background: none;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            padding: 9px 2px 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .tab.active { color: var(--accent-gold); border-bottom-color: var(--accent-gold); }
+        .ui-panel[data-state="collapsed"] .panel-top { border-bottom-color: transparent; }
+        .ui-panel[data-state="collapsed"] .panel-body { display: none; }
+
+        .panel-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 0 16px 14px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(138, 163, 176, 0.35) transparent;
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* 段落 */
+        .section { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+        .sec-h {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 14px 2px 10px;
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .sec-h .fh-title { flex: 1; }
+        .sec-h small { color: var(--text-muted); font-size: 0.72rem; font-weight: 500; }
+        .sec-pad { padding: 0 0 14px; }
+        .fold-head {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: 0;
+            padding: 12px 2px;
+            cursor: pointer;
+            text-align: left;
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .fold-head .fh-title { flex: 1; }
+
+        .prose { font-size: 0.79rem; line-height: 1.65; color: var(--text-muted); }
+        .prose + .prose { margin-top: 8px; }
+        .prose b { color: var(--text-light); }
+        .hint { font-size: 0.74rem; color: var(--text-muted); line-height: 1.55; }
+
+        /* 元件／步驟按鈕列＋說明卡 */
+        .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .pchip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex: none;
+            padding: 6px 11px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+        .pchip.active { color: var(--text-light); background: rgba(86, 182, 194, 0.2); border-color: var(--accent-cyan); }
+        .comp-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--c); }
+        .num {
+            width: 18px;
+            height: 18px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(86, 182, 194, 0.2);
+            color: var(--accent-cyan);
+            font-size: 0.66rem;
+            font-weight: 700;
+        }
+        .desc-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .desc-card h3 { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; margin-bottom: 5px; }
+        .desc-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.65; }
+        .desc-card p b { color: var(--text-light); }
+        .go-link {
+            margin-top: 8px;
+            background: none;
+            border: 0;
+            padding: 2px 0;
+            color: var(--accent-cyan);
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* 分段按鈕（錶面 App、保單期限） */
+        .seg {
+            display: flex;
+            gap: 4px;
+            padding: 3px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .seg button {
+            flex: 1;
+            min-width: 0;
+            border: 0;
+            background: none;
+            padding: 7px 4px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .seg button small { display: block; font-size: 0.68rem; font-weight: 500; }
+        .seg button.active { background: rgba(86, 182, 194, 0.22); color: var(--text-light); box-shadow: inset 0 0 0 1px rgba(86, 182, 194, 0.5); }
+
+        /* 保單等級卡片 */
+        .policy-option-card {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.25s ease, border-color 0.25s ease;
+        }
+        .policy-option-card:last-child { margin-bottom: 0; }
+        .policy-option-card.active {
+            background: rgba(86, 182, 194, 0.14);
+            border-color: var(--accent-cyan);
+            box-shadow: inset 3px 0 0 var(--accent-cyan);
+        }
+        .policy-name {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .policy-name em {
+            display: block;
+            font-style: normal;
+            font-family: var(--font-num);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            letter-spacing: 0.03em;
+        }
+        .policy-price, .price {
+            font-family: var(--font-num);
+            font-weight: 700;
+            color: var(--accent-gold);
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+        .policy-price { font-size: 1.05rem; }
+        .policy-price small { font-size: 0.72rem; color: var(--text-muted); font-family: var(--font); font-weight: 500; }
+        .policy-desc { display: block; font-size: 0.76rem; color: var(--text-muted); line-height: 1.55; }
+
+        /* 試算明細 */
+        .calculator-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+        .calc-row > span:first-child { color: var(--text-muted); }
+        .calc-row .num-v { font-family: var(--font-num); font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; }
+        .calc-row.total {
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        .calc-row.total > span:first-child { color: var(--accent-gold); }
+        .calc-row.total .price { font-size: 1.35rem; }
+        .calc-row.total small { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; margin-left: 2px; }
+        .calc-row.sub { margin-bottom: 0; font-size: 0.76rem; }
+        .hrv-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 32px;
+            padding: 0;
+            background: none;
+            border: 0;
+            cursor: pointer;
+            color: var(--text-muted);
+            text-align: left;
+        }
+        .hrv-switch .track {
+            flex: none;
+            position: relative;
+            width: 34px;
+            height: 19px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.14);
+            transition: background 0.2s ease;
+        }
+        .hrv-switch .track::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #dfe5ea;
+            transition: transform 0.2s ease;
+        }
+        .hrv-switch[aria-checked="true"] .track { background: var(--accent-cyan); }
+        .hrv-switch[aria-checked="true"] .track::after { transform: translateX(15px); }
+        .badge-discount {
+            flex: none;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 8px;
+            border-radius: 999px;
+            color: #f6dcae;
+            background: rgba(220, 174, 122, 0.16);
+            border: 1px solid rgba(220, 174, 122, 0.5);
+            white-space: nowrap;
+        }
+        .badge-discount.off { color: var(--text-muted); background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.12); }
+        .calc-note { font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; margin-top: 8px; }
+
+        /* 方案比較（取代原本的跳出視窗表格） */
+        .cmp {
+            display: grid;
+            grid-template-columns: 58px repeat(3, minmax(0, 1fr));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.7rem;
+        }
+        .cmp > span {
+            padding: 6px 6px;
+            line-height: 1.45;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            transition: background 0.25s ease, color 0.25s ease;
+        }
+        .cmp > span:nth-last-child(-n + 4) { border-bottom: 0; }
+        .cmp .ck { color: var(--text-light); font-weight: 700; background: rgba(255, 255, 255, 0.03); }
+        .cmp .ch { color: var(--text-light); font-weight: 700; text-align: center; background: rgba(255, 255, 255, 0.05); }
+        .cmp[data-sel="basic"] [data-t="basic"],
+        .cmp[data-sel="standard"] [data-t="standard"],
+        .cmp[data-sel="premium"] [data-t="premium"] { background: rgba(220, 174, 122, 0.1); color: #f6dcae; }
+
+        /* 條款手風琴 */
+        .terms-list { display: grid; gap: 6px; }
+        .acc {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            transition: border-color 0.25s ease;
+        }
+        .acc:not(.closed) { border-color: rgba(86, 182, 194, 0.5); }
+        .acc-head {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            background: none;
+            border: 0;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .acc-head .an { flex: 1; }
+        .acc-pad { padding: 0 12px 10px; font-size: 0.77rem; line-height: 1.6; color: var(--text-muted); }
+        .acc-pad strong { color: var(--accent-gold); }
+        .disclaimer { font-size: 0.7rem; color: var(--text-muted); line-height: 1.55; margin-top: 10px; opacity: 0.85; }
+
+        /* 運作流程：傳統保險比較 */
+        .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .rec { border-radius: 8px; padding: 8px 10px; font-size: 0.74rem; color: var(--text-muted); }
+        .rec b { display: block; font-size: 0.78rem; margin-bottom: 4px; }
+        .rec ul { padding-left: 16px; line-height: 1.6; }
+        .rec.keep { background: rgba(123, 200, 143, 0.07); border: 1px solid rgba(123, 200, 143, 0.3); }
+        .rec.keep b { color: var(--accent-green); }
+        .rec.no { background: rgba(255, 122, 89, 0.07); border: 1px solid rgba(255, 122, 89, 0.3); }
+        .rec.no b { color: #ffb39c; }
+        .rec.up { background: rgba(86, 182, 194, 0.07); border: 1px solid rgba(86, 182, 194, 0.3); }
+        .rec.up b { color: #bde8ee; }
+
+        /* 隱私保障 */
+        .safe-lead { font-size: 0.79rem; color: var(--text-muted); line-height: 1.65; margin-bottom: 10px; }
+        .safe-lead b { color: var(--accent-green); }
+        .promise { list-style: none; display: grid; gap: 6px; }
+        .promise li {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(123, 200, 143, 0.06);
+            border: 1px solid rgba(123, 200, 143, 0.2);
+        }
+        .promise .pi { font-size: 1.05rem; line-height: 1.3; flex: none; }
+        .promise b { display: block; font-size: 0.82rem; color: var(--text-light); margin-bottom: 2px; }
+        .promise span { font-size: 0.75rem; color: var(--text-muted); line-height: 1.55; }
+        .sub-h { font-size: 0.8rem; color: var(--accent-gold); margin: 14px 0 8px; }
+        .flow { list-style: none; position: relative; counter-reset: flow; }
+        .flow li {
+            counter-increment: flow;
+            position: relative;
+            padding: 0 0 12px 30px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .flow li::before {
+            content: counter(flow);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 0.68rem;
+            font-weight: 700;
+            background: rgba(86, 182, 194, 0.2);
+            color: var(--accent-cyan);
+        }
+        .flow li:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            left: 9.5px;
+            top: 22px;
+            bottom: 2px;
+            width: 1px;
+            background: rgba(86, 182, 194, 0.35);
+        }
+        .flow b { display: block; font-size: 0.8rem; color: var(--text-light); }
+        .tag { display: inline-block; margin-top: 3px; font-style: normal; font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+        .tag.del { color: #ffb39c; background: rgba(255, 122, 89, 0.12); border: 1px solid rgba(255, 122, 89, 0.35); }
+        .tag.keep { color: var(--accent-green); background: rgba(123, 200, 143, 0.12); border: 1px solid rgba(123, 200, 143, 0.4); }
+        .tag.up { color: #bde8ee; background: rgba(86, 182, 194, 0.12); border: 1px solid rgba(86, 182, 194, 0.4); }
+
+        .site-footer {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.72rem;
+            line-height: 1.7;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .site-footer b { color: var(--text-light); font-weight: 600; }
+
+        /* =========================================================
+           3D 控制工具列（側邊版面在底部；手機收進標題列）
+           ========================================================= */
+        .ui-bottom-bar {
+            position: fixed;
+            z-index: 11;
+            left: calc((100vw - var(--panel-w) - var(--edge)) / 2);
+            bottom: calc(var(--edge) + var(--sab));
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 30px;
+        }
+        .tb-items { display: flex; gap: 8px; }
+        .ui-bottom-bar.closed .tb-items { display: none; }
+        .tb-toggle { border-radius: 50%; }
+        .tb-toggle .fchev { transform: translateX(2px) rotate(135deg); }
+        .tb-toggle[aria-expanded="false"] .fchev { transform: translateX(-2px) rotate(-45deg); }
+        .tool-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 38px;
+            min-width: 38px;
+            padding: 0 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-light);
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .tool-btn svg { width: 18px; height: 18px; flex: none; }
+        .tool-btn .label { display: none; }
+        .tool-btn[aria-pressed="true"] { background: rgba(86, 182, 194, 0.25); border-color: var(--accent-cyan); }
+        @media (min-width: 1000px) {
+            .ui-bottom-bar .tool-btn .label { display: inline; }
+            .ui-bottom-bar .tool-btn { padding: 0 14px; }
+        }
+
+        /* ---------- 提示訊息 ---------- */
+        .toasts {
+            position: fixed;
+            z-index: 15;
+            top: calc(var(--edge) + var(--sat));
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(380px, calc(100vw - 32px));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+        }
+        .toast {
+            font-size: 0.8rem;
+            line-height: 1.45;
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: rgba(20, 27, 37, 0.95);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .toast.show { opacity: 1; transform: none; }
+        .toast.good { border-color: rgba(123, 200, 143, 0.6); color: #cdeed5; }
+        .toast.warn { border-color: rgba(240, 180, 76, 0.65); color: #f6dcae; }
+        .toast.info { border-color: rgba(86, 182, 194, 0.55); color: #d6f0f3; }
+
+        /* ---------- 載入畫面（不遮住面板；3D 失敗時面板照常可用） ---------- */
+        #loading {
+            position: fixed;
+            z-index: 8;
+            top: 50%;
+            left: calc((100vw - var(--panel-w) - var(--edge)) / 2);
+            transform: translate(-50%, -50%);
+            width: min(340px, calc(100vw - 48px));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            color: var(--accent-cyan);
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            line-height: 1.6;
+            text-align: center;
+            transition: opacity 0.6s ease;
+        }
+        #loading.done { opacity: 0; pointer-events: none; }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(86, 182, 194, 0.2);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-reload {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: 1px solid rgba(86, 182, 194, 0.55);
+            background: rgba(86, 182, 194, 0.13);
+            color: #bde8ee;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        html.no3d .ui-bottom-bar,
+        html.no3d .hdr-tools,
+        html.no3d .gesture-hint { display: none !important; }
+
+        /* ---------- 滑鼠懸停 ---------- */
+        @media (hover: hover) {
+            .icon-btn:hover { color: var(--text-light); border-color: var(--accent-cyan); }
+            .tab:hover { color: var(--text-light); }
+            .tab.active:hover { color: var(--accent-gold); }
+            .pchip:hover { color: var(--text-light); border-color: rgba(86, 182, 194, 0.5); }
+            .policy-option-card:not(.active):hover { border-color: rgba(86, 182, 194, 0.5); }
+            .seg button:not(.active):hover { color: var(--text-light); background: rgba(255, 255, 255, 0.05); }
+            .acc:hover { border-color: rgba(86, 182, 194, 0.5); }
+            .safe-tag:hover { background: rgba(123, 200, 143, 0.22); }
+            .tool-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+            .btn-reload:hover { background: rgba(86, 182, 194, 0.26); }
+            .go-link:hover { text-decoration: underline; }
+        }
+
+        /* ---------- 觸控裝置：放大點按區 ---------- */
+        @media (pointer: coarse) {
+            .tab, .fold-head, .acc-head, .seg button, .tool-btn { min-height: 44px; }
+            .icon-btn { width: 44px; height: 44px; }
+            .pchip { min-height: 40px; }
+            .ui-bottom-bar .tool-btn { min-width: 44px; }
+        }
+
+        /* ---------- 矮螢幕（手機橫向） ---------- */
+        html[data-short="1"] { --edge: 8px; }
+        html[data-short="1"] .ui-header { max-width: 300px; padding: 8px 12px 10px; }
+        html[data-short="1"] .title { font-size: 1rem; }
+        html[data-short="1"] .project-tag { font-size: 0.66rem; }
+        html[data-short="1"] .subtitle { display: none; }
+        html[data-short="1"] .safe-tag { margin-top: 6px; }
+        html[data-short="1"] .tab { font-size: 0.76rem; }
+        html[data-short="1"] .panel-top { gap: 4px; padding: 4px 6px 0; }
+
+        /* =========================================================
+           抽屜版面：手機、平板直向
+           ========================================================= */
+        html[data-layout="sheet"] .ui-header {
+            top: calc(8px + var(--sat));
+            left: calc(8px + var(--sal));
+            right: calc(8px + var(--sar));
+            max-width: none;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            grid-template-areas: "tag tag tools" "title chev tools" "sub sub sub" "safe safe safe";
+            align-items: center;
+            column-gap: 4px;
+            padding: 7px 8px 7px 12px;
+        }
+        html[data-layout="sheet"] .project-tag { grid-area: tag; margin: 0; font-size: 0.68rem; letter-spacing: 0.5px; }
+        html[data-layout="sheet"] .title {
+            grid-area: title;
+            font-size: 0.92rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        html[data-layout="sheet"] .title .ins { display: none; }
+        html[data-layout="sheet"] .subtitle { grid-area: sub; font-size: 0.76rem; margin-top: 4px; }
+        html[data-layout="sheet"] .safe-tag { grid-area: safe; justify-self: start; margin-top: 6px; }
+        html[data-layout="sheet"] .hdr-toggle {
+            grid-area: chev;
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 36px;
+            border: 0;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        html[data-layout="sheet"] .hdr-tools { grid-area: tools; display: flex; }
+        html[data-layout="sheet"][data-hdr="closed"] .ui-header .project-tag,
+        html[data-layout="sheet"][data-hdr="closed"] .ui-header .subtitle,
+        html[data-layout="sheet"][data-hdr="closed"] .ui-header .safe-tag { display: none; }
+        .hdr-tools .tb-items { gap: 4px; }
+        .hdr-tools .tool-btn { width: 34px; height: 34px; min-width: 0; min-height: 0; padding: 0; border-radius: 50%; }
+        .hdr-tools .tool-btn svg { width: 17px; height: 17px; }
+        html[data-layout="sheet"] .ui-bottom-bar { display: none; }
+
+        html[data-layout="sheet"] .ui-panel {
+            top: auto;
+            left: calc(8px + var(--sal));
+            right: calc(8px + var(--sar));
+            bottom: calc(8px + var(--sab));
+            width: auto;
+            max-height: none;
+            height: var(--sheet-closed);
+            border-radius: 16px;
+            transition: height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        html[data-layout="sheet"] .ui-panel[data-state="half"] { height: 52vh; height: 52dvh; }
+        html[data-layout="sheet"] .ui-panel[data-state="full"] { height: calc(100dvh - var(--header-h) - 24px - var(--sat) - var(--sab)); }
+        html[data-layout="sheet"] .sheet-handle { display: block; }
+        html[data-layout="sheet"] .panel-top { height: 46px; padding: 0 8px; }
+        html[data-layout="sheet"] #panel-toggle { display: none; }
+        html[data-layout="sheet"] .ui-panel[data-state="closed"] .panel-top { border-bottom-color: transparent; }
+        html[data-layout="sheet"] .ui-panel[data-state="closed"] .panel-body { visibility: hidden; }
+        html[data-layout="sheet"] .panel-body { padding: 0 12px 12px; }
+
+        html[data-layout="sheet"] .gesture-hint { left: 50%; bottom: calc(var(--sheet-closed) + 22px + var(--sab)); }
+        html[data-layout="sheet"]:not([data-sheet="closed"]) .gesture-hint { opacity: 0; }
+        html[data-layout="sheet"] #loading { left: 50%; top: calc(var(--header-h) + (100dvh - var(--header-h) - var(--sheet-closed)) / 2); }
+
+        @media (min-width: 600px) {
+            html[data-layout="sheet"] .ui-header { right: auto; width: 480px; }
+            html[data-layout="sheet"] .ui-panel { left: 0; right: 0; margin: 0 auto; width: min(720px, calc(100% - 24px)); }
+        }
+
+        /* 手機：面板內容稍微縮小 */
+        @media (max-width: 599px) {
+            html[data-layout="sheet"] .tab { font-size: 0.8rem; }
+            html[data-layout="sheet"] .sec-h { padding: 11px 2px 8px; font-size: 0.86rem; }
+            html[data-layout="sheet"] .sec-pad { padding-bottom: 11px; }
+            html[data-layout="sheet"] .chip-row { flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px 8px; padding: 0 12px 4px; scrollbar-width: none; }
+            html[data-layout="sheet"] .chip-row::-webkit-scrollbar { display: none; }
+            html[data-layout="sheet"] .desc-card p,
+            html[data-layout="sheet"] .safe-lead,
+            html[data-layout="sheet"] .prose { font-size: 0.76rem; line-height: 1.58; }
+            .toast {
+                font-size: 0.75rem;
+                padding: 6px 10px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; }
+        }
+    </style>
+
+    <!-- Three.js r128 及其 OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div id="canvas-container" aria-label="EmoGuard 智慧手錶 3D 模型，可拖曳旋轉"></div>
+
+    <div id="loading" role="status">
+        <div class="spinner"></div>
+        <span id="loading-text">載入 EmoGuard 3D 模型中…</span>
+        <button class="btn-reload" id="reload-btn" type="button" hidden>重新載入</button>
+    </div>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <!-- 作品資訊 -->
+    <header class="ui-header glass-card" id="header">
+        <div class="project-tag">單元三：應用與再想像 ｜ 作品 3-2</div>
+        <h1 class="title" id="hdr-title"><span class="en">EmoGuard<span class="ins"> Insurance</span></span> 情緒守護者</h1>
+        <button class="hdr-toggle" id="hdr-toggle" type="button" aria-expanded="false" aria-controls="hdr-sub" aria-label="展開作品資訊"><span class="fchev"></span></button>
+        <p class="subtitle" id="hdr-sub">穿戴式 HRV 量測・情緒預警關懷・達標保費折扣</p>
+        <button class="safe-tag" id="safe-tag" type="button">🔒 數據隱私 ›</button>
+        <div class="hdr-tools" id="hdr-tools"></div>
+    </header>
+
+    <div class="gesture-hint" id="gesture-hint"></div>
+
+    <!-- 分頁面板（電腦在右側；手機、平板直向為底部抽屜） -->
+    <aside class="ui-panel glass-card" id="panel" data-state="open" aria-label="EmoGuard 資訊面板">
+        <button class="sheet-handle" id="sheet-handle" type="button" aria-label="展開面板"></button>
+        <div class="panel-top">
+            <div class="tabs" role="tablist" aria-label="資訊分頁">
+                <button class="tab active" type="button" role="tab" id="tab-parts" data-tab="parts" aria-controls="pane-parts" aria-selected="true">裝置構造</button>
+                <button class="tab" type="button" role="tab" id="tab-flow" data-tab="flow" aria-controls="pane-flow" aria-selected="false" tabindex="-1">運作流程</button>
+                <button class="tab" type="button" role="tab" id="tab-plan" data-tab="plan" aria-controls="pane-plan" aria-selected="false" tabindex="-1">保單試算</button>
+                <button class="tab" type="button" role="tab" id="tab-privacy" data-tab="privacy" aria-controls="pane-privacy" aria-selected="false" tabindex="-1">隱私保障</button>
+            </div>
+            <button class="icon-btn" id="panel-toggle" type="button" aria-controls="panel-body" aria-expanded="true" aria-label="收合面板" title="收合面板"><span class="fchev"></span></button>
+        </div>
+
+        <div class="panel-body" id="panel-body">
+
+            <!-- 分頁一：裝置構造 -->
+            <div class="tab-pane active" id="pane-parts" role="tabpanel" aria-labelledby="tab-parts">
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">EmoGuard 手錶構造</span><small>點選放大</small></h2>
+                    <div class="sec-pad">
+                        <div class="chip-row" id="part-row" data-desc="part-desc">
+                            <button class="pchip" type="button" data-key="screen" aria-pressed="false"><span class="comp-dot" style="--c:#56B6C2"></span>AMOLED 螢幕</button>
+                            <button class="pchip" type="button" data-key="crown" aria-pressed="false"><span class="comp-dot" style="--c:#E040FB"></span>數位錶冠</button>
+                            <button class="pchip" type="button" data-key="calm" aria-pressed="false"><span class="comp-dot" style="--c:#00E5FF"></span>減壓任務鍵</button>
+                            <button class="pchip" type="button" data-key="sos" aria-pressed="false"><span class="comp-dot" style="--c:#DCAE7A"></span>SOS 求助鍵</button>
+                            <button class="pchip" type="button" data-key="side" aria-pressed="false"><span class="comp-dot" style="--c:#7A93A0"></span>鈦金屬側鍵</button>
+                            <button class="pchip" type="button" data-key="sensor" aria-pressed="false"><span class="comp-dot" style="--c:#7BC88F"></span>PPG 感測器</button>
+                            <button class="pchip" type="button" data-key="strap" aria-pressed="false"><span class="comp-dot" style="--c:#FF9F43"></span>親膚錶帶</button>
+                            <button class="pchip" type="button" data-key="case" aria-pressed="false"><span class="comp-dot" style="--c:#C9D3DD"></span>鈦金屬錶殼</button>
+                        </div>
+                        <div class="desc-card" id="part-desc" aria-live="polite">
+                            <div class="pdesc" data-for="screen"><h3><span class="comp-dot" style="--c:#56B6C2"></span>1. AMOLED 觸控螢幕</h3><p>顯示 HRV、心率與壓力指數，並提供呼吸引導；<b>輕觸錶面</b>可切換 3 個 App。</p></div>
+                            <div class="pdesc" data-for="crown" hidden><h3><span class="comp-dot" style="--c:#E040FB"></span>2. 數位錶冠</h3><p>旋轉可捲動資訊；按壓可隨時開始 <b>Daily Calm</b> 呼吸練習。</p></div>
+                            <div class="pdesc" data-for="calm" hidden><h3><span class="comp-dot" style="--c:#00E5FF"></span>3. 減壓任務鍵（2 點鐘）</h3><p>一鍵記錄當下心情，並領取今日減壓任務；<b>完成任務也算達標條件</b>之一。</p></div>
+                            <div class="pdesc" data-for="sos" hidden><h3><span class="comp-dot" style="--c:#DCAE7A"></span>4. SOS 求助鍵（4 點鐘）</h3><p>長按 3 秒即撥打 <b>1925 安心專線</b>，或通知你事先設定的緊急聯絡人。</p></div>
+                            <div class="pdesc" data-for="side" hidden><h3><span class="comp-dot" style="--c:#7A93A0"></span>5. 鈦金屬側鍵</h3><p>喚醒螢幕，快速查看本月配戴天數與 HRV 達標進度。</p></div>
+                            <div class="pdesc" data-for="sensor" hidden><h3><span class="comp-dot" style="--c:#7BC88F"></span>6. 雙波長 PPG 光學感測器</h3><p>綠光量測脈搏，紅光／紅外光輔助量測血氧與 HRV；<b>原始資料只在手錶端運算</b>。</p></div>
+                            <div class="pdesc" data-for="strap" hidden><h3><span class="comp-dot" style="--c:#FF9F43"></span>7. 親膚矽膠錶帶</h3><p>低敏透氣，適合 24 小時配戴與睡眠追蹤；每月<b>配戴滿 20 天</b>才計入折扣。</p></div>
+                            <div class="pdesc" data-for="case" hidden><h3><span class="comp-dot" style="--c:#C9D3DD"></span>8. 鈦金屬錶殼</h3><p>輕量耐用、5ATM 防水，洗手、運動都不必取下，數據不中斷。</p></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">錶面 App</span><small>輕觸錶面也能切換</small></h2>
+                    <div class="sec-pad">
+                        <div class="seg" id="app-seg" role="radiogroup" aria-label="錶面 App">
+                            <button type="button" role="radio" data-app="0">HRV 儀表板</button>
+                            <button type="button" role="radio" data-app="1">Daily Calm</button>
+                            <button type="button" role="radio" data-app="2">偏低預警</button>
+                        </div>
+                        <p class="hint" id="app-hint"></p>
+                    </div>
+                </section>
+
+                <section class="section closed">
+                    <h2 class="fold-h"><button class="fold-head" type="button" data-fold aria-expanded="false" aria-controls="fb-hrv"><span class="fh-title">更多說明：為什麼用 HRV 看情緒？</span><span class="fchev"></span></button></h2>
+                    <div class="fold-body" id="fb-hrv"><div class="fold-inner"><div class="sec-pad">
+                        <p class="prose">HRV（心率變異度）是<b>每次心跳間隔的微小變化</b>，反映自律神經是否平衡。長期壓力、焦慮或睡眠不足時，HRV 常會下降，因此能在情緒問題惡化<b>之前</b>提早提醒。</p>
+                        <p class="prose">HRV 只是壓力的參考指標，<b>不是醫療診斷</b>；身心不適持續時，仍請尋求專業協助。</p>
+                    </div></div></div>
+                </section>
+            </div>
+
+            <!-- 分頁二：運作流程 -->
+            <div class="tab-pane" id="pane-flow" role="tabpanel" aria-labelledby="tab-flow">
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">運作方式</span><small>點選步驟</small></h2>
+                    <div class="sec-pad">
+                        <div class="chip-row" id="step-row" data-desc="step-desc">
+                            <button class="pchip" type="button" data-key="s1" data-part="sensor" aria-pressed="false"><span class="num">1</span>配戴量測</button>
+                            <button class="pchip" type="button" data-key="s2" data-part="screen" data-app="0" aria-pressed="false"><span class="num">2</span>基準比較</button>
+                            <button class="pchip" type="button" data-key="s3" data-part="screen" data-app="2" aria-pressed="false"><span class="num">3</span>預警關懷</button>
+                            <button class="pchip" type="button" data-key="s4" data-part="screen" data-app="1" aria-pressed="false"><span class="num">4</span>減壓任務</button>
+                            <button class="pchip" type="button" data-key="s5" data-part="screen" data-app="2" aria-pressed="false"><span class="num">5</span>達標折扣</button>
+                        </div>
+                        <div class="desc-card" id="step-desc" aria-live="polite">
+                            <div class="pdesc" data-for="s1"><h3><span class="num">1</span>配戴量測</h3><p>背面的光學感測器自動量測脈搏並計算 HRV。基礎型每日定時 3 次，進階型以上 <b>24 小時連續分析</b>。</p></div>
+                            <div class="pdesc" data-for="s2" hidden><h3><span class="num">2</span>個人基準比較</h3><p>與<b>本人過去 30 日</b>的 HRV 基準比較，不和別人比，也不做排名。</p></div>
+                            <div class="pdesc" data-for="s3" hidden><h3><span class="num">3</span>預警與關懷</h3><p>HRV 持續低於基準時，手錶跳出提醒並發送<b>心理諮詢券</b>；進階型以上會主動關懷。</p></div>
+                            <div class="pdesc" data-for="s4" hidden><h3><span class="num">4</span>減壓任務</h3><p>完成 Daily Calm 呼吸練習等減壓任務，幫助 HRV 回到個人基準。</p></div>
+                            <div class="pdesc" data-for="s5" hidden><h3><span class="num">5</span>達標折扣</h3><p>每月配戴滿 20 天，且 HRV 達基準或完成減壓任務，<b>當月保費即享折扣</b>。</p><button class="go-link" type="button" data-goto="plan">前往保單試算 ›</button></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">和傳統保險有什麼不同</span></h2>
+                    <div class="sec-pad">
+                        <div class="rec-grid">
+                            <div class="rec no"><b>傳統心理保險</b><ul><li>需精神科診斷證明</li><li>發病後才理賠</li><li>保費固定不變</li></ul></div>
+                            <div class="rec keep"><b>EmoGuard</b><ul><li>不需診斷證明</li><li>預防型，提早介入</li><li>越穩定，保費越低</li></ul></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section closed">
+                    <h2 class="fold-h"><button class="fold-head" type="button" data-fold aria-expanded="false" aria-controls="fb-pay"><span class="fh-title">更多說明：給付方式與等待期</span><span class="fchev"></span></button></h2>
+                    <div class="fold-body" id="fb-pay"><div class="fold-inner"><div class="sec-pad">
+                        <p class="prose">保障以<b>諮詢券與服務直接提供</b>，不需要先就醫、也不用申請理賠。</p>
+                        <p class="prose">諮詢券於保單生效 30 日後可使用；<b>危機支持自生效日起即可使用</b>。</p>
+                    </div></div></div>
+                </section>
+            </div>
+
+            <!-- 分頁三：保單試算 -->
+            <div class="tab-pane" id="pane-plan" role="tabpanel" aria-labelledby="tab-plan">
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">保單等級</span><small id="fh-tier">舒活基礎型</small></h2>
+                    <div class="sec-pad">
+                        <div class="tier-group" role="radiogroup" aria-label="保單等級">
+                            <button class="policy-option-card active" type="button" data-tier="basic" role="radio" aria-checked="true" tabindex="0">
+                                <span class="policy-name"><span>舒活基礎型<em>Basic Calm</em></span><span class="policy-price">NT$ 450<small> /月</small></span></span>
+                                <span class="policy-desc">每日 3 次定時 HRV 量測與每週壓力報告、每季 1 次線上心理諮詢券，HRV 達標最高享 9 折。</span>
+                            </button>
+                            <button class="policy-option-card" type="button" data-tier="standard" role="radio" aria-checked="false" tabindex="-1">
+                                <span class="policy-name"><span>守護進階型<em>Standard Guardian</em></span><span class="policy-price">NT$ 880<small> /月</small></span></span>
+                                <span class="policy-desc">24 小時連續 HRV 分析、異常即時預警、每月 1 次專業諮詢券，HRV 達標最高享 85 折。</span>
+                            </button>
+                            <button class="policy-option-card" type="button" data-tier="premium" role="radio" aria-checked="false" tabindex="-1">
+                                <span class="policy-name"><span>尊榮全護型<em>Premium Shield</em></span><span class="policy-price">NT$ 1,500<small> /月</small></span></span>
+                                <span class="policy-desc">24 小時連續分析＋個人化基準與睡眠恢復分析、不限次線上諮商、24 小時危機支持與專人關懷，HRV 達標最高享 75 折。</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">保單期限</span><small id="fh-term">1 年 · 95 折</small></h2>
+                    <div class="sec-pad">
+                        <div class="seg term-group" role="radiogroup" aria-label="保單期限">
+                            <button class="term-btn" type="button" data-months="6" role="radio" aria-checked="false" tabindex="-1">6 個月<small>無折扣</small></button>
+                            <button class="term-btn active" type="button" data-months="12" role="radio" aria-checked="true" tabindex="0">1 年<small>95 折</small></button>
+                            <button class="term-btn" type="button" data-months="24" role="radio" aria-checked="false" tabindex="-1">2 年<small>88 折</small></button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">試算明細</span><small id="fh-calc">NT$ 385/月</small></h2>
+                    <div class="sec-pad">
+                        <div class="calculator-box" aria-live="polite">
+                            <div class="calc-row"><span>原保費月繳</span><span class="num-v" id="calc-base-price">NT$ 450</span></div>
+                            <div class="calc-row"><span>期限折扣</span><span id="calc-term-discount">95 折</span></div>
+                            <div class="calc-row">
+                                <button class="hrv-switch" id="hrv-switch" type="button" role="switch" aria-checked="true"><span class="track" aria-hidden="true"></span><span>假設本月 HRV 達標</span></button>
+                                <span class="badge-discount" id="calc-hrv-badge">9 折</span>
+                            </div>
+                            <div class="calc-row total"><span>預估月繳保費</span><span><span class="price" id="calc-final-price">NT$ 385</span><small>/月</small></span></div>
+                            <div class="calc-row sub"><span>合約期總額（<span id="calc-months">12</span> 個月）</span><span class="num-v" id="calc-total">NT$ 4,620</span></div>
+                            <p class="calc-note" id="calc-note">HRV 折扣按月結算。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">方案比較</span><small>目前方案以金色標示</small></h2>
+                    <div class="sec-pad">
+                        <div class="cmp" id="cmp" data-sel="basic" role="table" aria-label="三種方案比較">
+                            <span class="ch" role="columnheader">項目</span><span class="ch" data-t="basic" role="columnheader">基礎型</span><span class="ch" data-t="standard" role="columnheader">進階型</span><span class="ch" data-t="premium" role="columnheader">尊榮型</span>
+                            <span class="ck" role="rowheader">月繳原價</span><span data-t="basic" role="cell">NT$ 450</span><span data-t="standard" role="cell">NT$ 880</span><span data-t="premium" role="cell">NT$ 1,500</span>
+                            <span class="ck" role="rowheader">HRV 追蹤</span><span data-t="basic" role="cell">每日 3 次＋週報</span><span data-t="standard" role="cell">24 小時連續</span><span data-t="premium" role="cell">24 小時＋睡眠恢復分析</span>
+                            <span class="ck" role="rowheader">諮詢資源</span><span data-t="basic" role="cell">每季 1 張券</span><span data-t="standard" role="cell">每月 1 張券（自選諮商師）</span><span data-t="premium" role="cell">不限次＋24 小時危機支持</span>
+                            <span class="ck" role="rowheader">異常預警</span><span data-t="basic" role="cell">App 文字提醒</span><span data-t="standard" role="cell">主動觸發關懷</span><span data-t="premium" role="cell">專人關懷＋綠色通道</span>
+                            <span class="ck" role="rowheader">達標折扣</span><span data-t="basic" role="cell">最高 9 折</span><span data-t="standard" role="cell">最高 85 折</span><span data-t="premium" role="cell">最高 75 折</span>
+                        </div>
+                        <p class="hint" style="margin-top:8px">期限折扣：6 個月無折扣｜1 年 95 折｜2 年 88 折，可與 HRV 折扣併用。</p>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">條款摘要</span><small>6 項</small></h2>
+                    <div class="sec-pad">
+                        <div class="terms-list">
+                            <div class="acc closed">
+                                <h3 class="fold-h"><button class="acc-head" type="button" data-fold aria-expanded="false" aria-controls="term-1"><span class="an">投保資格</span><span class="fchev"></span></button></h3>
+                                <div class="fold-body" id="term-1"><div class="fold-inner"><p class="acc-pad">18–65 歲，配戴 EmoGuard 手錶並同意數據授權。</p></div></div>
+                            </div>
+                            <div class="acc closed">
+                                <h3 class="fold-h"><button class="acc-head" type="button" data-fold aria-expanded="false" aria-controls="term-2"><span class="an">給付方式</span><span class="fchev"></span></button></h3>
+                                <div class="fold-body" id="term-2"><div class="fold-inner"><p class="acc-pad">以諮詢券與服務直接提供，<strong>不需精神科診斷證明</strong>。</p></div></div>
+                            </div>
+                            <div class="acc closed">
+                                <h3 class="fold-h"><button class="acc-head" type="button" data-fold aria-expanded="false" aria-controls="term-3"><span class="an">等待期</span><span class="fchev"></span></button></h3>
+                                <div class="fold-body" id="term-3"><div class="fold-inner"><p class="acc-pad">諮詢券於保單生效 30 日後可使用；危機支持自生效日起即可使用。</p></div></div>
+                            </div>
+                            <div class="acc closed">
+                                <h3 class="fold-h"><button class="acc-head" type="button" data-fold aria-expanded="false" aria-controls="term-4"><span class="an">HRV 折扣規則</span><span class="fchev"></span></button></h3>
+                                <div class="fold-body" id="term-4"><div class="fold-inner"><p class="acc-pad">以<strong>本人過去 30 日的 HRV 基準</strong>比較，不與他人比較。每月配戴至少 20 天，且 HRV 達個人基準或完成減壓任務，即享當月折扣。</p></div></div>
+                            </div>
+                            <div class="acc closed">
+                                <h3 class="fold-h"><button class="acc-head" type="button" data-fold aria-expanded="false" aria-controls="term-5"><span class="an">數據使用與隱私</span><span class="fchev"></span></button></h3>
+                                <div class="fold-body" id="term-5"><div class="fold-inner"><p class="acc-pad">心率原始資料於手錶端運算，僅上傳「本月是否達標」的結果；可隨時撤回授權，撤回後改以原價計費。</p></div></div>
+                            </div>
+                            <div class="acc closed">
+                                <h3 class="fold-h"><button class="acc-head" type="button" data-fold aria-expanded="false" aria-controls="term-6"><span class="an">不在保障範圍</span><span class="fchev"></span></button></h3>
+                                <div class="fold-body" id="term-6"><div class="fold-inner"><p class="acc-pad">本方案不取代醫療診斷與藥物治療。遇緊急狀況請撥 <strong>1925 安心專線</strong>（24 小時）或 119。</p></div></div>
+                            </div>
+                        </div>
+                        <p class="disclaimer">本頁為課程概念設計作品，所有方案、價格與條款皆為虛構，非真實保險商品。</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 分頁四：隱私保障 -->
+            <div class="tab-pane" id="pane-privacy" role="tabpanel" aria-labelledby="tab-privacy">
+                <section class="section">
+                    <h2 class="sec-h"><span class="fh-title">🔒 隱私保障</span><small>情緒數據不外流</small></h2>
+                    <div class="sec-pad">
+                        <p class="safe-lead">心率原始資料<b>只在手錶端運算</b>，保險公司只會收到「本月是否達標」。</p>
+                        <ul class="promise">
+                            <li><span class="pi">⌚</span><div><b>手錶端運算</b><span>心率與 HRV 原始資料在手錶內分析，不上傳雲端</span></div></li>
+                            <li><span class="pi">✅</span><div><b>只上傳達標結果</b><span>每月只回傳一筆「是／否」與配戴天數</span></div></li>
+                            <li><span class="pi">👤</span><div><b>只跟自己比較</b><span>以本人過去 30 日 HRV 為基準，不做排名</span></div></li>
+                            <li><span class="pi">↩️</span><div><b>隨時撤回授權</b><span>撤回後改以原價計費，保障內容不變</span></div></li>
+                            <li><span class="pi">🤝</span><div><b>經同意才主動關懷</b><span>只在你同意的預警條件下，才由專人聯繫</span></div></li>
+                            <li><span class="pi">🏥</span><div><b>不取代醫療</b><span>緊急狀況請撥 1925 安心專線或 119</span></div></li>
+                        </ul>
+                        <h3 class="sub-h">數據流向</h3>
+                        <ol class="flow">
+                            <li><b>光學感測器量測脈搏</b>原始波形在手錶內轉成 HRV<br><i class="tag del">原始波形運算後刪除</i></li>
+                            <li><b>手錶比較個人基準</b>計算本日 HRV 與 30 日基準的差距<br><i class="tag keep">只存在手錶 30 天</i></li>
+                            <li><b>每月產生達標結果</b>是否達標＋配戴天數<br><i class="tag up">唯一上傳的資料</i></li>
+                            <li><b>保險公司計算當月保費</b>依結果套用 HRV 折扣<br><i class="tag del">不接收任何心率數據</i></li>
+                        </ol>
+                        <h3 class="sub-h">會上傳／不會上傳</h3>
+                        <div class="rec-grid">
+                            <div class="rec up"><b>只上傳</b><ul><li>本月是否達標</li><li>配戴天數</li><li>諮詢券使用次數</li></ul></div>
+                            <div class="rec keep"><b>絕不上傳</b><ul><li>心率原始波形</li><li>每日 HRV 數值</li><li>位置與通話資料</li></ul></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="site-footer">
+                <div>單元三：應用與再想像 ｜ 作品 3-2</div>
+                <div>團隊：<b>EmoGuard 情緒守護者</b></div>
+                <div>成員：<b>黃偉閎、莊詠筑</b></div>
+                <div>課程概念設計作品，方案、價格與條款皆為虛構。</div>
+                <div>© 2026 EmoGuard 情緒守護者</div>
+            </footer>
+        </div>
+    </aside>
+
+    <!-- 3D 控制工具列（手機版會由 JS 移到標題列右側） -->
+    <nav class="ui-bottom-bar glass-card" id="toolbar" aria-label="3D 檢視控制">
+        <div class="tb-items" id="tb-items">
+            <button class="tool-btn" id="btn-reset" type="button" title="重置視角" aria-label="重置視角">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                <span class="label">重置視角</span>
+            </button>
+            <button class="tool-btn" id="btn-rear" type="button" title="翻轉至背面感測器" aria-label="翻轉至手錶背面" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                <span class="label" id="rear-label">背面感測器</span>
+            </button>
+            <button class="tool-btn" id="btn-app" type="button" title="切換錶面 App" aria-label="切換錶面 App">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 9.5V12l1.5 1.5"/><path d="M16.5 7.5l-.9-4.2A2 2 0 0 0 13.6 2h-3.2a2 2 0 0 0-2 1.3l-.9 4.2M7.5 16.5l.9 4.2a2 2 0 0 0 2 1.3h3.2a2 2 0 0 0 2-1.3l.9-4.2"/></svg>
+                <span class="label">切換 App</span>
+            </button>
+            <button class="tool-btn" id="btn-rotate" type="button" title="360° 自動旋轉" aria-label="360 度自動旋轉" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg>
+                <span class="label">自動旋轉</span>
+            </button>
+        </div>
+        <button class="icon-btn tb-toggle" id="tb-toggle" type="button" aria-expanded="true" aria-controls="tb-items" aria-label="收合工具列" title="收合工具列"><span class="fchev"></span></button>
+    </nav>
+
+    <noscript><p style="position:fixed;inset:auto 0 0 0;padding:16px;text-align:center;background:#000;color:#fff;z-index:3000">請啟用 JavaScript 以檢視互動內容。</p></noscript>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const $ = (id) => document.getElementById(id);
+        const root = document.documentElement;
+        const header = $('header');
+        const panel = $('panel');
+        const toolbar = $('toolbar');
+        const loadingEl = $('loading');
+        const hintEl = $('gesture-hint');
+        const toastBox = $('toasts');
+        const isTouch = matchMedia('(pointer: coarse)').matches;
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // 與 <head> 內的版面判斷條件相同
+        const sideMQ = matchMedia('(min-width: 640px) and (min-aspect-ratio: 11/10)');
+        const shortMQ = matchMedia('(max-height: 560px) and (min-aspect-ratio: 11/10)');
+        const isSide = () => sideMQ.matches;
+
+        // =========================================================
+        // 0. 記住使用者設定（無法儲存時自動略過）
+        // =========================================================
+        const STORE_KEY = 'emoguard-v11';
+        const store = {
+            load() { try { return JSON.parse(window.localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; } },
+            save(o) { try { window.localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch (e) { /* 無法儲存時忽略 */ } },
+        };
+        const saved = store.load();
+
+        const TIERS = {
+            basic:    { name: '舒活基礎型', price: 450,  hrv: 0.9 },
+            standard: { name: '守護進階型', price: 880,  hrv: 0.85 },
+            premium:  { name: '尊榮全護型', price: 1500, hrv: 0.75 },
+        };
+        const TERMS = { 6: { d: 1, label: '6 個月' }, 12: { d: 0.95, label: '1 年' }, 24: { d: 0.88, label: '2 年' } };
+        const TABS = ['parts', 'flow', 'plan', 'privacy'];
+        const money = (n) => 'NT$ ' + n.toLocaleString('en-US');
+        function zhe(d) {
+            if (d >= 1) return '無折扣';
+            let n = Math.round(d * 100);
+            if (n % 10 === 0) n /= 10;
+            return `${n} 折`;
+        }
+
+        const state = {
+            app: 0,
+            tier: TIERS[saved.tier] ? saved.tier : 'basic',
+            months: TERMS[saved.months] ? Number(saved.months) : 12,
+            hrvOn: saved.hrvOn !== false,
+            tab: TABS.includes(saved.tab) ? saved.tab : 'parts',
+            sideCollapsed: saved.sideCollapsed === true,
+            hdrOpen: saved.hdrOpen === true,
+            part: null,
+            rear: false, xray: 1, xrayTarget: 1,
+        };
+        let sheet = 'closed';   // 抽屜狀態：closed / half / full
+        let v3 = null;          // 3D 場景 API（載入失敗時為 null，面板照常可用）
+
+        function persist() {
+            store.save({ tier: state.tier, months: state.months, hrvOn: state.hrvOn, tab: state.tab, sideCollapsed: state.sideCollapsed, hdrOpen: state.hdrOpen });
+        }
+
+        // =========================================================
+        // 1. 提示訊息
+        // =========================================================
+        function positionToasts() {
+            const s = toastBox.style;
+            const hd = header.getBoundingClientRect();
+            if (!isSide()) { s.left = ''; s.width = ''; s.top = `${Math.round(hd.bottom + 8)}px`; return; }
+            const pl = panel.getBoundingClientRect().left;
+            const avail = pl - hd.right - 24;
+            if (avail >= 260) {   // 標題卡與面板之間放得下：放在最上方
+                s.top = `${Math.round(hd.top)}px`;
+                s.left = `${Math.round((hd.right + pl) / 2)}px`;
+                s.width = `${Math.round(Math.min(380, avail))}px`;
+            } else {              // 放不下：放在標題卡下方
+                s.top = `${Math.round(hd.bottom + 8)}px`;
+                s.left = `${Math.round(pl / 2)}px`;
+                s.width = `${Math.round(Math.min(340, pl - 24))}px`;
+            }
+        }
+        function toast(msg, type = 'info', ms = 2400) {
+            positionToasts();
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.textContent = msg;
+            toastBox.appendChild(el);
+            while (toastBox.children.length > 2) toastBox.firstElementChild.remove();
+            void el.offsetWidth;   // 先排版再加上 .show，才會有淡入動畫
+            el.classList.add('show');
+            setTimeout(() => {
+                el.classList.remove('show');
+                setTimeout(() => el.remove(), 350);
+            }, ms);
+        }
+
+        // =========================================================
+        // 2. 版面：標題卡、側邊面板、底部抽屜
+        // =========================================================
+        function syncHeaderVars() {
+            root.style.setProperty('--header-h', `${Math.round(header.getBoundingClientRect().height)}px`);
+            positionToasts();
+        }
+        function reframe() { if (v3) v3.reframeSoon(); }
+
+        function applyPanelState() {
+            const body = $('panel-body');
+            if (isSide()) {
+                panel.dataset.state = state.sideCollapsed ? 'collapsed' : 'open';
+                body.inert = state.sideCollapsed;
+                const tg = $('panel-toggle');
+                tg.setAttribute('aria-expanded', String(!state.sideCollapsed));
+                tg.setAttribute('aria-label', state.sideCollapsed ? '展開面板' : '收合面板');
+                tg.title = state.sideCollapsed ? '展開面板' : '收合面板';
+            } else {
+                panel.dataset.state = sheet;
+                body.inert = sheet === 'closed';
+                $('sheet-handle').setAttribute('aria-label', { closed: '展開面板', half: '面板全螢幕', full: '收合面板' }[sheet]);
+            }
+            root.dataset.sheet = sheet;
+        }
+        function setSideCollapsed(c) {
+            state.sideCollapsed = c;
+            applyPanelState();
+            persist();
+            reframe();
+        }
+        function setSheet(s) {
+            if (isSide() || s === sheet) return;
+            sheet = s;
+            applyPanelState();
+            if (s !== 'closed') hideHint();
+            reframe();
+        }
+        // 打開面板（點分頁、隱私標籤時使用）
+        function revealPanel() {
+            if (isSide()) { if (state.sideCollapsed) setSideCollapsed(false); }
+            else if (sheet === 'closed') setSheet('half');
+        }
+
+        function setHdr(open) {
+            state.hdrOpen = open;
+            root.dataset.hdr = open ? 'open' : 'closed';
+            const tg = $('hdr-toggle');
+            tg.setAttribute('aria-expanded', String(open));
+            tg.setAttribute('aria-label', open ? '收合作品資訊' : '展開作品資訊');
+            syncHeaderVars();
+        }
+
+        function applyLayout() {
+            root.dataset.layout = isSide() ? 'side' : 'sheet';
+            root.dataset.short = shortMQ.matches ? '1' : '0';
+            // 手機與平板直向：工具列收進標題列；側邊版面：放回底部工具列
+            const items = $('tb-items');
+            const dest = isSide() ? toolbar : $('hdr-tools');
+            if (items.parentElement !== dest) dest.insertBefore(items, dest.firstChild);
+            applyPanelState();
+            syncHeaderVars();
+        }
+
+        $('panel-toggle').addEventListener('click', () => setSideCollapsed(!state.sideCollapsed));
+        $('hdr-toggle').addEventListener('click', () => { setHdr(!state.hdrOpen); persist(); reframe(); });
+        $('hdr-title').addEventListener('click', () => { if (!isSide()) $('hdr-toggle').click(); });
+
+        // 抽屜：點把手循環切換，上下滑動把手或分頁列也能切換
+        const SHEET_ORDER = ['closed', 'half', 'full'];
+        $('sheet-handle').addEventListener('click', () => {
+            if (suppressClick) return;
+            setSheet(SHEET_ORDER[(SHEET_ORDER.indexOf(sheet) + 1) % 3]);
+        });
+        let swipeY = null, suppressClick = false;
+        [$('sheet-handle'), panel.querySelector('.panel-top')].forEach((el) => {
+            el.addEventListener('touchstart', (e) => { swipeY = e.touches[0].clientY; }, { passive: true });
+            el.addEventListener('touchend', (e) => {
+                if (swipeY === null) return;
+                const dy = e.changedTouches[0].clientY - swipeY;
+                swipeY = null;
+                if (Math.abs(dy) < 30) return;
+                const i = SHEET_ORDER.indexOf(sheet) + (dy < 0 ? 1 : -1);
+                setSheet(SHEET_ORDER[Math.max(0, Math.min(2, i))]);
+                suppressClick = true;
+                setTimeout(() => { suppressClick = false; }, 400);
+            });
+        });
+
+        // =========================================================
+        // 3. 分頁
+        // =========================================================
+        const tabs = [...document.querySelectorAll('.tab')];
+        function setTab(name) {
+            state.tab = name;
+            tabs.forEach((t) => {
+                const on = t.dataset.tab === name;
+                t.classList.toggle('active', on);
+                t.setAttribute('aria-selected', String(on));
+                t.tabIndex = on ? 0 : -1;
+            });
+            document.querySelectorAll('.tab-pane').forEach((p) => p.classList.toggle('active', p.id === `pane-${name}`));
+            $('panel-body').scrollTop = 0;
+            persist();
+        }
+        tabs.forEach((t, i) => {
+            t.addEventListener('click', () => {
+                if (suppressClick) return;
+                setTab(t.dataset.tab);
+                revealPanel();
+            });
+            t.addEventListener('keydown', (e) => {
+                const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+                if (!step) return;
+                e.preventDefault();
+                const next = tabs[(i + step + tabs.length) % tabs.length];
+                next.click();
+                next.focus();
+            });
+        });
+        document.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.goto)));
+        $('safe-tag').addEventListener('click', () => { setTab('privacy'); revealPanel(); });
+
+        // =========================================================
+        // 4. 裝置構造、運作流程：按鈕列＋說明卡
+        // =========================================================
+        const partRow = $('part-row');
+        const stepRow = $('step-row');
+        function setChips(row, key) {
+            row.querySelectorAll('.pchip').forEach((c) => {
+                const on = c.dataset.key === key;
+                c.classList.toggle('active', on);
+                c.setAttribute('aria-pressed', String(on));
+            });
+        }
+        function showDesc(row, key) {
+            $(row.dataset.desc).querySelectorAll('.pdesc').forEach((d) => { d.hidden = d.dataset.for !== key; });
+        }
+        function clearSelection() {
+            state.part = null;
+            setChips(partRow, null);
+            setChips(stepRow, null);
+        }
+        partRow.querySelectorAll('.pchip').forEach((c) => c.addEventListener('click', () => {
+            const key = c.dataset.key;
+            const off = state.part === key;   // 再點一次：取消選取並回到全景
+            clearSelection();
+            if (!off) {
+                state.part = key;
+                setChips(partRow, key);
+                showDesc(partRow, key);
+            }
+            if (v3) v3.focusPart(off ? null : key);
+        }));
+        stepRow.querySelectorAll('.pchip').forEach((c) => c.addEventListener('click', () => {
+            clearSelection();
+            setChips(stepRow, c.dataset.key);
+            showDesc(stepRow, c.dataset.key);
+            if (c.dataset.app) setApp(Number(c.dataset.app), false);
+            if (v3) v3.focusPart(c.dataset.part);
+        }));
+
+        // 錶面 App
+        const APP_NAMES = ['HRV 儀表板', 'Daily Calm 呼吸引導', 'HRV 偏低預警'];
+        const APP_HINTS = [
+            '顯示 HRV、心率與壓力指數，並與本人 30 日基準比較。',
+            '4 秒吸氣、4 秒吐氣的呼吸引導，每日目標 30 分鐘。',
+            'HRV 持續低於基準時提醒，並發送諮詢券與減壓任務。',
+        ];
+        function setApp(n, notify) {
+            state.app = n;
+            syncRadios('#app-seg button', (b) => Number(b.dataset.app) === n);
+            $('app-hint').textContent = APP_HINTS[n];
+            if (v3) v3.redraw();
+            if (notify) toast(`錶面 App：${APP_NAMES[n]}`);
+        }
+        function cycleApp() { setApp((state.app + 1) % APP_NAMES.length, true); }
+
+        // =========================================================
+        // 5. 保單試算
+        // =========================================================
+        function updateCalculator() {
+            const tier = TIERS[state.tier];
+            const term = TERMS[state.months];
+            const hrv = state.hrvOn ? tier.hrv : 1;
+            const monthly = Math.round(tier.price * term.d * hrv);
+            const missed = Math.round(tier.price * term.d);
+
+            $('calc-base-price').textContent = money(tier.price);
+            $('calc-term-discount').textContent = zhe(term.d);
+            const badge = $('calc-hrv-badge');
+            badge.textContent = state.hrvOn ? zhe(tier.hrv) : `未套用（最高 ${zhe(tier.hrv)}）`;
+            badge.classList.toggle('off', !state.hrvOn);
+            $('hrv-switch').setAttribute('aria-checked', String(state.hrvOn));
+            $('calc-final-price').textContent = money(monthly);
+            $('calc-months').textContent = state.months;
+            $('calc-total').textContent = money(monthly * state.months);
+            $('calc-note').textContent = state.hrvOn
+                ? `HRV 折扣按月結算；未達標的月份為 ${money(missed)}／月。`
+                : `每月 HRV 達標可再享 ${zhe(tier.hrv)}，降至 ${money(Math.round(tier.price * term.d * tier.hrv))}／月。`;
+            $('fh-tier').textContent = tier.name;
+            $('fh-term').textContent = `${term.label} · ${zhe(term.d)}`;
+            $('fh-calc').textContent = `${money(monthly)}/月`;
+            $('cmp').dataset.sel = state.tier;
+
+            syncRadios('.policy-option-card', (c) => c.dataset.tier === state.tier);
+            syncRadios('.term-btn', (b) => Number(b.dataset.months) === state.months);
+            return monthly;
+        }
+
+        // 單選群組：aria-checked + roving tabindex（方向鍵切換）
+        function syncRadios(sel, isOn) {
+            document.querySelectorAll(sel).forEach((el) => {
+                const on = isOn(el);
+                el.classList.toggle('active', on);
+                el.setAttribute('aria-checked', String(on));
+                el.tabIndex = on ? 0 : -1;
+            });
+        }
+        function radioGroup(sel, select) {
+            const items = [...document.querySelectorAll(sel)];
+            items.forEach((el, i) => {
+                el.addEventListener('click', () => select(el));
+                el.addEventListener('keydown', (e) => {
+                    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+                    if (!step) return;
+                    e.preventDefault();
+                    const next = items[(i + step + items.length) % items.length];
+                    select(next);
+                    next.focus();
+                });
+            });
+        }
+        radioGroup('.policy-option-card', (c) => {
+            if (state.tier === c.dataset.tier) return;
+            state.tier = c.dataset.tier;
+            const m = updateCalculator();
+            persist();
+            if (v3) v3.redraw();   // 預警 App 會顯示目前方案
+            toast(`已切換至${TIERS[state.tier].name}・預估 ${money(m)}/月`, 'good');
+        });
+        radioGroup('.term-btn', (b) => {
+            const months = Number(b.dataset.months);
+            if (state.months === months) return;
+            state.months = months;
+            const m = updateCalculator();
+            persist();
+            toast(`保單期限 ${TERMS[months].label}・${zhe(TERMS[months].d)}・預估 ${money(m)}/月`, 'good');
+        });
+        $('hrv-switch').addEventListener('click', () => {
+            state.hrvOn = !state.hrvOn;
+            const m = updateCalculator();
+            persist();
+            toast(state.hrvOn
+                ? `已套用 HRV 達標 ${zhe(TIERS[state.tier].hrv)}・預估 ${money(m)}/月`
+                : `未計 HRV 折扣・預估 ${money(m)}/月`, state.hrvOn ? 'good' : 'warn');
+        });
+        radioGroup('#app-seg button', (b) => { if (Number(b.dataset.app) !== state.app) setApp(Number(b.dataset.app), true); });
+
+        // =========================================================
+        // 6. 共用收合（更多說明、條款）
+        // =========================================================
+        function setFold(btn, open) {
+            const body = $(btn.getAttribute('aria-controls'));
+            body.parentElement.classList.toggle('closed', !open);
+            btn.setAttribute('aria-expanded', String(open));
+            body.querySelector('.fold-inner').inert = !open;
+        }
+        document.querySelectorAll('[data-fold]').forEach((btn) => {
+            setFold(btn, btn.getAttribute('aria-expanded') === 'true');
+            btn.addEventListener('click', () => setFold(btn, btn.getAttribute('aria-expanded') !== 'true'));
+        });
+
+        // =========================================================
+        // 7. 工具列
+        // =========================================================
+        $('btn-reset').addEventListener('click', () => {
+            clearSelection();
+            if (v3) v3.reset();
+            toast('已重置視角');
+        });
+        $('btn-rear').addEventListener('click', () => {
+            clearSelection();
+            if (!v3) return;
+            const on = v3.toggleRear();
+            toast(on ? '已翻轉至背面・雙波長 PPG 光學感測器' : '已返回手錶正面');
+        });
+        $('btn-app').addEventListener('click', cycleApp);
+        $('btn-rotate').addEventListener('click', (e) => {
+            if (!v3) return;
+            const on = v3.toggleRotate();
+            e.currentTarget.setAttribute('aria-pressed', String(on));
+            toast(on ? '360° 自動旋轉：開啟' : '360° 自動旋轉：關閉');
+        });
+        $('tb-toggle').addEventListener('click', (e) => {
+            const closed = toolbar.classList.toggle('closed');
+            const tg = e.currentTarget;
+            tg.setAttribute('aria-expanded', String(!closed));
+            tg.setAttribute('aria-label', closed ? '展開工具列' : '收合工具列');
+            tg.title = closed ? '展開工具列' : '收合工具列';
+            reframe();
+        });
+
+        // 操作提示
+        function hideHint() { hintEl.classList.add('hide'); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !isSide() && sheet !== 'closed') setSheet('closed');
+        });
+
+        // =========================================================
+        // 8. 視窗尺寸變化
+        // =========================================================
+        let lastSide = isSide();
+        function onResize(force) {
+            const side = isSide();
+            if (side !== lastSide) { sheet = 'closed'; lastSide = side; force = true; }
+            applyLayout();
+            if (v3) v3.resize(force);
+        }
+        window.addEventListener('resize', () => onResize(false));
+        window.addEventListener('orientationchange', () => setTimeout(() => onResize(true), 250));
+
+        // =========================================================
+        // 9. 初始化面板（不依賴 3D）
+        // =========================================================
+        applyLayout();
+        setHdr(state.hdrOpen);
+        setTab(state.tab);
+        updateCalculator();
+        setApp(0, false);
+
+        let failed = false;
+        function fail(msg) {
+            if (failed) return;
+            failed = true;
+            root.classList.add('no3d');
+            loadingEl.classList.remove('done');
+            loadingEl.querySelector('.spinner').style.display = 'none';
+            $('loading-text').textContent = msg;
+            $('reload-btn').hidden = false;
+        }
+        $('reload-btn').addEventListener('click', () => location.reload());
+
+        if (!window.THREE || !THREE.OrbitControls) {
+            fail('3D 模型元件無法載入，請確認網路連線後重新載入頁面。');
+        } else {
+            try { v3 = init3D(); } catch (err) { console.error(err); v3 = null; }
+            if (!v3) fail('3D 模型無法顯示，請重新載入頁面或改用其他瀏覽器。');
+        }
+
+        // =========================================================
+        // 3D 場景（全部包在這個函式裡；失敗不影響上方的面板功能）
+        // =========================================================
+        function init3D() {
+        const TAU = Math.PI * 2;
+        const V3 = THREE.Vector3;
+        // r128 的材質顏色是線性空間，先把設計稿的 sRGB 色碼轉換，顏色才會和設計一致
+        const col = (hex) => new THREE.Color(hex).convertSRGBToLinear();
+
+        // =========================================================
+        // 1. Renderer / Scene / Camera
+        // =========================================================
+        const container = $('canvas-container');
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        } catch (e) {
+            fail('此裝置或瀏覽器不支援 WebGL，無法顯示 3D 模型。');
+            return;
+        }
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouch ? 1.75 : 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);              // 透明背景，露出 CSS 漸層
+        renderer.outputEncoding = THREE.sRGBEncoding;     // 正確的色彩空間
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; // 電影級色調映射
+        renderer.toneMappingExposure = 1.05;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+        const canvas = renderer.domElement;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 200);
+
+        const controls = new THREE.OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.rotateSpeed = isTouch ? 0.9 : 0.7;
+        controls.zoomSpeed = 0.9;
+        controls.autoRotateSpeed = 1.6;
+
+        // =========================================================
+        // 2. 攝影棚環境貼圖（讓金屬與玻璃有東西可以反射）
+        // =========================================================
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = (function buildStudioEnv() {
+            const env = new THREE.Scene();
+            env.add(new THREE.Mesh(
+                new THREE.BoxGeometry(30, 30, 30),
+                new THREE.MeshBasicMaterial({ color: 0x0d131b, side: THREE.BackSide })
+            ));
+            const softbox = (w, h, hex, k, x, y, z) => {
+                const m = new THREE.Mesh(
+                    new THREE.PlaneGeometry(w, h),
+                    new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k), side: THREE.DoubleSide })
+                );
+                m.position.set(x, y, z);
+                m.lookAt(0, 0, 0);
+                env.add(m);
+            };
+            softbox(14, 5, 0xffffff, 5.0, 0, 12, 3);     // 頂部主柔光箱
+            softbox(9, 3, 0xffffff, 2.2, 2, 3, 13);      // 正面補光
+            softbox(2.5, 16, 0x66f0ff, 3.2, -13, 1, 2);  // 左側青色燈條
+            softbox(2.5, 16, 0xffcf9a, 2.6, 13, 2, -4);  // 右後方香檳金燈條
+            softbox(10, 10, 0x2a3a4c, 1.2, 0, -13, 0);   // 地面反光
+            const tex = pmrem.fromScene(env, 0.02).texture;
+            env.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+            return tex;
+        })();
+
+        // =========================================================
+        // 3. 燈光
+        // =========================================================
+        scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x10141a, 0.35));
+
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        keyLight.position.set(5, 10, 6);
+        keyLight.castShadow = true;
+        const shadowSize = isTouch ? 1024 : 2048;
+        keyLight.shadow.mapSize.set(shadowSize, shadowSize);
+        Object.assign(keyLight.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 40 });
+        keyLight.shadow.bias = -0.0004;
+        keyLight.shadow.normalBias = 0.02;
+        scene.add(keyLight);
+
+        const rimLight = new THREE.DirectionalLight(0x00e5ff, 1.1);   // 青色輪廓光
+        rimLight.position.set(-6, 3, -8);
+        scene.add(rimLight);
+
+        const warmLight = new THREE.PointLight(0xdcae7a, 0.8, 18);
+        warmLight.position.set(6, -2, 5);
+        scene.add(warmLight);
+
+        // =========================================================
+        // 4. 手錶螢幕（1024 高解析畫布，自發光，含動態效果）
+        // =========================================================
+        const SCR = 1024;
+        const screenCanvas = document.createElement('canvas');
+        screenCanvas.width = screenCanvas.height = SCR;
+        const ctx = screenCanvas.getContext('2d');
+        const screenTexture = new THREE.CanvasTexture(screenCanvas);
+        screenTexture.encoding = THREE.sRGBEncoding;
+        screenTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+        const FONT_UI = '-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif';
+        const FONT_NUM = '"Rajdhani",-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
+        const font = (w, s, num) => `${w} ${s}px ${num ? FONT_NUM : FONT_UI}`;
+
+        function text(str, x, y, f, color, align) {
+            ctx.font = f;
+            ctx.fillStyle = color;
+            ctx.textAlign = align || 'center';
+            ctx.fillText(str, x, y);
+        }
+
+        // 自製圓角矩形（舊版 Safari 不支援 ctx.roundRect）
+        function rr(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        function drawHeart(x, y, s, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, y + s * 0.9);
+            ctx.bezierCurveTo(x - s * 1.6, y - s * 0.2, x - s * 0.7, y - s * 1.4, x, y - s * 0.5);
+            ctx.bezierCurveTo(x + s * 0.7, y - s * 1.4, x + s * 1.6, y - s * 0.2, x, y + s * 0.9);
+            ctx.fill();
+        }
+
+        // 心跳波形（88 bpm，壓力偏高時的心率）
+        const BPS = 88 / 60;
+        const heartbeat = (t) => {
+            const p = (t * BPS) % 1;
+            return Math.exp(-Math.pow((p - 0.1) / 0.06, 2)) + 0.5 * Math.exp(-Math.pow((p - 0.3) / 0.07, 2));
+        };
+        const ppg = (p) => Math.exp(-Math.pow((p - 0.18) / 0.07, 2)) + 0.35 * Math.exp(-Math.pow((p - 0.42) / 0.09, 2));
+
+
+        function statusBar() {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            text(`${hh}:${mm}`, 256, 66, font(700, 21, true), '#F4F0EA');
+            if ('letterSpacing' in ctx) ctx.letterSpacing = '3px';
+            text('EMOGUARD', 256, 88, font(600, 11, true), '#00E5FF');
+            if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+        }
+
+        function pill(x, y, w, h, stroke) {
+            rr(x, y, w, h, 18);
+            ctx.fillStyle = 'rgba(18, 26, 36, 0.92)';
+            ctx.fill();
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = stroke;
+            ctx.stroke();
+        }
+
+        function hint(color) {
+            text('輕觸錶面切換 App', 256, 446, font(500, 12), color || 'rgba(152,163,176,0.85)');
+        }
+
+        // App 1：主儀表板
+        function drawHome(t) {
+            const g = ctx.createRadialGradient(256, 190, 10, 256, 256, 280);
+            g.addColorStop(0, '#1a2738');
+            g.addColorStop(1, '#05070a');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, 512, 512);
+            statusBar();
+
+            const cx = 256, cy = 212, R = 88;
+            ctx.lineCap = 'round';
+            ctx.lineWidth = 13;
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+
+            const a0 = -Math.PI / 2, a1 = a0 + 0.34 * TAU;   // HRV 34 ms：低於個人基準
+            const lg = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+            lg.addColorStop(0, '#FFB86B');
+            lg.addColorStop(1, '#FF8A3D');
+            ctx.strokeStyle = lg;
+            ctx.shadowColor = 'rgba(255,159,67,0.6)';
+            ctx.shadowBlur = 24;
+            ctx.beginPath(); ctx.arc(cx, cy, R, a0, a1); ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#FFF3E6';
+            ctx.beginPath(); ctx.arc(cx + R * Math.cos(a1), cy + R * Math.sin(a1), 4.5, 0, TAU); ctx.fill();
+
+            text('34', cx, cy - 4, font(700, 72, true), '#F4F0EA');
+            text('HRV · SDNN ms', cx, cy + 40, font(500, 13), '#98A3B0');
+            text('低於個人基準 30%', cx, cy + 60, font(500, 11.5), '#FF9F43');
+
+            // 心率
+            const beat = heartbeat(t);
+            pill(98, 298, 152, 64, 'rgba(220,174,122,0.9)');
+            drawHeart(124, 328, 9 * (1 + 0.18 * beat), '#DCAE7A');
+            text('心率', 144, 316, font(500, 13), '#DCAE7A', 'left');
+            text('88', 144, 345, font(700, 28, true), '#FFFFFF', 'left');
+            text('bpm', 178, 345, font(500, 13, true), '#98A3B0', 'left');
+
+            // 壓力（偏高：橘色）
+            pill(262, 298, 152, 64, 'rgba(255,159,67,0.9)');
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#FF9F43';
+            ctx.beginPath(); ctx.arc(288, 334, 10, Math.PI, 0); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(288, 334); ctx.lineTo(288 + 6, 334 - 6); ctx.stroke();   // 指針偏右＝偏高
+            text('壓力 · 偏高', 308, 316, font(500, 13), '#FF9F43', 'left');
+            text('72', 308, 345, font(700, 28, true), '#FFFFFF', 'left');
+            text('/ 100', 340, 345, font(500, 13, true), '#98A3B0', 'left');
+
+            // PPG 波形
+            const wg = ctx.createLinearGradient(150, 0, 362, 0);
+            wg.addColorStop(0, 'rgba(0,229,255,0)');
+            wg.addColorStop(0.5, 'rgba(0,229,255,1)');
+            wg.addColorStop(1, 'rgba(0,229,255,0)');
+            ctx.strokeStyle = wg;
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            for (let x = 150; x <= 362; x += 2) {
+                const ph = (x - 150) / 70 - t * BPS;
+                const y = 404 - ppg(ph - Math.floor(ph)) * 20;
+                if (x === 150) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            hint();
+        }
+
+        // App 2：Daily Calm 呼吸引導
+        function drawCalm(t) {
+            const g = ctx.createRadialGradient(256, 220, 10, 256, 256, 280);
+            g.addColorStop(0, '#0f2330');
+            g.addColorStop(1, '#04070a');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, 512, 512);
+
+            text('Daily Calm', 256, 76, font(700, 28, true), '#F4F0EA');
+            text('正念呼吸引導', 256, 102, font(500, 12.5), '#56B6C2');
+
+            const cyc = (t % 8) / 8;
+            const inhale = cyc < 0.5;
+            const s = 0.5 - 0.5 * Math.cos(cyc * TAU);
+            const cx = 256, cy = 222;
+            for (let k = 3; k >= 1; k--) {
+                ctx.fillStyle = `rgba(0,229,255,${0.05 + 0.03 * (3 - k)})`;
+                ctx.beginPath(); ctx.arc(cx, cy, 34 + 34 * s + k * 8, 0, TAU); ctx.fill();
+            }
+            const core = ctx.createRadialGradient(cx, cy - 10, 4, cx, cy, 34 + 34 * s);
+            core.addColorStop(0, '#5ff3ff');
+            core.addColorStop(1, '#1b8fa0');
+            ctx.fillStyle = core;
+            ctx.beginPath(); ctx.arc(cx, cy, 34 + 34 * s, 0, TAU); ctx.fill();
+            text(inhale ? '吸氣' : '吐氣', cx, cy - 4, font(700, 20), '#04141a');
+            text(String(Math.ceil(4 - (t % 4))), cx, cy + 20, font(700, 17, true), '#04141a');
+
+            text('今日進度 15 / 30 分鐘', 256, 330, font(500, 13), '#98A3B0');
+            rr(166, 342, 180, 6, 3); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
+            rr(166, 342, 90, 6, 3); ctx.fillStyle = '#56B6C2'; ctx.fill();
+
+            const bg = ctx.createLinearGradient(176, 0, 336, 0);
+            bg.addColorStop(0, '#00E5FF');
+            bg.addColorStop(1, '#56B6C2');
+            rr(176, 364, 160, 42, 21); ctx.fillStyle = bg; ctx.fill();
+            text('開始呼吸練習', 256, 386, font(700, 15), '#061016');
+            hint();
+        }
+
+        // App 3：低 HRV 預警與保費折扣
+        function drawAlert(t) {
+            const g = ctx.createRadialGradient(256, 110, 10, 256, 256, 300);
+            g.addColorStop(0, '#3a1418');
+            g.addColorStop(0.55, '#0d0a0d');
+            g.addColorStop(1, '#05070a');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, 512, 512);
+
+            const pulse = 0.5 + 0.5 * Math.sin(t * 4);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = `rgba(255,82,82,${0.2 + 0.35 * pulse})`;
+            ctx.beginPath(); ctx.arc(256, 104, 36 + 6 * pulse, 0, TAU); ctx.stroke();
+
+            ctx.fillStyle = '#FF5252';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#FF5252';
+            ctx.beginPath(); ctx.moveTo(256, 80); ctx.lineTo(281, 124); ctx.lineTo(231, 124); ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            text('!', 256, 112, font(900, 26, true), '#1a0507');
+
+            text('HRV 偏低預警', 256, 168, font(700, 24), '#F4F0EA');
+            text('過去 3 小時 HRV 低於個人基準 30%', 256, 198, font(400, 13.5), '#98A3B0');
+            text('心理諮詢資源券已發送至帳戶', 256, 220, font(400, 13.5), '#98A3B0');
+
+            const cg = ctx.createLinearGradient(110, 246, 402, 338);
+            cg.addColorStop(0, '#EBC593');
+            cg.addColorStop(1, '#C9965F');
+            rr(110, 246, 292, 92, 20); ctx.fillStyle = cg; ctx.fill();
+            const tier = TIERS[state.tier];
+            text('完成今日減壓任務即可', 256, 270, font(500, 13), '#3a2a16');
+            text(`解鎖本月保費 ${zhe(tier.hrv)}`, 256, 299, font(900, 21), '#121820');
+            text(`目前方案：${tier.name}`, 256, 323, font(500, 11.5), '#4a3820');
+            hint();
+        }
+
+        const APPS = [drawHome, drawCalm, drawAlert];
+
+        function drawScreen(t) {
+            ctx.setTransform(SCR / 512, 0, 0, SCR / 512, 0, 0);
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 512, 512);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(256, 256, 236, 0, TAU);   // 外圈保留黑色邊框，模擬真實螢幕的黑邊
+            ctx.clip();
+            APPS[state.app](t);
+            ctx.restore();
+            screenTexture.needsUpdate = true;
+        }
+
+        // =========================================================
+        // 5. 材質（PBR 物理材質）
+        // =========================================================
+        const M = {
+            case: new THREE.MeshPhysicalMaterial({ color: col(0x7d8996), metalness: 1, roughness: 0.34, clearcoat: 0.35, clearcoatRoughness: 0.18, side: THREE.DoubleSide }),
+            bezel: new THREE.MeshPhysicalMaterial({ color: col(0xdfe6ee), metalness: 1, roughness: 0.12, side: THREE.DoubleSide }),
+            screen: new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false }),
+            // 藍寶石玻璃：只疊加反光（黑色本體 + 加法混合）
+            glass: new THREE.MeshPhysicalMaterial({ color: 0x000000, metalness: 0, roughness: 0.03, clearcoat: 1, clearcoatRoughness: 0.02, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, envMapIntensity: 2.4 }),
+            tick: new THREE.MeshStandardMaterial({ color: col(0x2a323d), metalness: 0.6, roughness: 0.5 }),
+            gold: new THREE.MeshPhysicalMaterial({ color: col(0xdcae7a), metalness: 1, roughness: 0.22, clearcoat: 0.3 }),
+            cyan: new THREE.MeshStandardMaterial({ color: col(0x00e5ff), emissive: col(0x00b8d4), emissiveIntensity: 0.55, metalness: 0.4, roughness: 0.28 }),
+            titan: new THREE.MeshPhysicalMaterial({ color: col(0x7a93a0), metalness: 1, roughness: 0.28 }),
+            dark: new THREE.MeshStandardMaterial({ color: col(0x0d1117), metalness: 0.5, roughness: 0.35 }),
+            strap: new THREE.MeshPhysicalMaterial({ color: col(0x2a3442), metalness: 0, roughness: 0.58, clearcoat: 0.18, clearcoatRoughness: 0.5, side: THREE.DoubleSide, transparent: true }),
+            stripe: new THREE.MeshStandardMaterial({ color: col(0x00e5ff), emissive: col(0x0097a7), emissiveIntensity: 0.4, roughness: 0.4, side: THREE.DoubleSide, transparent: true }),
+            backGlass: new THREE.MeshPhysicalMaterial({ color: col(0x0b1016), metalness: 0.1, roughness: 0.06, clearcoat: 1, side: THREE.DoubleSide }),
+        };
+        const keeperGold = M.gold.clone(); keeperGold.transparent = true;
+        const keeperCyan = M.cyan.clone(); keeperCyan.transparent = true;
+        const strapMats = [M.strap, M.stripe, keeperGold, keeperCyan];   // 背面 X 光模式時會淡出
+
+        // =========================================================
+        // 6. 3D 手錶模型
+        // =========================================================
+        const watch = new THREE.Group();
+        scene.add(watch);
+
+        function add(geo, mat, opts) {
+            const m = new THREE.Mesh(geo, mat);
+            m.castShadow = true;
+            m.receiveShadow = true;
+            if (opts) Object.assign(m.userData, opts);
+            return m;
+        }
+
+        // 用側面輪廓旋轉成形（LatheGeometry），旋轉軸轉成朝向鏡頭的 Z 軸
+        function lathe(points, seg) {
+            const g = new THREE.LatheGeometry(points.map((p) => new THREE.Vector2(p[0], p[1])), seg || 128);
+            g.rotateX(Math.PI / 2);
+            return g;
+        }
+
+        function roundedRect(w, h, r, cx) {
+            cx = cx || 0;
+            const s = new THREE.Shape();
+            const x0 = cx - w / 2, y0 = -h / 2;
+            s.moveTo(x0 + r, y0);
+            s.lineTo(x0 + w - r, y0); s.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + r);
+            s.lineTo(x0 + w, y0 + h - r); s.quadraticCurveTo(x0 + w, y0 + h, x0 + w - r, y0 + h);
+            s.lineTo(x0 + r, y0 + h); s.quadraticCurveTo(x0, y0 + h, x0, y0 + h - r);
+            s.lineTo(x0, y0 + r); s.quadraticCurveTo(x0, y0, x0 + r, y0);
+            return s;
+        }
+
+        // (A) 錶殼：弧形側面 + 前後倒角
+        watch.add(add(lathe([
+            [1.56, -0.40], [1.98, -0.40], [2.20, -0.33], [2.32, -0.19],
+            [2.35, 0.00], [2.33, 0.17], [2.29, 0.31]
+        ]), M.case));
+
+        // (B) 拋光錶圈
+        watch.add(add(lathe([
+            [1.99, 0.37], [1.99, 0.43], [2.03, 0.465], [2.12, 0.478],
+            [2.21, 0.46], [2.27, 0.41], [2.30, 0.30]
+        ]), M.bezel));
+
+        // 錶圈刻度（60 格，每 5 格為香檳金大刻度，12 點為青色標記）
+        (function bezelTicks() {
+            const dummy = new THREE.Object3D();
+            const minor = new THREE.InstancedMesh(new THREE.BoxGeometry(0.09, 0.016, 0.012), M.tick, 48);
+            const major = new THREE.InstancedMesh(new THREE.BoxGeometry(0.15, 0.03, 0.014), M.gold, 11);
+            let mi = 0, ma = 0;
+            for (let i = 0; i < 60; i++) {
+                const a = Math.PI / 2 - (i / 60) * TAU;
+                dummy.position.set(Math.cos(a) * 2.12, Math.sin(a) * 2.12, 0.479);
+                dummy.rotation.set(0, 0, a);
+                dummy.updateMatrix();
+                if (i === 0) continue;
+                if (i % 5 === 0) major.setMatrixAt(ma++, dummy.matrix);
+                else minor.setMatrixAt(mi++, dummy.matrix);
+            }
+            watch.add(minor, major);
+            const tri = new THREE.Shape();
+            tri.moveTo(0, -0.06); tri.lineTo(0.07, 0.06); tri.lineTo(-0.07, 0.06); tri.closePath();
+            const marker = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: 0.012, bevelEnabled: false }), M.cyan);
+            marker.position.set(0, 2.12, 0.474);
+            watch.add(marker);
+        })();
+
+        // (C) 螢幕
+        const screenMesh = add(new THREE.CircleGeometry(1.99, 96), M.screen, { tapScreen: true });
+        screenMesh.position.z = 0.395;
+        screenMesh.castShadow = false;
+        watch.add(screenMesh);
+
+        // 微微隆起的藍寶石玻璃
+        (function sapphire() {
+            const R = 16, a = 2.0;
+            const g = new THREE.SphereGeometry(R, 128, 8, 0, TAU, 0, Math.asin(a / R));
+            g.rotateX(Math.PI / 2);
+            const glass = new THREE.Mesh(g, M.glass);
+            glass.position.z = 0.43 - Math.sqrt(R * R - a * a);
+            glass.renderOrder = 2;
+            glass.userData.tapScreen = true;
+            watch.add(glass);
+        })();
+
+        // (D) 錶冠與按鍵：建立一個繞 Z 軸旋轉的支點，零件沿 +X 往外放
+        function sideMount(angle) {
+            const g = new THREE.Group();
+            g.rotation.z = angle;
+            watch.add(g);
+            return g;
+        }
+        function xCylinder(r, len, seg) {
+            const g = new THREE.CylinderGeometry(r, r, len, seg || 32);
+            g.rotateZ(-Math.PI / 2);
+            return g;
+        }
+
+        (function crown() {
+            const g = sideMount(0);
+            const stem = add(xCylinder(0.12, 0.3, 24), M.case);
+            stem.position.x = 2.42;
+            g.add(stem);
+
+            // 滾花齒紋：用齒輪形狀擠出
+            const gear = new THREE.Shape();
+            const N = 44;
+            for (let i = 0; i <= N * 2; i++) {
+                const r = i % 2 ? 0.288 : 0.31;
+                const a = (i / (N * 2)) * TAU;
+                if (i === 0) gear.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                else gear.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            const cg = new THREE.ExtrudeGeometry(gear, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.02, bevelSegments: 3, curveSegments: 2 });
+            cg.translate(0, 0, -0.11);
+            cg.rotateY(Math.PI / 2);
+            const knob = add(cg, M.case);
+            knob.position.x = 2.6;
+            g.add(knob);
+
+            const cap = add(xCylinder(0.2, 0.03, 48), M.dark);
+            cap.position.x = 2.745;
+            g.add(cap);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.02, 12, 64), M.cyan);
+            ring.rotation.y = Math.PI / 2;
+            ring.position.x = 2.75;
+            g.add(ring);
+        })();
+
+        function pusher(angle, mat) {
+            const g = sideMount(angle);
+            const stem = add(xCylinder(0.09, 0.22, 20), M.case);
+            stem.position.x = 2.38;
+            g.add(stem);
+            const btn = add(xCylinder(0.15, 0.15, 40), mat);
+            btn.position.x = 2.52;
+            g.add(btn);
+            const tip = add(new THREE.SphereGeometry(0.15, 32, 12, 0, TAU, 0, Math.PI * 0.18), mat);
+            tip.rotation.z = -Math.PI / 2;
+            tip.position.x = 2.595 - 0.15 * Math.cos(Math.PI * 0.18);
+            g.add(tip);
+        }
+        pusher(0.72, M.cyan);    // 2 點鐘：霓虹青藍按鍵
+        pusher(-0.72, M.gold);   // 4 點鐘：香檳金按鍵
+
+        (function sideButton() {
+            const g = sideMount(Math.PI);   // 9 點鐘：鈦金屬長形側鍵
+            const geo = new THREE.ExtrudeGeometry(roundedRect(0.22, 0.95, 0.1), { depth: 0.1, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 3 });
+            geo.rotateY(Math.PI / 2);
+            const b = add(geo, M.titan);
+            b.position.x = 2.3;
+            g.add(b);
+        })();
+
+        // (E) 錶耳：側面輪廓擠出，上下各兩支
+        (function lugs() {
+            const prof = [[1.95, 0.27], [2.4, 0.2], [2.68, 0.06], [2.78, -0.08], [2.72, -0.22], [2.45, -0.27], [1.95, -0.3]];
+            const s = new THREE.Shape();
+            s.moveTo(-prof[0][1], prof[0][0]);
+            s.splineThru(prof.slice(1).map(([y, z]) => new THREE.Vector2(-z, y)));
+            s.closePath();
+            const geo = new THREE.ExtrudeGeometry(s, { depth: 0.26, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 3, curveSegments: 16 });
+            geo.rotateY(Math.PI / 2);
+            [[0.98, 1], [-1.24, 1], [0.98, -1], [-1.24, -1]].forEach(([x, sy]) => {
+                const lug = add(geo, M.case);
+                lug.position.x = x;
+                lug.scale.y = sy;
+                watch.add(lug);
+            });
+        })();
+
+        // (F) 錶帶：扁平圓角截面，沿著手腕形狀擠出
+        const strapCurve = (function () {
+            const pts = [];
+            const head = [[2.15, 0.0], [2.72, -0.03], [3.1, -0.3], [3.32, -0.82]];
+            const A = 3.38, B = 2.6, ZC = -1.45;
+            head.forEach(([y, z]) => pts.push(new V3(0, y, z)));
+            for (let d = 0; d <= 180; d += 15) {
+                const p = -d * Math.PI / 180;
+                pts.push(new V3(0, A * Math.cos(p), ZC + B * Math.sin(p)));
+            }
+            head.slice().reverse().forEach(([y, z]) => pts.push(new V3(0, -y, z)));
+            return new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+        })();
+
+        const strapOpts = { steps: 320, bevelEnabled: false, curveSegments: 6, extrudePath: strapCurve };
+        watch.add(add(new THREE.ExtrudeGeometry(roundedRect(1.9, 0.2, 0.09), strapOpts), M.strap, { strap: true }));
+        // 兩條青色飾線（略厚於錶帶，從兩面都看得到）
+        watch.add(add(new THREE.ExtrudeGeometry([
+            roundedRect(0.07, 0.214, 0.03, -0.62),
+            roundedRect(0.07, 0.214, 0.03, 0.62)
+        ], strapOpts), M.stripe, { strap: true }));
+
+        // 錶帶扣環（香檳金 + 霓虹青藍）
+        function keeper(u, mat) {
+            const outer = roundedRect(2.12, 0.38, 0.14);
+            outer.holes.push(roundedRect(1.98, 0.28, 0.1));
+            const geo = new THREE.ExtrudeGeometry(outer, { depth: 0.18, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.012, bevelSegments: 2 });
+            geo.translate(0, 0, -0.09);
+            const k = add(geo, mat, { strap: true });
+            const p = strapCurve.getPointAt(u);
+            const tz = strapCurve.getTangentAt(u);
+            const tx = new V3(1, 0, 0);
+            const ty = tz.clone().cross(tx);
+            k.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(tx, ty, tz));
+            k.position.copy(p);
+            watch.add(k);
+        }
+        keeper(0.15, keeperGold);
+        keeper(0.2, keeperCyan);
+
+        // (G) 背面：雙波長 PPG 光學感測器
+        (function rear() {
+            const domeProfile = [[0, -0.47], [0.6, -0.466], [1.1, -0.447], [1.4, -0.427], [1.57, -0.40]];
+            watch.add(add(lathe(domeProfile, 96), M.backGlass));
+            const domeZ = (r) => {
+                for (let i = 1; i < domeProfile.length; i++) {
+                    const [r0, z0] = domeProfile[i - 1], [r1, z1] = domeProfile[i];
+                    if (r <= r1) return z0 + (z1 - z0) * (r - r0) / (r1 - r0);
+                }
+                return -0.4;
+            };
+
+            const goldRing = new THREE.Mesh(new THREE.TorusGeometry(1.575, 0.022, 12, 128), M.gold);
+            goldRing.position.z = -0.4;
+            watch.add(goldRing);
+
+            // 背蓋雷射刻字
+            const ec = document.createElement('canvas');
+            ec.width = ec.height = 1024;
+            const etex = new THREE.CanvasTexture(ec);
+            etex.encoding = THREE.sRGBEncoding;
+            const engrave = new THREE.Mesh(
+                new THREE.RingGeometry(1.62, 1.96, 128),
+                new THREE.MeshStandardMaterial({ map: etex, transparent: true, metalness: 0.7, roughness: 0.4, polygonOffset: true, polygonOffsetFactor: -1 })
+            );
+            engrave.rotation.y = Math.PI;
+            engrave.position.z = -0.4015;
+            watch.add(engrave);
+            function drawEngraving() {
+                const c = ec.getContext('2d');
+                c.clearRect(0, 0, 1024, 1024);
+                c.save();
+                c.translate(512, 512);
+                c.fillStyle = 'rgba(214,224,233,0.9)';
+                c.font = `600 30px ${FONT_NUM}`;
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                const R = 1.79 / 1.96 * 512;
+                const str = 'EMOGUARD  ·  DUAL-WAVELENGTH PPG  ·  HRV BIOSENSOR  ·  TITANIUM CASE  ·  WR 5ATM  ·  ';
+                const chars = [...str];
+                const widths = chars.map((ch) => c.measureText(ch).width);
+                const sum = widths.reduce((a, b) => a + b, 0);
+                const extra = (TAU * R - sum) / chars.length;
+                let a = 0;
+                chars.forEach((ch, i) => {
+                    const w = widths[i] + extra;
+                    c.save();
+                    c.rotate(a + w / 2 / R);
+                    c.fillText(ch, 0, -R);
+                    c.restore();
+                    a += w / R;
+                });
+                c.restore();
+                etex.needsUpdate = true;
+            }
+            drawEngraving();
+            if (document.fonts) document.fonts.ready.then(drawEngraving);
+
+            // 光暈貼圖
+            const hc = document.createElement('canvas');
+            hc.width = hc.height = 128;
+            const hctx = hc.getContext('2d');
+            const hg = hctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            hg.addColorStop(0, 'rgba(255,255,255,1)');
+            hg.addColorStop(0.35, 'rgba(255,255,255,0.35)');
+            hg.addColorStop(1, 'rgba(255,255,255,0)');
+            hctx.fillStyle = hg;
+            hctx.fillRect(0, 0, 128, 128);
+            const haloTex = new THREE.CanvasTexture(hc);
+
+            const leds = [];
+            function led(x, y, color, size) {
+                const z = domeZ(Math.hypot(x, y));
+                const core = new THREE.Mesh(new THREE.CircleGeometry(size, 24), new THREE.MeshBasicMaterial({ color, toneMapped: false }));
+                core.rotation.y = Math.PI;
+                core.position.set(x, y, z - 0.004);
+                const halo = new THREE.Mesh(
+                    new THREE.PlaneGeometry(size * 5, size * 5),
+                    new THREE.MeshBasicMaterial({ map: haloTex, color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })
+                );
+                halo.rotation.y = Math.PI;
+                halo.position.set(x, y, z - 0.008);
+                halo.userData.noHit = true;
+                watch.add(core, halo);
+                leds.push(halo.material);
+            }
+            for (let k = 0; k < 4; k++) {
+                const a = Math.PI / 4 + k * Math.PI / 2;
+                led(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0x3dff8a, 0.09);   // 綠光
+            }
+            led(0.2, 0, 0xff4d5a, 0.07);    // 紅光 / 紅外光
+            led(-0.2, 0, 0xff4d5a, 0.07);
+            for (let k = 0; k < 4; k++) {   // 光電二極體
+                const a = k * Math.PI / 2;
+                const r = 1.12;
+                const pd = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), new THREE.MeshStandardMaterial({ color: col(0x2b3440), metalness: 0.6, roughness: 0.3 }));
+                pd.rotation.set(0, Math.PI, a);
+                pd.position.set(Math.cos(a) * r, Math.sin(a) * r, domeZ(r) - 0.004);
+                watch.add(pd);
+            }
+            watch.userData.leds = leds;
+        })();
+
+        // (H) 地面陰影：真實陰影 + 柔和接觸陰影
+        const groundY = -3.85;
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.28 }));
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = groundY;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        const blob = (function () {
+            const c = document.createElement('canvas');
+            c.width = c.height = 256;
+            const x = c.getContext('2d');
+            const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+            g.addColorStop(0, 'rgba(0,0,0,0.6)');
+            g.addColorStop(0.5, 'rgba(0,0,0,0.25)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            x.fillStyle = g;
+            x.fillRect(0, 0, 256, 256);
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, toneMapped: false }));
+            m.rotation.x = -Math.PI / 2;
+            m.position.set(0, groundY + 0.01, -1.6);
+            scene.add(m);
+            return m;
+        })();
+
+        // =========================================================
+        // 7. 依螢幕比例自動對焦（RWD 的關鍵）
+        // =========================================================
+        // 直接取樣模型實際頂點（以 0.1 網格去重），用來計算「剛好裝得下」的鏡頭距離
+        // ※ v8 用手動估計的外圍點，漏掉錶帶厚度與扣環，矮螢幕時錶帶會被裁切
+        const fitPoints = [];
+        (function sampleWatch() {
+            const BOB = 0.08;   // 上下浮動幅度，與動畫迴圈一致
+            const seen = new Set();
+            const p = new V3();
+            watch.updateMatrixWorld(true);
+            watch.traverse((o) => {
+                if (!o.isMesh || o.isInstancedMesh || o.userData.noHit) return;
+                const pos = o.geometry.attributes.position;
+                for (let i = 0; i < pos.count; i++) {
+                    p.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+                    const key = `${Math.round(p.x / 0.1)},${Math.round(p.y / 0.1)},${Math.round(p.z / 0.1)}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    fitPoints.push(new V3(p.x, p.y + BOB, p.z), new V3(p.x, p.y - BOB, p.z));
+                }
+            });
+        })();
+        const fitBox = new THREE.Box3().setFromPoints(fitPoints);
+        const target = fitBox.getCenter(new V3());
+        target.z *= 0.6;   // 旋轉中心稍微往錶面靠
+        controls.target.copy(target);
+
+        const VIEW = {
+            front: new V3(0.42, 0.3, 1).normalize(),
+            rear: new V3(0.2, 0.22, -1).normalize(),
+        };
+
+        // 計算沒有被 UI 遮住的區域（回傳幾個候選區域，之後挑能把模型放最大的那個）
+        function freeRects() {
+            const w = window.innerWidth;
+            const hd = header.getBoundingClientRect();
+            const pn = panel.getBoundingClientRect();
+            const rect = (left, top, right, bottom) => ({ left, top, width: Math.max(right - left, 120), height: Math.max(bottom - top, 120) });
+            if (isSide()) {
+                const tb = toolbar.getBoundingClientRect();
+                const right = pn.left - 8;
+                return [
+                    rect(0, hd.bottom + 8, right, tb.top - 8),   // 模型放在標題卡下方
+                    rect(hd.right + 8, 8, right, tb.top - 8),    // 模型放在標題卡右側
+                    rect(0, Math.max(hd.bottom, pn.bottom) + 8, w, tb.top - 8),   // 面板收合後：使用整個下方空間
+                ];
+            }
+            return [rect(0, hd.bottom + 8, w, pn.top - 8)];   // 抽屜版面：標題卡與抽屜之間
+        }
+
+        // 把投影中心移到空白區域的中心（模型不會被面板擋住）
+        const view = { cx: null, cy: null, tx: 0, ty: 0 };
+        function setOffset(cx, cy) {
+            const w = window.innerWidth, h = window.innerHeight;
+            camera.aspect = w / h;
+            camera.setViewOffset(w, h, w / 2 - cx, h / 2 - cy, w, h);
+        }
+        function applyViewOffset(r) { setOffset(r.left + r.width / 2, r.top + r.height / 2); }
+
+        // 二分搜尋：找出讓所有取樣點都落在空白區域內的最近距離
+        const _v = new V3();
+        function computeFitDist(dir, r) {
+            const w = window.innerWidth, h = window.innerHeight;
+            const m = 0.05 * Math.min(r.width, r.height);
+            const saved = camera.position.clone();
+            let lo = 2, hi = 80;
+            for (let i = 0; i < 22; i++) {
+                const d = (lo + hi) / 2;
+                camera.position.copy(target).addScaledVector(dir, d);
+                camera.lookAt(target);
+                camera.updateMatrixWorld();
+                let ok = true;
+                for (const p of fitPoints) {
+                    _v.copy(p).project(camera);
+                    const px = (_v.x + 1) / 2 * w, py = (1 - _v.y) / 2 * h;
+                    if (_v.z > 1 || px < r.left + m || px > r.left + r.width - m || py < r.top + m || py > r.top + r.height - m) { ok = false; break; }
+                }
+                if (ok) hi = d; else lo = d;
+            }
+            camera.position.copy(saved);
+            return hi;
+        }
+
+        // 側邊版面：工具列、操作提示、載入訊息置中於模型所在的空白區域（抽屜版面交回 CSS 置中）
+        function alignOverlays(r) {
+            const els = [toolbar, hintEl, loadingEl];
+            if (!isSide()) { els.forEach((el) => { el.style.left = ''; }); return; }
+            const half = toolbar.offsetWidth / 2;
+            const maxC = panel.getBoundingClientRect().left - 8 - half;
+            const c = Math.max(half + 8, Math.min(r.left + r.width / 2, maxC));
+            els.forEach((el) => { el.style.left = `${Math.round(c)}px`; });
+        }
+
+        let fitDist = 14;
+        function refit(dir, smooth) {
+            let best = null;
+            freeRects().forEach((r) => {
+                applyViewOffset(r);
+                const d = computeFitDist(dir, r);
+                if (!best || d < best.d) best = { r, d };
+            });
+            view.tx = best.r.left + best.r.width / 2;
+            view.ty = best.r.top + best.r.height / 2;
+            if (!smooth || reduceMotion || view.cx === null) { view.cx = view.tx; view.cy = view.ty; }
+            setOffset(view.cx, view.cy);
+            alignOverlays(best.r);
+            fitDist = best.d;
+            controls.minDistance = fitDist * 0.3;
+            controls.maxDistance = fitDist * 2.2;
+        }
+
+        // 用球座標做鏡頭過場，翻轉時不會穿過模型
+        // k：距離倍率（放大元件時 < 1）；to：旋轉中心（放大元件時移向該元件）
+        let tween = null;
+        const cam = { k: 1, to: target.clone() };
+        function flyTo(dir, ms, k = 1, to = target) {
+            cam.k = k;
+            cam.to = to.clone();
+            const off = camera.position.clone().sub(controls.target);
+            const s0 = new THREE.Spherical().setFromVector3(off);
+            const s1 = new THREE.Spherical().setFromVector3(dir.clone().multiplyScalar(fitDist * k));
+            let dTheta = s1.theta - s0.theta;
+            dTheta = ((dTheta + Math.PI) % TAU + TAU) % TAU - Math.PI;
+            tween = { t0: performance.now(), ms: reduceMotion ? 1 : (ms || 900), s0, s1, dTheta, from: controls.target.clone(), to: cam.to };
+        }
+        function stepTween(now) {
+            if (!tween) return;
+            const k = Math.min((now - tween.t0) / tween.ms, 1);
+            const e = 1 - Math.pow(1 - k, 3);
+            const s = new THREE.Spherical(
+                tween.s0.radius + (tween.s1.radius - tween.s0.radius) * e,
+                tween.s0.phi + (tween.s1.phi - tween.s0.phi) * e,
+                tween.s0.theta + tween.dTheta * e
+            );
+            controls.target.lerpVectors(tween.from, tween.to, e);
+            camera.position.setFromSpherical(s).add(controls.target);
+            if (k >= 1) tween = null;
+        }
+
+        // =========================================================
+        // 8. 元件標示：脈動光圈＋各元件的觀看角度
+        // =========================================================
+        const nv = (x, y, z) => new V3(x, y, z).normalize();
+        const PART3D = {
+            screen: { pos: new V3(0, 0, 0.5),  dir: nv(0.18, 0.12, 1),   k: 0.8,  color: 0x56b6c2, ring: false },
+            crown:  { pos: new V3(2.78, 0, 0), dir: nv(1, 0.25, 0.65),   k: 0.7, color: 0xe040fb },
+            calm:   { pos: new V3(2.6 * Math.cos(0.72), 2.6 * Math.sin(0.72), 0),   dir: nv(0.8, 0.75, 0.6),  k: 0.7, color: 0x00e5ff },
+            sos:    { pos: new V3(2.6 * Math.cos(-0.72), 2.6 * Math.sin(-0.72), 0), dir: nv(0.8, -0.55, 0.6), k: 0.7, color: 0xdcae7a },
+            side:   { pos: new V3(-2.45, 0, 0), dir: nv(-1, 0.25, 0.6),  k: 0.7, color: 0x7a93a0 },
+            sensor: { pos: new V3(0, 0, -0.52), dir: VIEW.rear,          k: 0.8,  color: 0x7bc88f, rear: true },
+            strap:  { pos: strapCurve.getPointAt(0.1), dir: nv(0.35, 0.9, 0.75), k: 0.72, color: 0xff9f43 },
+            case:   { pos: new V3(-1.68, -1.68, 0.05), dir: nv(-0.5, -0.35, 1), k: 0.72, color: 0xc9d3dd },
+        };
+
+        const marker = (function () {
+            const c = document.createElement('canvas');
+            c.width = c.height = 128;
+            const x = c.getContext('2d');
+            const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+            g.addColorStop(0, 'rgba(255,255,255,0.55)');
+            g.addColorStop(0.25, 'rgba(255,255,255,0.12)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            x.fillStyle = g;
+            x.fillRect(0, 0, 128, 128);
+            x.strokeStyle = '#fff';
+            x.lineWidth = 6;
+            x.beginPath(); x.arc(64, 64, 44, 0, TAU); x.stroke();
+            const s = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, depthWrite: false,
+                blending: THREE.AdditiveBlending, toneMapped: false,
+            }));
+            s.renderOrder = 10;
+            s.visible = false;
+            s.userData.noHit = true;
+            watch.add(s);
+            return s;
+        })();
+
+        function setRear(on, fly = true) {
+            state.rear = on;
+            state.xrayTarget = on ? 0.08 : 1;   // 看背面時錶帶半透明，不會擋住感測器
+            const btn = $('btn-rear');
+            btn.setAttribute('aria-pressed', String(on));
+            btn.setAttribute('aria-label', on ? '返回手錶正面' : '翻轉至手錶背面');
+            btn.title = on ? '返回手錶正面' : '翻轉至背面感測器';
+            $('rear-label').textContent = on ? '返回正面' : '背面感測器';
+            if (fly) {
+                marker.visible = false;
+                const dir = on ? VIEW.rear : VIEW.front;
+                refit(dir);
+                flyTo(dir, 1100);
+            }
+        }
+
+        function focusPart(key) {
+            const p = key && PART3D[key];
+            if (!p) {
+                marker.visible = false;
+                setRear(false, false);
+                refit(VIEW.front);
+                flyTo(VIEW.front, 900);
+                return;
+            }
+            setRear(!!p.rear, false);
+            marker.visible = p.ring !== false;
+            marker.position.copy(p.pos);
+            marker.material.color.set(p.color);
+            refit(p.dir);
+            const world = watch.localToWorld(p.pos.clone());
+            world.y -= watch.position.y;   // 扣掉上下浮動
+            flyTo(p.dir, 1000, p.k, target.clone().lerp(world, 0.55));
+        }
+
+        // =========================================================
+        // 9. 互動：點擊錶面（區分點擊與拖曳）、游標
+        // =========================================================
+        const raycaster = new THREE.Raycaster();
+        const ndc = new THREE.Vector2();
+        function hitScreen(e) {
+            const rect = canvas.getBoundingClientRect();
+            ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+            raycaster.setFromCamera(ndc, camera);
+            const hits = raycaster.intersectObject(watch, true);
+            const first = hits.find((h) => !h.object.userData.noHit && !(state.rear && h.object.userData.strap));
+            return !!(first && first.object.userData.tapScreen);
+        }
+
+        let down = null;
+        canvas.addEventListener('pointerdown', (e) => {
+            down = { x: e.clientX, y: e.clientY, t: performance.now() };
+            tween = null;
+            hideHint();
+        });
+        canvas.addEventListener('pointerup', (e) => {
+            if (!down) return;
+            const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+            const dt = performance.now() - down.t;
+            down = null;
+            if (moved > 8 || dt > 600) return;   // 這是拖曳，不是點擊
+            if (!isSide() && sheet === 'full') { setSheet('half'); return; }
+            if (hitScreen(e)) cycleApp();
+        });
+
+        let hoverQueued = false;
+        canvas.addEventListener('pointermove', (e) => {
+            if (e.pointerType !== 'mouse' || down || hoverQueued) return;
+            hoverQueued = true;
+            requestAnimationFrame(() => {
+                hoverQueued = false;
+                canvas.style.cursor = hitScreen(e) ? 'pointer' : 'grab';
+            });
+        });
+
+        // UI 收合或抽屜改變高度後，重新計算模型可用空間並平滑取景
+        let reframeTimer = 0;
+        function reframeSoon() {
+            clearTimeout(reframeTimer);
+            reframeTimer = setTimeout(() => {
+                const dir = camera.position.clone().sub(controls.target).normalize();
+                const before = fitDist;
+                refit(dir, true);
+                if (Math.abs(fitDist - before) / before > 0.03) flyTo(dir, 600, cam.k, cam.to);
+            }, 340);   // 等收合動畫結束
+        }
+
+        // =========================================================
+        // 10. 視窗尺寸變化
+        // =========================================================
+        let lastW = 0;
+        function resize(force) {
+            const w = window.innerWidth, h = window.innerHeight;
+            renderer.setSize(w, h);
+            const dir = lastW === 0 ? VIEW.front : camera.position.clone().sub(controls.target).normalize();
+            refit(dir);
+            // 手機捲動時網址列伸縮只會改變高度，這時不移動鏡頭，避免使用者的縮放被重置
+            if (force || w !== lastW) {
+                tween = null;
+                controls.target.copy(cam.to);
+                camera.position.copy(controls.target).addScaledVector(dir, fitDist * cam.k);
+            }
+            lastW = w;
+        }
+
+        // =========================================================
+        // 11. 動畫迴圈
+        // =========================================================
+        const clock = new THREE.Clock();
+        let lastScreenDraw = -1;
+
+        resize(true);
+        drawScreen(0);
+        if (document.fonts) document.fonts.ready.then(() => { resize(true); drawScreen(clock.getElapsedTime()); });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            const now = performance.now();
+
+            if (!reduceMotion) {
+                watch.position.y = Math.sin(t * 1.1) * 0.08;
+                blob.scale.setScalar(1 - watch.position.y * 0.3);
+            }
+
+            stepTween(now);
+
+            if (view.cx !== null && (Math.abs(view.tx - view.cx) > 0.5 || Math.abs(view.ty - view.cy) > 0.5)) {
+                view.cx += (view.tx - view.cx) * 0.14;
+                view.cy += (view.ty - view.cy) * 0.14;
+                setOffset(view.cx, view.cy);
+            }
+
+            // 錶帶 X 光淡入淡出
+            if (Math.abs(state.xray - state.xrayTarget) > 0.001) {
+                state.xray += (state.xrayTarget - state.xray) * 0.12;
+                strapMats.forEach((m) => {
+                    m.opacity = state.xray;
+                    m.depthWrite = state.xray > 0.95;
+                });
+            }
+
+            // 背面 LED 隨心跳閃爍
+            const beat = heartbeat(t);
+            watch.userData.leds.forEach((m) => { m.opacity = 0.35 + 0.65 * beat; });
+
+            // 元件光圈脈動
+            if (marker.visible) {
+                const s = 0.95 + (reduceMotion ? 0 : 0.18 * Math.sin(t * 4));
+                marker.scale.set(s, s, 1);
+            }
+
+            // 螢幕約每秒 15 格更新
+            if (t - lastScreenDraw > 1 / 15) {
+                drawScreen(t);
+                lastScreenDraw = t;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        requestAnimationFrame(() => loadingEl.classList.add('done'));
+
+        // 操作提示（依裝置顯示不同文字）
+        hintEl.textContent = isTouch
+            ? '單指旋轉 · 雙指縮放 · 輕觸錶面切換 App'
+            : '左鍵拖曳旋轉 · 滾輪縮放 · 右鍵平移 · 點擊錶面切換 App';
+        setTimeout(hideHint, 7000);
+
+        return {
+            redraw() { drawScreen(clock.getElapsedTime()); },
+            focusPart,
+            reset() {
+                marker.visible = false;
+                setRear(false, false);
+                refit(VIEW.front);
+                flyTo(VIEW.front, 800);
+            },
+            toggleRear() { setRear(!state.rear); return state.rear; },
+            toggleRotate() { controls.autoRotate = !controls.autoRotate; return controls.autoRotate; },
+            reframeSoon,
+            resize,
+        };
+        }
+    })();
+    </script>
+</body>
+</html>
