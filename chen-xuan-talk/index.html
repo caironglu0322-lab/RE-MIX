@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="陳瑄演講〈從生育奇觀到生育主體性〉的錄音、整理後逐字稿與現場簡報照片同步播放。">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>陳瑄｜肉體恐怖演講</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;800&family=Noto+Sans+TC:wght@400;500&display=swap">
+<style>
+/* Layout: sticky player bar on top; slide panel pinned left, transcript scrolls right; stacks on phones */
+:root{
+  --bg:#f3f3f1; --surface:#ffffff; --ink:#1d2030; --muted:#6b6e7a; --line:#dcdcd8;
+  --accent:#a3253d; --accent-soft:#f4dfe3; --hl:#fff1c9;
+  --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15161c; --surface:#1e2029; --ink:#e7e6ea; --muted:#9a9ca8; --line:#30323d;
+  --accent:#e06a80; --accent-soft:#3a2129; --hl:#3a3420; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15161c; --surface:#1e2029; --ink:#e7e6ea; --muted:#9a9ca8; --line:#30323d;
+  --accent:#e06a80; --accent-soft:#3a2129; --hl:#3a3420; color-scheme:dark}
+
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1360px;margin:0 auto}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:10px}
+.ttl{min-width:0;flex:1 1 260px}
+.ttl .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:500}
+.ttl h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:20px;line-height:1.3;text-wrap:balance}
+.player{display:flex;align-items:center;gap:8px;flex:2 1 420px;min-width:0}
+.player audio{flex:1;min-width:0;height:40px}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.seg:focus-visible,.thumb:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+main .wrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;padding-block:24px 64px}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);align-self:start;display:flex;flex-direction:column;gap:12px;min-width:0}
+.slide{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden;aspect-ratio:16/10;max-width:100%;display:grid;place-items:center}
+.slide img{width:100%;height:100%;object-fit:contain;transition:opacity .25s}
+.slide .empty{padding:24px;text-align:center;color:var(--muted)}
+.slide .empty b{display:block;font-family:var(--f-display);font-size:22px;color:var(--ink);margin-bottom:6px}
+.cap{display:flex;gap:12px;align-items:baseline;font-size:14px;min-width:0}
+.cap .n{font-family:var(--f-num);color:var(--accent);font-size:12px;flex:none}
+.cap .t{font-family:var(--f-display);font-weight:600;min-width:0}
+.strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.thumb{flex:none;width:96px;border:2px solid transparent;border-radius:3px;padding:0;background:var(--surface);cursor:pointer;position:relative}
+.thumb img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:1px;opacity:.7}
+.thumb span{position:absolute;left:3px;bottom:3px;font:11px/1 var(--f-num);background:rgba(0,0,0,.6);color:#fff;padding:2px 4px;border-radius:2px}
+.thumb.on{border-color:var(--accent)}.thumb.on img,.thumb:hover img{opacity:1}
+.note{font-size:12px;color:var(--muted)}
+
+.tx{min-width:0}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.tools input{font:inherit;font-size:14px;flex:1 1 160px;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.tools .cnt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.para{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:start;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.para .ts{justify-self:start;font:12px/2.4 var(--f-num);color:var(--muted);background:none;border:0;padding:0;text-align:left;cursor:pointer}
+.para .ts:hover{color:var(--accent)}
+.para p{margin:0;max-width:40em}
+.slidemark{margin:22px 0 6px;font-family:var(--f-display);font-weight:600;font-size:15px;color:var(--accent);display:flex;gap:10px;align-items:center}
+.slidemark::after{content:"";flex:1;height:1px;background:var(--accent-soft)}
+.seg{cursor:pointer;border-radius:3px;transition:background .15s}
+.seg:hover{background:var(--accent-soft)}
+.seg.now{background:var(--hl);box-shadow:0 0 0 2px var(--hl)}
+.seg.hit{text-decoration:underline 2px var(--accent);text-underline-offset:4px}
+.follow{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25}
+.follow .btn{background:var(--accent);color:#fff;border-color:var(--accent);padding:8px 14px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.loading{color:var(--muted);padding:24px 0}
+
+@media (max-width:860px){
+  main .wrap{grid-template-columns:minmax(0,1fr);gap:16px;padding-block:12px 64px}
+  .stage{top:calc(env(safe-area-inset-top,0px) + var(--hh,120px));z-index:10;background:var(--bg);padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .slide{aspect-ratio:auto;height:30vh}
+  .slide .empty{padding:8px}
+  .strip,.stage .note{display:none}
+  .para{grid-template-columns:minmax(0,1fr);gap:0}
+  .seg{scroll-margin-top:calc(var(--hh,120px) + 30vh + 48px)}
+  .para .ts{line-height:1.6}
+  .ttl h1{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header id="hdr"><div class="wrap">
+  <div class="ttl">
+    <div class="eyebrow">演講逐字稿・簡報同步</div>
+    <h1>陳瑄：女性主義、肉體恐怖與生育主體性</h1>
+  </div>
+  <div class="player">
+    <button class="btn" id="back" title="倒退 15 秒">−15s</button>
+    <audio id="au" controls preload="metadata">
+      <source src="talk.webm" type="audio/webm; codecs=opus">
+      <source src="talk.mp4" type="audio/mp4">
+    </audio>
+    <button class="btn" id="fwd" title="快轉 15 秒">+15s</button>
+    <button class="btn" id="rate" title="播放速度">1×</button>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <section class="stage" aria-label="簡報">
+    <div class="slide" id="slide"><div class="empty"><b>開場</b>主持人介紹講者</div></div>
+    <div class="cap"><span class="n" id="capn">—</span><span class="t" id="capt">開場</span></div>
+    <div class="strip" id="strip" aria-label="簡報縮圖，點選跳到該段"></div>
+    <div class="note">簡報為現場拍攝的照片，共 17 張，並非每一頁都有拍到；畫面會停留在最近一張拍到的簡報。</div>
+  </section>
+
+  <section class="tx" aria-label="逐字稿">
+    <div class="tools">
+      <input id="q" type="search" placeholder="搜尋逐字稿（例如：陰性怪物、Kristeva）" aria-label="搜尋逐字稿">
+      <span class="cnt" id="cnt"></span>
+      <button class="btn" id="next" hidden>下一個</button>
+    </div>
+    <div id="body"><div class="loading">逐字稿載入中…</div></div>
+  </section>
+</div></main>
+
+<div class="follow"><button class="btn" id="follow" hidden>回到目前播放位置</button></div>
+
+<script>
+/* 簡報對照表：每張簡報從第幾秒開始講。要微調時間，改這裡的 t 就好。 */
+const SLIDES = [{"t": 268.32, "img": "slides/s01.jpg", "title": "女性執導恐怖片於 2010 年代崛起", "src": 17}, {"t": 550.78, "img": "slides/s02.jpg", "title": "與女性恐怖片相關的同期研究", "src": 16}, {"t": 742.24, "img": "slides/s03.jpg", "title": "《陰性怪物的回歸》之核心觀點", "src": 15}, {"t": 1034.02, "img": "slides/s04.jpg", "title": "「陰性怪物」的原始概念", "src": 14}, {"t": 2151.26, "img": "slides/s05.jpg", "title": "電影為何／如何憎恨女性？", "src": 13}, {"t": 2270.86, "img": "slides/s06.jpg", "title": "80 年代反挫電影", "src": 12}, {"t": 2703.77, "img": "slides/s07.jpg", "title": "女性觀眾與女性認同在哪裡？", "src": 11}, {"t": 3169.12, "img": "slides/s08.jpg", "title": "「女性凝視」存在嗎？三個追問", "src": 10}, {"t": 3242.08, "img": "slides/s09.jpg", "title": "不是教條或謬誤，而是條件", "src": 9}, {"t": 3776.15, "img": "slides/s10.jpg", "title": "生育主體性的三個軸線", "src": 8}, {"t": 4040.15, "img": "slides/s11.jpg", "title": "生育主體性：從觀看者到居住者", "src": 7}, {"t": 4553.08, "img": "slides/s12.jpg", "title": "從女性凝視到女同志凝視，再到酷兒凝視", "src": 6}, {"t": 4642.5, "img": "slides/s13.jpg", "title": "《鈦》：懷孕的酷兒化", "src": 5}, {"t": 5011.86, "img": "slides/s14.jpg", "title": "《懼裂》：克莉斯蒂娃，賤斥之外的母性", "src": 4}, {"t": 5280.21, "img": "slides/s15.jpg", "title": "《懼裂》：艾莉斯・楊，懷孕的時間性", "src": 3}, {"t": 5376.97, "img": "slides/s16.jpg", "title": "並置與結論：兩部影片，兩種改寫", "src": 2}, {"t": 5593.94, "img": "slides/s17.jpg", "title": "餘論：以肉體恐怖重奪生殖的浪潮持續", "src": 1}];
+
+const $ = s => document.querySelector(s);
+const narrow = matchMedia('(max-width:860px)');
+const toCur = el => el.scrollIntoView({block: narrow.matches ? 'start' : 'center', behavior:'smooth'});
+const au = $('#au');
+const fmt = t => { t = Math.floor(t); const h = Math.floor(t/3600), m = Math.floor(t%3600/60), s = t%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(s).padStart(2,'0'); };
+let segs = [], segEls = [], cur = -1, curSlide = -2, autoFollow = true, lastUserScroll = 0;
+
+function seek(t){ au.currentTime = t; if (au.paused) au.play().catch(()=>{}); }
+
+/* slides */
+const strip = $('#strip');
+SLIDES.forEach((s,i) => {
+  const b = document.createElement('button');
+  b.className = 'thumb'; b.title = s.title + '（' + fmt(s.t) + '）';
+  b.innerHTML = '<img loading="lazy" alt="" src="' + s.img + '"><span>' + fmt(s.t) + '</span>';
+  b.onclick = () => seek(s.t);
+  strip.appendChild(b);
+});
+function slideAt(t){ let k = -1; for (let i=0;i<SLIDES.length;i++) if (SLIDES[i].t <= t + 0.06) k = i; return k; }
+function showSlide(k){
+  if (k === curSlide) return; curSlide = k;
+  const box = $('#slide');
+  if (k < 0){ box.innerHTML = '<div class="empty"><b>開場</b>主持人介紹講者</div>'; $('#capn').textContent='—'; $('#capt').textContent='開場'; }
+  else { const s = SLIDES[k];
+    box.innerHTML = '<img alt="' + s.title + '" src="' + s.img + '">';
+    $('#capn').textContent = (k+1) + ' / ' + SLIDES.length; $('#capt').textContent = s.title; }
+  [...strip.children].forEach((c,i) => c.classList.toggle('on', i===k));
+  if (k >= 0){ const c = strip.children[k]; strip.scrollTo({left: c.offsetLeft - strip.clientWidth/2 + c.clientWidth/2, behavior:'smooth'}); }
+}
+
+/* transcript */
+fetch('transcript.json').then(r => r.json()).then(data => {
+  const body = $('#body'); body.innerHTML = '';
+  let si = 0;
+  data.paras.forEach(p => {
+    const t0 = p[0][0];
+    while (si < SLIDES.length && SLIDES[si].t <= t0 + 0.06){
+      const h = document.createElement('div'); h.className = 'slidemark';
+      h.textContent = SLIDES[si].title; body.appendChild(h); si++;
+    }
+    const row = document.createElement('div'); row.className = 'para';
+    const ts = document.createElement('button'); ts.className = 'ts'; ts.textContent = fmt(t0); ts.onclick = () => seek(t0);
+    const para = document.createElement('p');
+    p.forEach(([a,b,txt]) => {
+      const sp = document.createElement('span'); sp.className = 'seg'; sp.textContent = txt; sp.tabIndex = 0;
+      sp.dataset.i = segs.length; segs.push([a,b]); segEls.push(sp);
+      sp.onclick = () => seek(a);
+      sp.onkeydown = e => { if (e.key === 'Enter') seek(a); };
+      para.appendChild(sp);
+    });
+    row.append(ts, para); body.appendChild(row);
+  });
+  tick();
+}).catch(() => { $('#body').innerHTML = '<div class="loading">逐字稿載入失敗，請重新整理頁面。</div>'; });
+
+function segAt(t){ let lo=0, hi=segs.length-1, k=-1; while (lo<=hi){ const m=(lo+hi)>>1; if (segs[m][0] <= t){ k=m; lo=m+1; } else hi=m-1; } return k; }
+function tick(){
+  const t = au.currentTime;
+  showSlide(slideAt(t));
+  const k = segAt(t);
+  if (k !== cur){
+    if (cur >= 0) segEls[cur].classList.remove('now');
+    cur = k;
+    if (k >= 0){ const el = segEls[k]; el.classList.add('now');
+      if (autoFollow && !au.paused) toCur(el); }
+  }
+}
+au.addEventListener('timeupdate', tick);
+au.addEventListener('seeked', () => { autoFollow = true; $('#follow').hidden = true; tick();
+  if (cur >= 0) toCur(segEls[cur]); });
+
+/* pause auto-follow when the reader scrolls by hand */
+['wheel','touchmove'].forEach(ev => window.addEventListener(ev, () => {
+  if (!au.paused){ autoFollow = false; $('#follow').hidden = false; } }, {passive:true}));
+$('#follow').onclick = () => { autoFollow = true; $('#follow').hidden = true; if (cur >= 0) toCur(segEls[cur]); };
+
+/* controls */
+$('#back').onclick = () => { au.currentTime = Math.max(0, au.currentTime - 15); };
+$('#fwd').onclick = () => { au.currentTime = au.currentTime + 15; };
+const rates = [1, 1.25, 1.5, 1.75, 2, 0.75]; let ri = 0;
+$('#rate').onclick = () => { ri = (ri+1) % rates.length; au.playbackRate = rates[ri]; $('#rate').textContent = rates[ri] + '×'; };
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input')) return;
+  if (e.code === 'Space' && !e.target.matches('button,audio,.seg')){ e.preventDefault(); au.paused ? au.play() : au.pause(); }
+});
+
+/* search */
+let hits = [], hi = -1;
+$('#q').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  segEls.forEach(el => el.classList.remove('hit')); hits = []; hi = -1;
+  if (q){ segEls.forEach((el,i) => { if (el.textContent.toLowerCase().includes(q)){ el.classList.add('hit'); hits.push(i); } }); }
+  $('#cnt').textContent = q ? (hits.length ? hits.length + ' 筆' : '找不到') : '';
+  $('#next').hidden = hits.length < 1;
+  if (hits.length) jump();
+});
+function jump(){ hi = (hi+1) % hits.length; autoFollow = false; $('#follow').hidden = au.paused;
+  toCur(segEls[hits[hi]]); $('#cnt').textContent = (hi+1) + ' / ' + hits.length + ' 筆'; }
+$('#next').onclick = jump;
+
+/* header height for the phone layout's sticky slide */
+const setHH = () => document.documentElement.style.setProperty('--hh', $('#hdr').offsetHeight + 'px');
+setHH(); window.addEventListener('resize', setHH);
+</script>
+
+</body>
+</html>
