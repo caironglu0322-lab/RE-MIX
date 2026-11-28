@@ -1,0 +1,1594 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Budi 人偶原型</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* 版面：3D 舞台占滿畫面，左上作品卡，右側控制面板（手機改為底部面板）。與 3-2、3-3 同一套深色系。 */
+:root {
+  color-scheme: dark;
+  --bg-deep: #0a0e14;
+  --bg-mid: #162230;
+  --card: rgba(20, 28, 38, 0.9);
+  --line: rgba(138, 163, 176, 0.25);
+  --text: #f4f0ea;
+  --muted: #98a3b0;
+  --gold: #dcae7a;
+  --cyan: #56b6c2;
+  --green: #4fb393;
+  --chip: rgba(255, 255, 255, 0.05);
+  --chip-line: rgba(255, 255, 255, 0.12);
+  --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI", Roboto, sans-serif;
+  --font-num: "Rajdhani", var(--font);
+  --panel-w: clamp(300px, 28vw, 350px);
+  --edge: 20px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(90% 75% at 38% 42%, #23364a 0%, var(--bg-mid) 45%, var(--bg-deep) 100%);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+#stage { position: fixed; inset: 0; z-index: 1; }
+#stage canvas { display: block; outline: none; touch-action: none; }
+
+.card {
+  background: var(--card);
+  -webkit-backdrop-filter: blur(14px);
+          backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 作品卡 */
+.hdr {
+  position: fixed;
+  z-index: 10;
+  top: calc(var(--edge) + env(safe-area-inset-top, 0px));
+  left: calc(var(--edge) + env(safe-area-inset-left, 0px));
+  max-width: 360px;
+  padding: 12px 18px 14px;
+}
+.tag { font-size: 0.74rem; font-weight: 700; letter-spacing: 1px; color: var(--gold); margin-bottom: 4px; }
+.hdr h1 { font-size: 1.32rem; line-height: 1.3; }
+.hdr h1 .en { font-family: var(--font-num); letter-spacing: 0.02em; font-size: 1.12em; }
+.hdr p { font-size: 0.84rem; color: var(--muted); line-height: 1.6; margin-top: 4px; }
+.proto {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(86, 182, 194, 0.12);
+  border: 1px solid rgba(86, 182, 194, 0.4);
+}
+
+/* 對話框 */
+.bubble {
+  position: fixed;
+  z-index: 9;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 40px));
+  padding: 10px 14px 11px;
+  border-radius: 14px;
+  background: #f6f2ea;
+  color: #18232c;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -100%);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: var(--tail, 50%);
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+}
+.bubble.off { opacity: 0; }
+.bubble.below::after { display: none; }
+.bubble .say { font-size: 0.98rem; font-weight: 650; line-height: 1.45; }
+.bubble .sub { font-size: 0.82rem; color: #4d5c66; line-height: 1.45; margin-top: 4px; }
+.bubble .sub:empty { display: none; }
+.bubble .who { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; color: #2f8f74; margin-bottom: 2px; }
+
+.qmark {
+  position: fixed;
+  z-index: 8;
+  left: 0;
+  top: 0;
+  font: 800 1.6rem/1 var(--font-num);
+  color: var(--gold);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  letter-spacing: 0.1em;
+}
+.qmark.off { opacity: 0; }
+
+/* 操作提示 */
+.hint {
+  position: fixed;
+  z-index: 8;
+  left: calc((100vw - var(--panel-w) - var(--edge)) / 2);
+  bottom: calc(var(--edge) + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  color: var(--cyan);
+  background: rgba(86, 182, 194, 0.1);
+  border: 1px solid rgba(86, 182, 194, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+}
+
+/* 控制面板 */
+.panel {
+  position: fixed;
+  z-index: 12;
+  top: calc(var(--edge) + env(safe-area-inset-top, 0px));
+  right: calc(var(--edge) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--edge) + env(safe-area-inset-bottom, 0px));
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-head h2 { flex: 1; font-size: 0.95rem; color: var(--gold); }
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 163, 176, 0.35) transparent;
+}
+.sec { padding: 14px 0 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.sec:last-child { border-bottom: 0; }
+.sec h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--gold);
+  margin-bottom: 9px;
+}
+.sec h3 span { flex: 1; }
+.sec h3 small { font-size: 0.7rem; color: var(--muted); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-line);
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.chip[aria-pressed="true"] { color: var(--text); background: rgba(86, 182, 194, 0.2); border-color: var(--cyan); }
+.chip .t {
+  font: 700 0.72rem/1 var(--font-num);
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.scene-list { display: grid; gap: 6px; }
+.scene {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 2px 10px;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.scene[aria-pressed="true"] { border-color: var(--cyan); background: rgba(86, 182, 194, 0.14); }
+.scene .t { font: 700 0.9rem/1.2 var(--font-num); color: var(--gold); font-variant-numeric: tabular-nums; }
+.scene b { font-size: 0.82rem; }
+.scene span:last-child { grid-column: 2; font-size: 0.74rem; color: var(--muted); line-height: 1.45; }
+
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.seg button {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 7px 4px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: rgba(86, 182, 194, 0.22); color: var(--text); box-shadow: inset 0 0 0 1px rgba(86, 182, 194, 0.5); }
+
+
+
+.fallback {
+  position: fixed;
+  z-index: 2;
+  top: 50%;
+  left: calc((100vw - var(--panel-w) - var(--edge)) / 2);
+  transform: translate(-50%, -50%);
+  width: min(320px, calc(100vw - 48px));
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+.fallback img { width: 180px; border-radius: 12px; margin: 0 auto 12px; display: block; }
+
+@media (hover: hover) {
+  .chip:hover, .scene:hover { color: var(--text); border-color: rgba(86, 182, 194, 0.5); }
+  .seg button:hover { color: var(--text); }
+}
+@media (pointer: coarse) {
+  .chip { min-height: 40px; }
+  .seg button { min-height: 44px; }
+}
+
+/* 手機與平板直向：面板改到底部 */
+@media (max-width: 760px), (max-aspect-ratio: 1/1) {
+  :root { --edge: 10px; }
+  .hdr { right: calc(var(--edge) + env(safe-area-inset-right, 0px)); max-width: none; padding: 9px 12px 10px; }
+  .hdr h1 { font-size: 1.05rem; }
+  .hdr p { display: none; }
+  .proto { margin-top: 5px; }
+  .panel {
+    top: auto;
+    left: calc(var(--edge) + env(safe-area-inset-left, 0px));
+    width: auto;
+    height: 42dvh;
+    border-radius: 16px;
+  }
+  .panel-head { padding: 9px 14px 8px; }
+  .panel-body { padding: 0 14px 14px; }
+  .hint { left: 50%; bottom: calc(42dvh + var(--edge) + 8px + env(safe-area-inset-bottom, 0px)); font-size: 0.7rem; }
+  .fallback { left: 50%; top: 34%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+}
+</style>
+
+<div id="stage" aria-label="Budi 的 3D 人偶，可以拖曳旋轉，點他會有反應"></div>
+
+<header class="hdr card">
+  <div class="tag">單元二：偏誤與再校正 ｜ 作品 2-3</div>
+  <h1><span class="en">Budi</span> 的第一天上工</h1>
+  <p>來自印尼的新進員工。這是他的 3D 人偶原型，確認外型與動作後再放進完整網頁。</p>
+  <span class="proto">人偶原型・測試版</span>
+</header>
+
+<div class="bubble off" id="bubble" aria-live="polite">
+  <div class="who">BUDI</div>
+  <div class="say" id="say"></div>
+  <div class="sub" id="sub"></div>
+</div>
+<div class="qmark off" id="qmark" aria-hidden="true">???</div>
+<div class="hint" id="hint">拖曳可旋轉視角・點 Budi 跟他說話</div>
+
+<div class="fallback" id="fallback" hidden>
+  <img src="data:image/jpeg;base64,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" alt="簡報中的 Budi，手上拿著一本藍色手冊">
+  <p>這台裝置無法顯示 3D 畫面，先看 Budi 的照片。右側台詞仍可使用。</p>
+</div>
+
+<aside class="panel card" aria-label="Budi 人偶控制">
+  <div class="panel-head"><h2>跟 Budi 互動</h2></div>
+  <div class="panel-body">
+
+    <section class="sec">
+      <h3><span>情境台詞</span><small>表情＋動作＋說話</small></h3>
+      <div class="scene-list" id="scenes"></div>
+    </section>
+
+    <section class="sec">
+      <h3><span>台詞語言</span></h3>
+      <div class="seg" id="lang-seg" role="radiogroup" aria-label="Budi 說話的語言">
+        <button type="button" role="radio" data-lang="id" aria-pressed="true" aria-checked="true">印尼文＋中文字幕</button>
+        <button type="button" role="radio" data-lang="zh" aria-pressed="false" aria-checked="false">中文</button>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h3><span>表情</span></h3>
+      <div class="chips" id="exprs"></div>
+    </section>
+
+    <section class="sec">
+      <h3><span>動作</span></h3>
+      <div class="chips" id="gests"></div>
+    </section>
+
+    <section class="sec">
+      <h3><span>鏡頭</span></h3>
+      <div class="seg" id="view-seg" role="radiogroup" aria-label="鏡頭距離">
+        <button type="button" role="radio" data-view="full" aria-pressed="false" aria-checked="false">全身</button>
+        <button type="button" role="radio" data-view="half" aria-pressed="true" aria-checked="true">半身</button>
+        <button type="button" role="radio" data-view="face" aria-pressed="false" aria-checked="false">臉部</button>
+      </div>
+    </section>
+
+
+  </div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* =========================================================
+   台詞（印尼文＋中文）
+   ========================================================= */
+var LINES = {
+  hello:   { id: 'Halo! Nama saya Budi. Hari ini hari pertama saya kerja di sini.', zh: '你好！我是 Budi，今天是我第一天上班。' },
+  manual:  { id: 'Hmm… buku panduan ini semuanya bahasa Mandarin. Saya tidak mengerti…', zh: '嗯……這本手冊全是中文，我看不太懂耶。' },
+  help:    { id: 'Bisa bantu saya? Kita cari pakai tablet itu, yuk.', zh: '可以幫我嗎？我們用那台平板查查看。' },
+  found:   { id: 'Oh, begitu! JM150-DC itu mesin cetak dua warna!', zh: '原來如此！JM150-DC 是雙色射出成型機！' },
+  alarm:   { id: 'Eh, mesinnya alarm… tapi catatannya tidak ada. Saya tanya teknisi senior dulu, ya.', zh: '欸，機台在警報……可是查不到紀錄。我先去問老師傅好了。' },
+  thanks:  { id: 'Terima kasih! Lain kali, teman lain juga bisa menemukannya.', zh: '謝謝你！下次別人遇到，也查得到了。' },
+  poke1:   { id: 'Ya? Ada apa?', zh: '嗯？怎麼了？' },
+  poke2:   { id: 'Hehe, saya masih belajar.', zh: '嘿嘿，我還在學。' },
+  poke3:   { id: 'Mesin di sini besar sekali!', zh: '這裡的機器好大台！' },
+  book:    { id: 'Wah, buku ini tebal sekali…', zh: '哇，這本書好厚喔……' },
+  idle:    { id: 'Kita lanjut?', zh: '我們繼續嗎？' }
+};
+
+var SCENES = [
+  { key: 'hello',  time: '08:00', title: '打招呼',     desc: '抬頭、揮手，介紹自己',            expr: 'happy',    gest: 'wave' },
+  { key: 'manual', time: '08:15', title: '看不懂手冊', desc: '翻開手冊、皺眉、抓頭',            expr: 'confused', gest: 'readScratch' },
+  { key: 'help',   time: '08:30', title: '請你幫忙',   desc: '指向旁邊的平板，請你一起查',      expr: 'hopeful',  gest: 'point' },
+  { key: 'found',  time: '09:10', title: '查到答案',   desc: '恍然大悟、點頭',                  expr: 'aha',      gest: 'nod' },
+  { key: 'alarm',  time: '17:20', title: '機台警報',   desc: '查不到紀錄，擔心、聳肩',          expr: 'worried',  gest: 'shrug' },
+  { key: 'thanks', time: '17:40', title: '謝謝你',     desc: '師傅補上紀錄後，笑著比讚',        expr: 'happy',    gest: 'thumbs' }
+];
+
+var EXPR_LABELS = [
+  ['neutral', '平常'], ['happy', '開心'], ['confused', '困惑'], ['focused', '專心看書'],
+  ['aha', '恍然大悟'], ['worried', '擔心'], ['hopeful', '期待']
+];
+var GEST_LABELS = [
+  ['wave', '揮手'], ['read', '翻手冊'], ['scratch', '抓頭'], ['point', '指向平板'],
+  ['nod', '點頭'], ['thumbs', '比讚'], ['shrug', '聳肩']
+];
+
+/* =========================================================
+   表情參數
+   ========================================================= */
+var EXPR = {
+  neutral:  { bR: 0,    bL: 0,    tR: 0,    tL: 0,    lid: 1.0,   low: 0,   smile: 0.4,  open: 0,    tilt: 0,     q: 0, blush: 0.4 },
+  happy:    { bR: 0.35, bL: 0.35, tR: 0.1,  tL: 0.1,  lid: 0.97, low: 0.45, smile: 1,    open: 0.32, tilt: 0.05,  q: 0, blush: 0.95 },
+  confused: { bR: -0.3, bL: 0.85, tR: -0.2, tL: 0.3,  lid: 0.88, low: 0.1, smile: -0.35,open: 0.08, tilt: 0.13,  q: 1, blush: 0.35 },
+  focused:  { bR: -0.35,bL: -0.35,tR: -0.25,tL: -0.25,lid: 0.78, low: 0.25,smile: 0,    open: 0,    tilt: -0.03, q: 0, blush: 0.3 },
+  aha:      { bR: 1,    bL: 1,    tR: 0,    tL: 0,    lid: 1.15, low: 0,   smile: 0.45, open: 0.55, tilt: 0,     q: 0, blush: 0.7 },
+  worried:  { bR: 0.45, bL: 0.45, tR: 0.8,  tL: 0.8,  lid: 0.92, low: 0.15,smile: -0.7, open: 0.06, tilt: -0.06, q: 0, blush: 0.25 },
+  hopeful:  { bR: 0.6,  bL: 0.6,  tR: 0.45, tL: 0.45, lid: 1.02, low: 0.2, smile: 0.5,  open: 0.12, tilt: 0.08,  q: 0, blush: 0.8 }
+};
+
+/* =========================================================
+   DOM 與狀態
+   ========================================================= */
+var $ = function (s) { return document.querySelector(s); };
+var bubble = $('#bubble'), sayEl = $('#say'), subEl = $('#sub'), qEl = $('#qmark');
+var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+var state = {
+  lang: 'id',
+  expr: 'neutral',
+  talking: 0,
+  busy: false,
+  lastInput: performance.now(),
+  pointer: null,
+  pointerAt: 0,
+  view: 'half'
+};
+var token = 0;
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+/* ---------- 面板按鈕 ---------- */
+function press(group, el) {
+  group.forEach(function (b) {
+    var on = b === el;
+    b.setAttribute('aria-pressed', String(on));
+    if (b.hasAttribute('aria-checked')) b.setAttribute('aria-checked', String(on));
+  });
+}
+var sceneWrap = $('#scenes');
+SCENES.forEach(function (s) {
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'scene';
+  b.dataset.scene = s.key;
+  b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = '<span class="t">' + s.time + '</span><b>' + s.title + '</b><span>' + s.desc + '</span>';
+  sceneWrap.appendChild(b);
+});
+var sceneBtns = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+sceneBtns.forEach(function (b) {
+  b.addEventListener('click', function () { press(sceneBtns, b); playScene(b.dataset.scene); });
+});
+
+function makeChips(wrap, list, attr) {
+  list.forEach(function (it) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.dataset[attr] = it[0];
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = it[1];
+    wrap.appendChild(b);
+  });
+  return Array.prototype.slice.call(wrap.querySelectorAll('.chip'));
+}
+var exprBtns = makeChips($('#exprs'), EXPR_LABELS, 'expr');
+var gestBtns = makeChips($('#gests'), GEST_LABELS, 'gest');
+function markExpr(name) { press(exprBtns, exprBtns.filter(function (b) { return b.dataset.expr === name; })[0]); }
+exprBtns.forEach(function (b) {
+  b.addEventListener('click', function () {
+    token++; state.busy = false; touch();
+    setExpr(b.dataset.expr);
+    press(sceneBtns, null);
+  });
+});
+gestBtns.forEach(function (b) {
+  b.addEventListener('click', function () {
+    token++; state.busy = false; touch();
+    press(gestBtns, b);
+    press(sceneBtns, null);
+    startGesture(b.dataset.gest, function () { press(gestBtns, null); });
+  });
+});
+
+var langBtns = Array.prototype.slice.call(document.querySelectorAll('#lang-seg button'));
+langBtns.forEach(function (b) {
+  b.addEventListener('click', function () { press(langBtns, b); state.lang = b.dataset.lang; });
+});
+var viewBtns = Array.prototype.slice.call(document.querySelectorAll('#view-seg button'));
+viewBtns.forEach(function (b) {
+  b.addEventListener('click', function () { press(viewBtns, b); setView(b.dataset.view); });
+});
+
+/* =========================================================
+   對話框
+   ========================================================= */
+var bubbleTimer = 0, typeTimer = 0;
+function say(line) {
+  var lang = state.lang;
+  var main = lang === 'id' ? line.id : line.zh;
+  var sub = lang === 'id' ? line.zh : '';
+  clearTimeout(bubbleTimer); clearInterval(typeTimer);
+  sayEl.lang = lang === 'id' ? 'id' : 'zh-Hant';
+  subEl.textContent = sub;
+  bubble.classList.remove('off');
+  var est = lang === 'id' ? 420 + main.length * 62 : 380 + main.length * 190;
+  var chars = Array.from(main), shown = 0;
+  sayEl.textContent = '';
+  var step = Math.max(18, est / chars.length);
+  typeTimer = setInterval(function () {
+    shown++;
+    sayEl.textContent = chars.slice(0, shown).join('');
+    if (shown >= chars.length) clearInterval(typeTimer);
+  }, reduceMotion ? 1 : step);
+
+  return new Promise(function (resolve) {
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      state.talking = 0;
+      sayEl.textContent = main;
+      bubbleTimer = setTimeout(function () { bubble.classList.add('off'); }, 2600);
+      resolve();
+    }
+    state.talking = 1;
+    setTimeout(finish, est);
+  });
+}
+
+/* =========================================================
+   情境表演
+   ========================================================= */
+async function playScene(key) {
+  var my = ++token;
+  var s = SCENES.filter(function (x) { return x.key === key; })[0];
+  state.busy = true; touch();
+  press(gestBtns, null);
+  if (key === 'manual') {
+    setExpr('focused');
+    startGesture('read');
+    await sleep(1600); if (my !== token) return;
+    setExpr('confused');
+    var p = say(LINES.manual);
+    await sleep(900); if (my !== token) return;
+    startGesture('scratch');
+    await p;
+  } else if (key === 'found') {
+    setExpr('focused');
+    lookOverride = { x: -0.55, y: 1.05, z: 0.55, until: performance.now() + 1100 };
+    await sleep(1000); if (my !== token) return;
+    setExpr('aha');
+    startGesture('nod');
+    await say(LINES.found);
+  } else if (key === 'thanks') {
+    setExpr('happy');
+    startGesture('thumbs');
+    await say(LINES.thanks);
+  } else {
+    setExpr(s.expr);
+    startGesture(s.gest);
+    await say(LINES[key]);
+  }
+  if (my !== token) return;
+  await sleep(1200); if (my !== token) return;
+  if (key !== 'thanks' && key !== 'hello') setExpr('neutral');
+  state.busy = false;
+  press(sceneBtns, null);
+}
+
+function touch() { state.lastInput = performance.now(); }
+
+/* =========================================================
+   3D
+   ========================================================= */
+var stage = $('#stage');
+var ok = !!window.THREE;
+var renderer;
+if (ok) {
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) { ok = false; }
+}
+if (!ok) {
+  $('#fallback').hidden = false;
+  $('#hint').hidden = true;
+  window.budi = { scene: playScene };
+  setExpr = function (n) { state.expr = n; markExpr(n); qEl.classList.add('off'); };
+  startGesture = function (n, cb) { if (cb) setTimeout(cb, 600); };
+  setView = function () {};
+  positionBubbleFallback();
+  return;
+}
+function positionBubbleFallback() {
+  var r = $('#fallback img').getBoundingClientRect();
+  bubble.style.left = (r.left + r.width / 2) + 'px';
+  bubble.style.top = (r.top - 8) + 'px';
+}
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
+camera.position.set(0.35, 1.5, 2.1);
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.55;
+controls.maxDistance = 5;
+controls.minPolarAngle = 0.75;
+controls.maxPolarAngle = 1.78;
+controls.rotateSpeed = 0.7;
+controls.target.set(0, 1.3, 0);
+
+/* ---------- 燈光 ---------- */
+scene.add(new THREE.HemisphereLight(0xcfe0f5, 0x2a2219, 0.62));
+var key = new THREE.DirectionalLight(0xfff0de, 1.75);
+key.position.set(1.3, 2.8, 2.3);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.left = -1.2; key.shadow.camera.right = 1.2;
+key.shadow.camera.top = 2.2; key.shadow.camera.bottom = -0.4;
+key.shadow.camera.near = 0.5; key.shadow.camera.far = 7;
+key.shadow.bias = -0.0012;
+key.shadow.normalBias = 0.02;
+scene.add(key);
+var rim = new THREE.DirectionalLight(0x7fd6c6, 1.05);
+rim.position.set(-1.9, 2.1, -1.7);
+scene.add(rim);
+var fill = new THREE.DirectionalLight(0xffd6b0, 0.38);
+fill.position.set(-1.6, 1.2, 1.9);
+scene.add(fill);
+
+/* ---------- 材質 ---------- */
+function col(h) { return new THREE.Color(h).convertSRGBToLinear(); }
+function mat(h, rough, extra) {
+  var m = new THREE.MeshStandardMaterial({ color: col(h), roughness: rough == null ? 0.7 : rough, metalness: 0 });
+  if (extra) Object.keys(extra).forEach(function (k) { m[k] = extra[k]; });
+  return m;
+}
+var M = {
+  skin: mat('#a46c46', 0.6, { emissive: col('#3a1a0a'), emissiveIntensity: 0.14 }),
+  skinShade: mat('#86563a', 0.62),
+  lip: mat('#7d3b33', 0.5),
+  hair: mat('#16110e', 0.72),
+  brow: mat('#1b1512', 0.85),
+  shirt: mat('#4d6577', 0.86),
+  shirtDark: mat('#3d5262', 0.88),
+  stripe: mat('#c9d2d6', 0.4),
+  pants: mat('#2a3038', 0.9),
+  shoe: mat('#1c1d20', 0.55),
+  sole: mat('#2f3134', 0.85),
+  belt: mat('#1d1c1b', 0.5),
+  sclera: mat('#fbf8f2', 0.3),
+  iris: new THREE.MeshStandardMaterial({ color: col('#5b3520'), roughness: 0.2 }),
+  pupil: new THREE.MeshBasicMaterial({ color: 0x050403 }),
+  glint: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+  bookCover: mat('#2f5d86', 0.6),
+  page: mat('#efe9dc', 0.9),
+  mouthIn: new THREE.MeshBasicMaterial({ color: 0xffffff })
+};
+
+/* ---------- 幾何工具 ---------- */
+function capsule(r1, r2, len, seg) {
+  seg = seg || 20;
+  var pts = [], n = 8, i, a;
+  for (i = 0; i <= n; i++) { a = -Math.PI / 2 + (Math.PI / 2) * (i / n); pts.push(new THREE.Vector2(Math.max(0.0001, r2 * Math.cos(a)), -len + r2 * Math.sin(a))); }
+  for (i = 0; i <= n; i++) { a = (Math.PI / 2) * (i / n); pts.push(new THREE.Vector2(Math.max(0.0001, r1 * Math.cos(a)), r1 * Math.sin(a))); }
+  return new THREE.LatheGeometry(pts, seg);
+}
+function mesh(geo, m, parent, x, y, z, cast) {
+  var o = new THREE.Mesh(geo, m);
+  o.position.set(x || 0, y || 0, z || 0);
+  o.castShadow = cast !== false;
+  o.receiveShadow = true;
+  if (parent) parent.add(o);
+  return o;
+}
+function sph(r, ws, hs) { return new THREE.SphereGeometry(r, ws || 32, hs || 24); }
+function grp(parent, x, y, z) { var g = new THREE.Group(); g.position.set(x || 0, y || 0, z || 0); if (parent) parent.add(g); return g; }
+function canvasTex(w, h, draw) {
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  var t = new THREE.CanvasTexture(c);
+  t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = 4;
+  return t;
+}
+var CJK = '"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif';
+
+/* =========================================================
+   建立 Budi
+   ========================================================= */
+var J = {};            // 關節
+var budi = grp(scene);
+budi.name = 'budi';
+
+J.hips = grp(budi, 0, 0.94, 0);
+// 骨盆與褲子
+(function () {
+  var p = [[0.150, -0.13], [0.160, -0.08], [0.163, -0.02], [0.158, 0.04], [0.152, 0.08]].map(function (v) { return new THREE.Vector2(v[0], v[1]); });
+  var m = mesh(new THREE.LatheGeometry(p, 32), M.pants, J.hips);
+  m.scale.z = 0.7;
+  var belt = mesh(new THREE.TorusGeometry(0.153, 0.012, 8, 40), M.belt, J.hips, 0, 0.065, 0);
+  belt.rotation.x = Math.PI / 2; belt.scale.y = 0.7;
+  var buckle = mesh(new THREE.BoxGeometry(0.04, 0.026, 0.008), mat('#9a9a92', 0.35, { metalness: 0.6 }), J.hips, 0, 0.065, 0.108);
+})();
+
+J.spine = grp(J.hips, 0, 0.05, 0);
+var torso;
+(function () {
+  var prof = [[0.148, -0.02], [0.152, 0.06], [0.163, 0.16], [0.176, 0.26], [0.180, 0.33], [0.172, 0.39], [0.150, 0.425], [0.105, 0.448], [0.062, 0.46]];
+  var p = prof.map(function (v) { return new THREE.Vector2(v[0], v[1]); });
+  torso = mesh(new THREE.LatheGeometry(p, 40), M.shirt, J.spine);
+  torso.scale.z = 0.64;
+  // 肩膀
+  [-1, 1].forEach(function (s) {
+    var sh = mesh(sph(0.064), M.shirt, J.spine, s * 0.168, 0.405, -0.005);
+    sh.scale.set(1, 0.82, 0.86);
+  });
+  // 領子
+  var collar = mesh(new THREE.TorusGeometry(0.066, 0.016, 10, 36, Math.PI * 1.5), M.shirtDark, J.spine, 0, 0.452, -0.004);
+  collar.rotation.x = Math.PI / 2;
+  collar.rotation.z = Math.PI * 0.25 + Math.PI;
+  collar.scale.set(1, 0.82, 1);
+  // 領口兩片
+  [-1, 1].forEach(function (s) {
+    var flap = mesh(new THREE.BoxGeometry(0.05, 0.05, 0.006), M.shirtDark, J.spine, s * 0.03, 0.425, 0.068);
+    flap.rotation.z = s * 0.75; flap.rotation.x = -0.35;
+  });
+  // V 領內的皮膚
+  var v = mesh(new THREE.CircleGeometry(0.028, 3), M.skin, J.spine, 0, 0.432, 0.067, false);
+  v.rotation.z = -Math.PI / 2; v.rotation.x = -0.35; v.scale.set(1.25, 0.9, 1);
+  // 鈕扣
+  [0.08, 0.18, 0.28, 0.37].forEach(function (y) {
+    var r = 0.152 + (y > 0.2 ? 0.024 : 0.012) * 1;
+    mesh(sph(0.0065, 10, 8), mat('#d9d4c8', 0.4), J.spine, 0, y, r * 0.64 + 0.003, false);
+  });
+  // 前襟線
+  var placket = mesh(new THREE.BoxGeometry(0.016, 0.36, 0.004), M.shirtDark, J.spine, 0, 0.23, 0.108, false);
+  placket.rotation.x = -0.06;
+  // 右胸口袋
+  var pk = mesh(new THREE.BoxGeometry(0.07, 0.075, 0.006), M.shirtDark, J.spine, -0.078, 0.29, 0.101, false);
+  pk.rotation.y = -0.38;
+  // 名牌
+  var badgeTex = canvasTex(256, 140, function (g, w, h) {
+    g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2f8f74'; g.fillRect(0, 0, w, 30);
+    g.fillStyle = '#ffffff'; g.font = '700 19px ' + CJK; g.textBaseline = 'middle';
+    g.fillText('新進員工  PEGAWAI BARU', 12, 16);
+    g.fillStyle = '#18232c'; g.font = '800 48px "Rajdhani",' + CJK;
+    g.fillText('Budi', 12, 74);
+    g.fillStyle = '#4d5c66'; g.font = '600 20px ' + CJK;
+    g.fillText('射出成型課・Day 1', 12, 116);
+  });
+  var badge = mesh(new THREE.PlaneGeometry(0.076, 0.042), new THREE.MeshStandardMaterial({ map: badgeTex, roughness: 0.4 }), J.spine, 0.082, 0.302, 0.1035, false);
+  badge.rotation.y = 0.4;
+})();
+
+// 脖子與頭
+J.neck = grp(J.spine, 0, 0.455, -0.004);
+mesh(capsule(0.05, 0.055, 0.075, 20), M.skin, J.neck, 0, 0.07, 0);
+J.head = grp(J.neck, 0, 0.058, 0.006);
+var H = grp(J.head, 0, 0.14, 0); // 頭部中心
+H.scale.setScalar(1.3);           // 卡通比例：頭比較大
+var face = {};
+var SK = { x: 0.1, y: 0.11, z: 0.105 }; // 頭殼橢球半徑
+// 頭殼表面上的點與法線（給腮紅貼在臉上）
+function skullPoint(x, y, lift) {
+  var z = SK.z * Math.sqrt(Math.max(0, 1 - Math.pow(x / SK.x, 2) - Math.pow(y / SK.y, 2)));
+  var n = new THREE.Vector3(x / (SK.x * SK.x), y / (SK.y * SK.y), z / (SK.z * SK.z)).normalize();
+  return { p: new THREE.Vector3(x, y, z).addScaledVector(n, lift), n: n };
+}
+(function () {
+  var skull = mesh(sph(1, 48, 36), M.skin, H);
+  skull.scale.set(SK.x, SK.y, SK.z);
+  // 圓圓的臉頰與小下巴
+  var jaw = mesh(sph(0.082, 48, 36), M.skin, H, 0, -0.036, 0.004);
+  jaw.scale.set(1.0, 0.9, 0.96);
+  // 耳朵
+  [-1, 1].forEach(function (s) {
+    var ear = mesh(sph(0.027, 20, 16), M.skin, H, s * 0.1, -0.01, -0.008);
+    ear.scale.set(0.42, 1, 0.64);
+    ear.rotation.y = s * 0.3;
+    var inner = mesh(sph(0.015, 14, 10), M.skinShade, H, s * 0.107, -0.011, -0.004, false);
+    inner.scale.set(0.3, 0.85, 0.5);
+  });
+  // 小圓鼻頭
+  var tip = mesh(sph(0.0105, 20, 16), M.skin, H, 0, -0.022, 0.1035, false);
+  tip.scale.set(1.25, 0.9, 0.85);
+  // 大眼睛
+  var ER = 0.024;
+  function cap(r, ang, m) {
+    var g = new THREE.SphereGeometry(r, 32, 12, 0, Math.PI * 2, 0, ang);
+    g.rotateX(Math.PI / 2);
+    return new THREE.Mesh(g, m);
+  }
+  face.eyes = [];
+  face.upper = []; face.lower = [];
+  [-1, 1].forEach(function (s) {
+    var base = grp(H, s * 0.041, 0.002, 0.077);
+    var eye = grp(base);
+    mesh(sph(ER, 32, 24), M.sclera, eye, 0, 0, 0, false);
+    eye.add(cap(ER + 0.00015, 0.66, M.iris));   // 黑眼珠
+    eye.add(cap(ER + 0.0003, 0.33, M.pupil));   // 瞳孔
+    // 兩個反光點：一大一小
+    [[0.006, 0.0068, 0.0042], [-0.0045, -0.0052, 0.0019]].forEach(function (g) {
+      var gl = mesh(new THREE.CircleGeometry(g[2], 16), M.glint, eye, g[0], g[1], 0, false);
+      gl.position.z = Math.sqrt(ER * ER - g[0] * g[0] - g[1] * g[1]) + 0.0006;
+      gl.rotation.order = 'YXZ';
+      gl.rotation.y = Math.asin(g[0] / ER);
+      gl.rotation.x = -Math.asin(g[1] / ER);
+    });
+    face.eyes.push(eye);
+    var up = mesh(new THREE.SphereGeometry(ER * 1.055, 32, 14, 0, Math.PI * 2, 0, Math.PI / 2), M.skin, base, 0, 0, 0, false);
+    var lo = mesh(new THREE.SphereGeometry(ER * 1.035, 32, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), M.skin, base, 0, 0, 0, false);
+    // 上眼線（卡通感的粗線）
+    var lash = mesh(new THREE.TorusGeometry(ER * 1.065, 0.0017, 6, 32, Math.PI), M.brow, up, 0, 0, 0, false);
+    lash.rotation.x = Math.PI / 2;
+    face.upper.push(up); face.lower.push(lo);
+  });
+  // 眉毛（細、帶弧度）
+  face.brows = [];
+  [-1, 1].forEach(function (s) {
+    var g = grp(H, s * 0.043, 0.046, 0.088);
+    var R = 0.034, arc = 0.78;
+    var geo = new THREE.TorusGeometry(R, 0.0032, 8, 20, arc);
+    geo.rotateZ(Math.PI / 2 - arc / 2);
+    geo.translate(0, -R, 0);
+    var b = mesh(geo, M.brow, g, 0, 0, 0, false);
+    b.scale.set(1, 1, 0.6);
+    b.rotation.z = s * -0.12;
+    g.userData.s = s;
+    g.rotation.y = s * 0.38;
+    face.brows.push(g);
+  });
+  // 腮紅（柔邊，濃淡跟著表情）
+  var blushTex = canvasTex(64, 64, function (g, w, h) {
+    var gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    gr.addColorStop(0, 'rgba(255,120,120,0.9)');
+    gr.addColorStop(0.55, 'rgba(255,120,120,0.45)');
+    gr.addColorStop(1, 'rgba(255,120,120,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  });
+  face.blushM = new THREE.MeshBasicMaterial({ map: blushTex, transparent: true, depthWrite: false, opacity: 0.4 });
+  [-1, 1].forEach(function (s) {
+    var sp = skullPoint(s * 0.06, -0.026, 0.0018);
+    var bl = mesh(new THREE.CircleGeometry(0.016, 24), face.blushM, H, sp.p.x, sp.p.y, sp.p.z, false);
+    bl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), sp.n);
+    bl.scale.set(1.25, 0.8, 1);
+    bl.renderOrder = 2;
+  });
+  // 頭髮：沿頭型長出來，前額髮際、側分、後腦到頸部
+  var hairTex = canvasTex(256, 256, function (g, w, h) {
+    g.fillStyle = '#17120f'; g.fillRect(0, 0, w, h);
+    for (var i = 0; i < 900; i++) {
+      var x = (i * 97) % w, y = (i * 53) % h, l = 10 + (i % 7) * 4;
+      g.strokeStyle = i % 3 ? 'rgba(70,58,50,0.35)' : 'rgba(5,4,3,0.5)';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + ((i % 5) - 2), y + l); g.stroke();
+    }
+  });
+  var hairM = new THREE.MeshStandardMaterial({ map: hairTex, roughness: 0.62, color: 0xffffff });
+  var hg = new THREE.SphereGeometry(1, 72, 54);
+  var pos = hg.attributes.position, v = new THREE.Vector3();
+  for (var i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    var x = v.x, y = v.y, z = v.z;
+    var line = -0.05 + 0.72 * z + 0.28 * Math.abs(x) * (1 - Math.abs(z));
+    // 太陽穴兩側稍微往後
+    line += 0.08 * Math.exp(-Math.pow((Math.abs(x) - 0.6) / 0.18, 2)) * Math.max(0, z);
+    var side = Math.abs(x) > 0.86 && z > -0.1 && z < 0.34 && y > -0.26 && y < 0.25;  // 鬢角
+    var isHair = y > line || side;
+    var r;
+    if (isHair) {
+      var vol = 1.07 + 0.055 * Math.max(0, y) * (0.55 + 0.45 * Math.max(0, z));
+      vol += 0.012 * Math.sin(x * 23 + z * 7) * Math.sin(y * 19) ;
+      vol -= 0.022 * Math.exp(-Math.pow((x - 0.38) / 0.07, 2)) * Math.max(0, y - 0.2); // 側分線
+      vol += 0.03 * Math.exp(-Math.pow((x + 0.1) / 0.35, 2)) * Math.max(0, z - 0.2) * Math.max(0, y - 0.3) * 3; // 前額蓬起
+      if (side && !(y > line)) vol = 1.012;
+      r = vol;
+    } else {
+      r = 0.93;
+    }
+    pos.setXYZ(i, x * r, y * r, z * r);
+  }
+  hg.computeVertexNormals();
+  var hair = mesh(hg, hairM, H, 0, 0.002, -0.002);
+  hair.scale.set(SK.x, SK.y, SK.z);
+})();
+
+// 嘴巴（每次表情改變時重建）
+var mouthG = grp(H, 0, -0.056, 0.0955);
+var mouthTex = canvasTex(64, 64, function (g, w, h) {
+  var gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#3a1612'); gr.addColorStop(1, '#5c211d');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#ebe5d8'; g.fillRect(0, 0, w, 20);
+  g.fillStyle = 'rgba(120,100,90,0.5)';
+  for (var i = 1; i < 6; i++) g.fillRect(i * w / 6, 0, 1, 20);
+  g.fillStyle = '#8c3a33'; g.beginPath(); g.ellipse(w / 2, h + 6, w * 0.32, 18, 0, 0, Math.PI * 2); g.fill();
+});
+M.mouthIn.map = mouthTex;
+M.mouthIn.color = new THREE.Color(0xffffff);
+var mouthParts = null, mouthKey = '';
+function buildMouth(open, smile) {
+  var k = open.toFixed(3) + '|' + smile.toFixed(3);
+  if (k === mouthKey) return;
+  mouthKey = k;
+  if (mouthParts) mouthParts.forEach(function (m) { mouthG.remove(m); m.geometry.dispose(); });
+  var w = 0.0155 + Math.max(0, smile) * 0.004 - open * 0.002;
+  var cy = smile * 0.0068;
+  var upMid = 0.0012 + open * 0.0036;
+  var loMid = -0.0012 - open * 0.017 - Math.max(0, smile) * 0.0035;
+  function curve(mid, n) {
+    var pts = [];
+    for (var i = 0; i <= n; i++) {
+      var x = -w + (2 * w) * (i / n), u = x / w;
+      var y = cy + (1 - u * u) * (mid - cy);
+      pts.push(new THREE.Vector3(x, y, -u * u * 0.0065));
+    }
+    return pts;
+  }
+  var up = curve(upMid, 8), lo = curve(loMid, 8);
+  var upT = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(up), 24, 0.0024, 6, false);
+  var loT = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lo), 24, 0.003, 6, false);
+  var parts = [new THREE.Mesh(upT, M.lip), new THREE.Mesh(loT, M.lip)];
+  if (upMid - loMid > 0.0035) {
+    var shape = new THREE.Shape();
+    shape.moveTo(up[0].x, up[0].y);
+    for (var i = 1; i < up.length; i++) shape.lineTo(up[i].x, up[i].y);
+    for (i = lo.length - 1; i >= 0; i--) shape.lineTo(lo[i].x, lo[i].y);
+    var sg = new THREE.ShapeGeometry(shape);
+    var pos = sg.attributes.position, uv = sg.attributes.uv;
+    for (i = 0; i < pos.count; i++) {
+      var x = pos.getX(i), y = pos.getY(i), u2 = x / w;
+      var top = cy + (1 - u2 * u2) * (upMid - cy), bot = cy + (1 - u2 * u2) * (loMid - cy);
+      uv.setXY(i, (x + w) / (2 * w), 1 - (top - y) / Math.max(0.0001, top - bot));
+      pos.setZ(i, -u2 * u2 * 0.0065 - 0.0012);
+    }
+    parts.push(new THREE.Mesh(sg, M.mouthIn));
+  }
+  parts.forEach(function (m) { mouthG.add(m); });
+  mouthParts = parts;
+}
+
+// 手臂
+function buildArm(s) {
+  var sh = grp(J.spine, s * 0.178, 0.405, -0.006);
+  sh.userData.baseY = 0.405;
+  var sleeve = mesh(capsule(0.056, 0.05, 0.15, 24), M.shirt, sh);
+  var hem = mesh(new THREE.TorusGeometry(0.049, 0.007, 8, 28), M.shirtDark, sh, 0, -0.17, 0);
+  hem.rotation.x = Math.PI / 2;
+  var band = mesh(new THREE.TorusGeometry(0.0545, 0.0055, 6, 28), M.stripe, sh, 0, -0.085, 0, false);
+  band.rotation.x = Math.PI / 2;
+  mesh(capsule(0.042, 0.038, 0.27, 20), M.skin, sh, 0, -0.02, 0);
+  var el = grp(sh, 0, -0.285, 0);
+  mesh(capsule(0.039, 0.031, 0.235, 20), M.skin, el);
+  var wr = grp(el, 0, -0.258, 0);
+  // 手
+  var hand = grp(wr);
+  var palm = mesh(sph(0.042, 20, 16), M.skin, hand, 0, -0.045, 0);
+  palm.scale.set(0.5, 1.05, 0.95);
+  var knuck = grp(hand, 0, -0.08, 0);
+  var idx = grp(knuck, 0, 0, 0.022);
+  mesh(capsule(0.0105, 0.0095, 0.048, 10), M.skin, idx);
+  var fing = grp(knuck, 0, 0, -0.008);
+  var f = mesh(capsule(0.012, 0.011, 0.045, 12), M.skin, fing);
+  f.scale.set(0.95, 1, 2.3);
+  var th = grp(hand, -s * 0.012, -0.035, 0.03);
+  var thm = mesh(capsule(0.011, 0.01, 0.035, 10), M.skin, th);
+  th.rotation.x = -0.55;
+  return { sh: sh, el: el, wr: wr, hand: hand, idx: idx, fing: fing, th: th, s: s };
+}
+var armL = buildArm(1), armR = buildArm(-1);
+J.lSh = armL.sh; J.lEl = armL.el; J.lWr = armL.wr;
+J.rSh = armR.sh; J.rEl = armR.el; J.rWr = armR.wr;
+
+// 腿
+function buildLeg(s) {
+  var hip = grp(J.hips, s * 0.088, -0.05, 0);
+  mesh(capsule(0.086, 0.066, 0.4, 24), M.pants, hip);
+  var kn = grp(hip, 0, -0.43, 0);
+  mesh(capsule(0.067, 0.058, 0.36, 22), M.pants, kn);
+  var an = grp(kn, 0, -0.39, 0);
+  var shoe = mesh(sph(0.056, 24, 18), M.shoe, an, 0, -0.022, 0.035);
+  shoe.scale.set(0.95, 0.62, 1.85);
+  var sole = mesh(new THREE.BoxGeometry(0.096, 0.016, 0.205), M.sole, an, 0, -0.053, 0.035);
+  return { hip: hip, kn: kn, an: an };
+}
+var legL = buildLeg(1), legR = buildLeg(-1);
+J.lHip = legL.hip; J.lKn = legL.kn; J.lAn = legL.an;
+J.rHip = legR.hip; J.rKn = legR.kn; J.rAn = legR.an;
+
+// 手冊（拿在左手）
+var book = grp(J.spine);
+var bookParts = {};
+(function () {
+  var W = 0.17, Hh = 0.235, T = 0.012;
+  var coverTex = canvasTex(256, 352, function (g, w, h) {
+    g.fillStyle = '#2f5d86'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#e4d9c0'; g.fillRect(0, 54, w, 4);
+    g.font = '800 30px ' + CJK; g.fillStyle = '#f4efe4'; g.textBaseline = 'top';
+    g.fillText('射出成型機', 22, 82);
+    g.fillText('操作手冊', 22, 120);
+    g.font = '700 34px "Rajdhani",' + CJK; g.fillStyle = '#e8c98f';
+    g.fillText('JM150', 22, 172);
+    g.font = '500 16px ' + CJK; g.fillStyle = 'rgba(244,239,228,0.75)';
+    g.fillText('MK6 / DC 共用版', 22, 214);
+    g.fillText('第 3 版・內部文件', 22, 300);
+  });
+  var pageTex = canvasTex(256, 352, function (g, w, h) {
+    g.fillStyle = '#efe9dc'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2b2b2b'; g.font = '700 18px ' + CJK; g.textBaseline = 'top';
+    g.fillText('第四章 模溫設定', 20, 22);
+    g.fillStyle = 'rgba(40,40,40,0.55)';
+    for (var y = 58; y < h - 20; y += 15) {
+      var len = 150 + ((y * 37) % 60);
+      g.fillRect(20, y, len, 6);
+    }
+  });
+  var coverM = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.6 });
+  var pageM = new THREE.MeshStandardMaterial({ map: pageTex, roughness: 0.9 });
+  // 兩半，以書脊（x=0）為軸
+  function half(dir) {
+    var g = grp(book);
+    var c = mesh(new THREE.BoxGeometry(W, Hh, 0.004), M.bookCover, g, W / 2, 0, dir * (T / 2 + 0.002));
+    var p = mesh(new THREE.BoxGeometry(W - 0.008, Hh - 0.01, T / 2), M.page, g, W / 2, 0, dir * T / 4);
+    return { g: g, cover: c, pages: p };
+  }
+  bookParts.front = half(1);
+  bookParts.back = half(-1);
+  var face1 = mesh(new THREE.PlaneGeometry(W - 0.002, Hh - 0.002), coverM, bookParts.front.g, W / 2, 0, T / 2 + 0.0042, false);
+  var inner = mesh(new THREE.PlaneGeometry(W - 0.012, Hh - 0.014), pageM, bookParts.back.g, W / 2, 0, 0.0002 + 0.0001, false);
+  inner.position.z = 0.0003;
+  bookParts.inner = inner;
+  var spine = mesh(new THREE.BoxGeometry(0.008, Hh, T + 0.008), M.bookCover, book, 0, 0, 0);
+})();
+
+// 地板
+(function () {
+  var plate = mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.03, 6), mat('#14302c', 0.85), scene, 0, -0.015, 0, false);
+  plate.rotation.y = Math.PI / 6;
+  var edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.62, 0.62, 0.03, 6)), new THREE.LineBasicMaterial({ color: col('#4fb393'), transparent: true, opacity: 0.55 }));
+  edge.position.y = -0.015; edge.rotation.y = Math.PI / 6;
+  scene.add(edge);
+  var sh = new THREE.Mesh(new THREE.CircleGeometry(2.6, 48), new THREE.ShadowMaterial({ opacity: 0.32 }));
+  sh.rotation.x = -Math.PI / 2; sh.position.y = 0.001; sh.receiveShadow = true;
+  scene.add(sh);
+  var glow = mesh(new THREE.RingGeometry(0.66, 1.25, 6), new THREE.MeshBasicMaterial({ color: col('#4fb393'), transparent: true, opacity: 0.06, depthWrite: false }), scene, 0, 0.002, 0, false);
+  glow.rotation.x = -Math.PI / 2; glow.rotation.z = Math.PI / 6;
+})();
+
+/* =========================================================
+   姿勢系統（手臂用反向運動學：指定手腕位置，自動算肩與肘）
+   ========================================================= */
+var JOINT_KEYS = ['hips', 'spine', 'neck', 'head', 'lWr', 'rWr', 'lHip', 'lKn', 'lAn', 'rHip', 'rKn', 'rAn'];
+JOINT_KEYS.forEach(function (k) { J[k].rotation.order = 'YXZ'; });
+
+// 閱讀時手冊的朝向：書頁朝向眼睛，左右攤開
+var READ_ROT = (function () {
+  var n = new THREE.Vector3(0, 0.86, -0.51).normalize();
+  var zA = new THREE.Vector3(1, 0, 0);
+  var yA = new THREE.Vector3().crossVectors(zA, n).normalize();
+  var m = new THREE.Matrix4().makeBasis(n, yA, zA);
+  var e = new THREE.Euler().setFromRotationMatrix(m, 'XYZ');
+  return [e.x, e.y, e.z];
+})();
+
+// 站姿：左手把手冊夾在前臂上
+var BASE = {
+  hips: [0, 0, 0], spine: [-0.02, 0, 0], neck: [0, 0, 0], head: [0, 0, 0],
+  lT: [0.15, 0.1, 0.25], lP: [1, -0.3, -0.8], lWr: [0, 0, 0],
+  rT: [-0.215, -0.11, 0.05], rP: [-0.25, 0, -1], rWr: [0, 0.2, 0],
+  lHip: [0.0, 0, 0.035], lKn: [0.03, 0, 0], lAn: [-0.03, 0, -0.035],
+  rHip: [0.0, -0.12, -0.03], rKn: [0.02, 0, 0], rAn: [-0.02, 0.1, 0.03],
+  lCurl: 0.8, rCurl: 0.35, rIdx: 0.3, lThumb: 0.2, rThumb: 0, bookOpen: 0, shrug: 0,
+  bOff: [0.0, 0.04, 0.0], bAbs: 0, bAbsP: [0, 0.24, 0.3], bR: [0, 0.9, 0]
+};
+// 翻閱手冊：雙手在胸前打開書
+var READ = {
+  lT: [0.14, 0.17, 0.25], lP: [1, -1, -0.4], lWr: [0.3, -0.9, 0],
+  rT: [-0.14, 0.17, 0.25], rP: [-1, -1, -0.4], rWr: [0.3, 0.9, 0],
+  head: [0.4, 0, 0], neck: [0.12, 0, 0],
+  lCurl: 0.45, rCurl: 0.4, rIdx: 0.3, bookOpen: 1,
+  bAbs: 1, bAbsP: [0, 0.235, 0.3], bR: READ_ROT
+};
+
+var cur = {};
+function copyPose(src, dst) { Object.keys(src).forEach(function (k) { dst[k] = Array.isArray(src[k]) ? src[k].slice() : src[k]; }); }
+copyPose(BASE, cur);
+
+var gesture = null; // { name, t, dur, fn, cb }
+var stance = BASE;
+var lookOverride = null;
+
+function lerpPose(a, b, t) {
+  var o = {};
+  Object.keys(b).forEach(function (k) {
+    if (Array.isArray(b[k])) {
+      var av = a[k] || BASE[k];
+      o[k] = [av[0] + (b[k][0] - av[0]) * t, av[1] + (b[k][1] - av[1]) * t, av[2] + (b[k][2] - av[2]) * t];
+    } else {
+      var an = a[k] == null ? BASE[k] : a[k];
+      o[k] = an + (b[k] - an) * t;
+    }
+  });
+  return o;
+}
+function ease(t) { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); }
+function env(t, a, b, d) { return ease(t / a) * (1 - ease((t - (d - b)) / b)); }
+
+var GESTURES = {
+  wave: { dur: 2.8, fn: function (t) {
+    var w = env(t, 0.45, 0.55, 2.8);
+    var osc = Math.sin((t - 0.45) * Math.PI * 2 * 1.9) * ease((t - 0.35) / 0.3);
+    return { w: w, pose: { rT: [-0.38 + osc * 0.045, 0.62, 0.08], rP: [-1, -0.4, 0], rWr: [0, -1.5, osc * 0.35], rCurl: 0, rIdx: 0, rThumb: 0, head: [-0.02, 0, -0.06], spine: [-0.03, 0, 0.03] } };
+  } },
+  read: { dur: 3.6, fn: function (t) {
+    var w = env(t, 0.7, 0.7, 3.6);
+    var flip = Math.max(0, Math.sin((t - 1.3) * 2.4)) * ease((t - 1.3) / 0.2) * (1 - ease((t - 2.6) / 0.3));
+    var p = Object.assign({}, READ);
+    p.rT = [-0.14 + flip * 0.08, 0.17 + flip * 0.06, 0.25 + flip * 0.03];
+    return { w: w, pose: p, look: 'book' };
+  } },
+  scratch: { dur: 2.6, fn: function (t) {
+    var w = env(t, 0.5, 0.6, 2.6);
+    var osc = Math.sin(t * 15) * ease((t - 0.45) / 0.2);
+    return { w: w, pose: { rT: [-0.115, 0.7 + osc * 0.012, -0.03 + osc * 0.008], rP: [-1, 0.5, 0.4], rWr: [0.2, 0.4, -0.3], rCurl: 0.6, rIdx: 0.55, head: [0.06, 0.12, 0.14], neck: [0, 0.05, 0.06] } };
+  } },
+  point: { dur: 3.0, fn: function (t) {
+    var w = env(t, 0.5, 0.6, 3.0);
+    return { w: w, pose: { rT: [-0.62, 0.4, 0.3], rP: [0, -1, -0.3], rWr: [0, -1.4, 0], rCurl: 1, rIdx: 0, rThumb: 0.15, spine: [-0.02, -0.16, 0] }, look: t < 1.7 ? 'point' : null };
+  } },
+  nod: { dur: 1.6, fn: function (t) {
+    var w = env(t, 0.15, 0.3, 1.6);
+    var n = Math.sin(t * Math.PI * 2 * 1.6) * 0.16 * (1 - ease(t / 1.6));
+    return { w: w, pose: { head: [n + 0.04, 0, 0], neck: [n * 0.4, 0, 0] }, additive: true };
+  } },
+  thumbs: { dur: 2.8, fn: function (t) {
+    var w = env(t, 0.5, 0.6, 2.8);
+    var bob = Math.sin(t * 5) * 0.012 * ease((t - 0.5) / 0.2);
+    return { w: w, pose: { rT: [-0.17, 0.2 + bob, 0.3], rP: [-0.7, -1, 0], rWr: [0, -1.5, 0], rCurl: 1, rIdx: 1, rThumb: 1, head: [-0.03, 0, -0.07], spine: [-0.04, 0, 0.02] } };
+  } },
+  shrug: { dur: 2.4, fn: function (t) {
+    var w = env(t, 0.45, 0.6, 2.4);
+    return { w: w, pose: { shrug: 1, rT: [-0.34, 0.04, 0.22], rP: [-0.3, -0.4, -1], rWr: [0, -1.5, 0], rCurl: 0.1, rIdx: 0.05, lT: [0.3, 0.07, 0.25], lP: [0.3, -0.4, -1], head: [0.06, 0, -0.14], neck: [0.03, 0, -0.04] } };
+  } },
+  readScratch: null
+};
+
+function startGesture(name, cb) {
+  if (name === 'readScratch') { startGesture('read', cb); return; }
+  var g = GESTURES[name];
+  if (!g) return;
+  if (gesture && gesture.cb) { var old = gesture.cb; gesture.cb = null; old(); }
+  gesture = { name: name, t: 0, dur: g.dur, fn: g.fn, cb: cb || null };
+}
+
+/* ---------- 兩節手臂的反向運動學 ---------- */
+var IK = { A: 0.285, B: 0.258 };
+var _S = new THREE.Vector3(), _T = new THREE.Vector3(), _D = new THREE.Vector3(), _P = new THREE.Vector3(),
+    _E = new THREE.Vector3(), _W = new THREE.Vector3(), _u = new THREE.Vector3(), _f = new THREE.Vector3(),
+    _x = new THREE.Vector3(), _y = new THREE.Vector3(), _m = new THREE.Matrix4();
+function solveArm(arm, T, P) {
+  var a = IK.A, b = IK.B;
+  _S.copy(arm.sh.position);
+  _T.set(T[0], T[1], T[2]);
+  _D.subVectors(_T, _S);
+  var d = Math.min(a + b - 0.002, Math.max(0.08, _D.length()));
+  _D.normalize();
+  _P.set(P[0], P[1], P[2]);
+  _P.addScaledVector(_D, -_P.dot(_D));
+  if (_P.lengthSq() < 1e-6) _P.set(0, 0, -1).addScaledVector(_D, -_D.z);
+  _P.normalize();
+  var ca = (a * a + d * d - b * b) / (2 * a * d);
+  var al = Math.acos(Math.max(-1, Math.min(1, ca)));
+  _E.copy(_S).addScaledVector(_D, a * Math.cos(al)).addScaledVector(_P, a * Math.sin(al));
+  _W.copy(_S).addScaledVector(_D, d);
+  _u.subVectors(_E, _S).normalize();
+  _f.subVectors(_W, _E);
+  _f.addScaledVector(_u, -_f.dot(_u));
+  if (_f.lengthSq() < 1e-8) _f.copy(_P).negate();
+  _f.normalize();
+  _y.copy(_u).negate();
+  _x.crossVectors(_y, _f).normalize();
+  _m.makeBasis(_x, _y, _f);
+  arm.sh.quaternion.setFromRotationMatrix(_m);
+  var cb = (a * a + b * b - d * d) / (2 * a * b);
+  var beta = Math.acos(Math.max(-1, Math.min(1, cb)));
+  arm.el.rotation.set(-(Math.PI - beta), 0, 0);
+  return _W;
+}
+
+/* ---------- 表情 ---------- */
+var E = Object.assign({}, EXPR.neutral), Etgt = Object.assign({}, EXPR.neutral);
+function setExpr(name) {
+  if (!EXPR[name]) return;
+  state.expr = name;
+  Etgt = Object.assign({}, EXPR[name]);
+  markExpr(name);
+}
+
+/* =========================================================
+   視線
+   ========================================================= */
+var raycaster = new THREE.Raycaster();
+var ndc = new THREE.Vector2();
+var gaze = { hy: 0, hp: 0, ey: 0, ep: 0, sy: 0, sp: 0 };
+var sacc = { x: 0, y: 0, next: 0 };
+var tmpV = new THREE.Vector3(), headPos = new THREE.Vector3();
+var blink = { t: 0, next: 1.5, dur: 0.16, dbl: false };
+var idleLook = { until: 0, x: 0, y: 0 };
+
+renderer.domElement.addEventListener('pointermove', function (e) {
+  var r = renderer.domElement.getBoundingClientRect();
+  state.pointer = { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 };
+  state.pointerAt = performance.now();
+  var hit = pick(e);
+  renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
+});
+renderer.domElement.addEventListener('pointerleave', function () { state.pointer = null; });
+
+var downAt = null;
+renderer.domElement.addEventListener('pointerdown', function (e) { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; touch(); });
+renderer.domElement.addEventListener('pointerup', function (e) {
+  if (!downAt) return;
+  var moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+  var quick = performance.now() - downAt.t < 450;
+  downAt = null;
+  if (moved > 6 || !quick) return;
+  var hit = pick(e);
+  if (hit) poke(hit);
+});
+function pick(e) {
+  var r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  var hits = raycaster.intersectObject(budi, true);
+  return hits.length ? hits[0].object : null;
+}
+var pokeN = 0;
+async function poke(obj) {
+  var my = ++token;
+  state.busy = true; touch();
+  press(sceneBtns, null);
+  var isBook = false, o = obj;
+  while (o) { if (o === book) { isBook = true; break; } o = o.parent; }
+  var line, ex, gs;
+  if (isBook) { line = LINES.book; ex = 'confused'; gs = 'read'; }
+  else {
+    var opts = [[LINES.poke1, 'hopeful', 'nod'], [LINES.poke2, 'happy', null], [LINES.poke3, 'aha', 'point']];
+    var pick2 = opts[pokeN++ % opts.length];
+    line = pick2[0]; ex = pick2[1]; gs = pick2[2];
+  }
+  setExpr(ex);
+  if (gs) startGesture(gs);
+  await say(line);
+  if (my !== token) return;
+  await sleep(900);
+  if (my !== token) return;
+  setExpr('neutral');
+  state.busy = false;
+}
+
+/* =========================================================
+   鏡頭
+   ========================================================= */
+var VIEWS = {
+  full: { t: [0, 0.95, 0], d: 4.4 },
+  half: { t: [0, 1.4, 0], d: 2.45 },
+  face: { t: [0, 1.67, 0], d: 1.1 }
+};
+var camAnim = null;
+function setView(name, instant) {
+  state.view = name;
+  var v = VIEWS[name];
+  var dir = camera.position.clone().sub(controls.target).normalize();
+  var toT = new THREE.Vector3(v.t[0], v.t[1], v.t[2]);
+  var narrowV = window.innerWidth <= 760 || window.innerWidth / window.innerHeight <= 1;
+  var toP = toT.clone().add(dir.multiplyScalar(v.d * (narrowV && name !== 'face' ? 1.22 : 1)));
+  if (instant || reduceMotion) { controls.target.copy(toT); camera.position.copy(toP); controls.update(); return; }
+  camAnim = { t: 0, dur: 1.4, fT: controls.target.clone(), tT: toT, fP: camera.position.clone(), tP: toP };
+}
+
+/* ---------- 尺寸與構圖：避開面板 ---------- */
+var view = { w: 1, h: 1, ox: 0, oy: 0 };
+function resize() {
+  var w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  var narrow = w <= 760 || w / h <= 1;
+  var panel = document.querySelector('.panel').getBoundingClientRect();
+  var hdr = document.querySelector('.hdr').getBoundingClientRect();
+  if (narrow) {
+    var free = panel.top - hdr.bottom;
+    var centerY = hdr.bottom + free / 2;
+    view.ox = 0; view.oy = (h / 2 - centerY);
+  } else {
+    var freeW = panel.left;
+    view.ox = (w / 2 - freeW / 2); view.oy = 0;
+  }
+  view.w = w; view.h = h;
+  camera.setViewOffset(w, h, view.ox, view.oy, w, h);
+  camera.fov = narrow ? 34 : 30;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* =========================================================
+   動畫
+   ========================================================= */
+var clock = new THREE.Clock();
+var tAll = 0;
+function damp(a, b, k, dt) { return a + (b - a) * (1 - Math.exp(-k * dt)); }
+function noise(t, s) { return Math.sin(t * 1.3 + s) * 0.5 + Math.sin(t * 0.71 + s * 2.1) * 0.35 + Math.sin(t * 2.3 + s * 0.7) * 0.15; }
+
+function applyPose(dt) {
+  // 目標姿勢 = 站姿 + 動作
+  var target = {};
+  copyPose(stance, target);
+  Object.keys(BASE).forEach(function (k) { if (target[k] == null) target[k] = Array.isArray(BASE[k]) ? BASE[k].slice() : BASE[k]; });
+  var look = null;
+  if (gesture) {
+    gesture.t += dt;
+    var r = gesture.fn(gesture.t);
+    look = r.look || null;
+    if (r.additive) {
+      Object.keys(r.pose).forEach(function (k) {
+        var v = r.pose[k];
+        if (Array.isArray(v)) target[k] = [target[k][0] + v[0] * r.w, target[k][1] + v[1] * r.w, target[k][2] + v[2] * r.w];
+        else target[k] += v * r.w;
+      });
+    } else {
+      var blended = lerpPose(target, r.pose, r.w);
+      Object.keys(blended).forEach(function (k) { target[k] = blended[k]; });
+    }
+    if (gesture.t >= gesture.dur) { var cb = gesture.cb; gesture = null; if (cb) cb(); }
+  }
+  var kArm = gesture ? 11 : 6;
+  Object.keys(target).forEach(function (k) {
+    var kk = /^(l|r)(T|P|Wr)$/.test(k) ? kArm : 7;
+    if (Array.isArray(target[k])) {
+      for (var i = 0; i < 3; i++) cur[k][i] = damp(cur[k][i], target[k][i], kk, dt);
+    } else cur[k] = damp(cur[k], target[k], kk, dt);
+  });
+  return look;
+}
+
+function setJoints(t, look, dt) {
+  // 呼吸與重心
+  var br = Math.sin(t * 1.55);
+  var sway = reduceMotion ? 0 : noise(t * 0.35, 1.7);
+  JOINT_KEYS.forEach(function (k) {
+    J[k].rotation.set(cur[k][0], cur[k][1], cur[k][2]);
+  });
+  J.hips.position.x = sway * 0.012;
+  J.hips.position.y = 0.94 - Math.abs(sway) * 0.004;
+  J.hips.rotation.z += sway * 0.025;
+  J.spine.rotation.z += -sway * 0.03;
+  J.spine.rotation.x += br * 0.012;
+  torso.scale.x = 1 + br * 0.008;
+  torso.scale.z = 0.64 * (1 + br * 0.018);
+  J.lSh.position.y = J.lSh.userData.baseY + br * 0.003 + cur.shrug * 0.032;
+  J.rSh.position.y = J.rSh.userData.baseY + br * 0.003 + cur.shrug * 0.032;
+  J.lHip.rotation.z -= sway * 0.02; J.rHip.rotation.z -= sway * 0.02;
+  var wl = solveArm(armL, cur.lT, cur.lP).clone();
+  solveArm(armR, cur.rT, cur.rP);
+
+  // 手指
+  [[armL, cur.lCurl, cur.lCurl, cur.lThumb], [armR, cur.rCurl, cur.rIdx, cur.rThumb]].forEach(function (a) {
+    var arm = a[0], s = arm.s;
+    arm.fing.rotation.set(0, 0, -s * a[1] * 1.6);
+    arm.idx.rotation.set(0, 0, -s * a[2] * 1.5);
+    arm.th.rotation.set(-0.55 + a[3] * 0.3, 0, -s * (0.25 - a[3] * 0.25) + s * a[3] * 2.6);
+  });
+
+  // 手冊
+  var ba = cur.bAbs;
+  book.position.set(
+    (wl.x + cur.bOff[0]) * (1 - ba) + cur.bAbsP[0] * ba,
+    (wl.y + cur.bOff[1]) * (1 - ba) + cur.bAbsP[1] * ba,
+    (wl.z + cur.bOff[2]) * (1 - ba) + cur.bAbsP[2] * ba);
+  book.rotation.set(cur.bR[0], cur.bR[1], cur.bR[2]);
+  var op = cur.bookOpen;
+  bookParts.front.g.rotation.y = -op * 1.35;
+  bookParts.back.g.rotation.y = op * 1.35;
+  bookParts.inner.visible = op > 0.05;
+
+  // 視線
+  H.getWorldPosition(headPos);
+  var now = performance.now();
+  var T;
+  if (lookOverride && now < lookOverride.until) {
+    T = tmpV.set(lookOverride.x, lookOverride.y, lookOverride.z);
+  } else if (look === 'book') {
+    book.getWorldPosition(tmpV); tmpV.y += 0.05;
+    T = tmpV;
+  } else if (look === 'point') {
+    T = tmpV.set(-1.2, 1.15, 1.1);
+  } else if (now < idleLook.until) {
+    T = tmpV.set(idleLook.x, idleLook.y, 0.9);
+  } else if (state.pointer && now - state.pointerAt < 3500) {
+    raycaster.setFromCamera(state.pointer, camera);
+    var d = camera.position.distanceTo(headPos);
+    T = tmpV.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, d * 0.92);
+  } else {
+    T = tmpV.copy(camera.position);
+  }
+  if (t > sacc.next) {
+    sacc.x = (Math.random() - 0.5) * 0.06; sacc.y = (Math.random() - 0.5) * 0.04;
+    sacc.next = t + 0.6 + Math.random() * 2.2;
+  }
+  var dx = T.x - headPos.x, dy = T.y - headPos.y, dz = T.z - headPos.z;
+  var hz = Math.sqrt(dx * dx + dz * dz);
+  var yaw = Math.atan2(dx, dz), pitch = Math.atan2(-dy, hz);
+  var behind = Math.abs(yaw) > 1.9;
+  if (behind) { yaw = 0; pitch = 0; }
+  yaw = Math.max(-1.1, Math.min(1.1, yaw));
+  pitch = Math.max(-0.45, Math.min(0.6, pitch));
+  var poseHeadP = cur.head[0];
+  var gy = gesture && gesture.name === 'read' ? 0.15 : 1;
+  gaze.hy = damp(gaze.hy, yaw * 0.62 * gy, 3.2, dt);
+  gaze.hp = damp(gaze.hp, (pitch * 0.5) * gy, 3.2, dt);
+  gaze.sy = damp(gaze.sy, yaw * 0.18 * gy, 2.2, dt);
+  J.spine.rotation.y += gaze.sy;
+  J.neck.rotation.y += gaze.hy * 0.35;
+  J.head.rotation.y += gaze.hy * 0.65;
+  J.head.rotation.x += gaze.hp;
+  J.head.rotation.z += E.tilt;
+  // 頭部微動
+  if (!reduceMotion) {
+    J.head.rotation.x += noise(t * 0.6, 4.1) * 0.02;
+    J.head.rotation.y += noise(t * 0.5, 7.3) * 0.025;
+  }
+  var headYaw = gaze.sy + gaze.hy;
+  var eyeY = Math.max(-0.42, Math.min(0.42, yaw - headYaw + sacc.x));
+  var eyeP = Math.max(-0.32, Math.min(0.38, pitch - gaze.hp - poseHeadP * 0.85 + sacc.y));
+  if (behind) { eyeY = 0; eyeP = 0; }
+  gaze.ey = damp(gaze.ey, eyeY, 22, dt);
+  gaze.ep = damp(gaze.ep, eyeP, 22, dt);
+  face.eyes.forEach(function (e) { e.rotation.set(gaze.ep, gaze.ey, 0, 'YXZ'); });
+
+  // 眨眼
+  blink.t += dt;
+  var bAmt = 0;
+  if (blink.t > blink.next) {
+    var p = (blink.t - blink.next) / blink.dur;
+    bAmt = p < 0.45 ? p / 0.45 : 1 - (p - 0.45) / 0.55;
+    if (p >= 1) {
+      if (blink.dbl) { blink.dbl = false; blink.next = blink.t + 0.12; }
+      else { blink.next = blink.t + 1.8 + Math.random() * 4.2; blink.dbl = Math.random() < 0.2; }
+      bAmt = 0;
+    }
+  }
+  bAmt = Math.max(0, Math.min(1, bAmt));
+
+  // 表情插值
+  Object.keys(Etgt).forEach(function (k) { E[k] = damp(E[k], Etgt[k], 7, dt); });
+  var lid = E.lid * (1 - bAmt);
+  var upTh = 1.45 - lid * 2.17 + Math.max(0, gaze.ep) * 0.55;
+  var loTh = 0.78 - E.low * 0.42 - Math.max(0, -gaze.ep) * 0.3;
+  face.upper.forEach(function (u) { u.rotation.x = Math.min(1.5, upTh); });
+  face.lower.forEach(function (l) { l.rotation.x = loTh; });
+  face.brows.forEach(function (b) {
+    var s = b.userData.s;
+    var raise = s < 0 ? E.bR : E.bL, tilt = s < 0 ? E.tR : E.tL;
+    b.position.y = 0.046 + raise * 0.009 + (state.talking ? Math.max(0, Math.sin(t * 5.3)) * 0.0018 : 0);
+    b.rotation.z = (s < 0 ? 1 : -1) * tilt * 0.3;
+  });
+  var talk = 0;
+  if (state.talking) {
+    talk = Math.max(0, Math.sin(t * 17) * 0.6 + Math.sin(t * 9.3) * 0.4) * (0.5 + 0.5 * Math.abs(Math.sin(t * 2.7)));
+  }
+  buildMouth(Math.min(1, E.open + talk * 0.42), E.smile - talk * 0.15);
+  face.blushM.opacity = Math.max(0, Math.min(1, E.blush));
+  qEl.classList.toggle('off', E.q < 0.5);
+}
+
+function positionOverlays() {
+  // 對話框跟著頭部
+  H.getWorldPosition(headPos);
+  var top = headPos.clone(); top.y += 0.2;
+  top.project(camera);
+  var x = (top.x * 0.5 + 0.5) * view.w, y = (-top.y * 0.5 + 0.5) * view.h;
+  var narrow = view.w <= 760 || view.w / view.h <= 1;
+  var hdr = document.querySelector('.hdr').getBoundingClientRect();
+  var panel = document.querySelector('.panel').getBoundingClientRect();
+  var bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+  var minX = 12 + bw / 2, maxX = (narrow ? view.w : panel.left) - 12 - bw / 2;
+  var minY = (narrow ? hdr.bottom : 12) + 10 + bh;
+  var bx = Math.max(minX, Math.min(maxX, x + (narrow ? 0 : 60)));
+  var by = Math.max(minY, Math.min(view.h - 40, y));
+  // 電腦：對話框若和左上作品卡同高，往右移開
+  if (!narrow && by - bh < hdr.bottom + 6) bx = Math.min(maxX, Math.max(bx, hdr.right + 14 + bw / 2));
+  // 手機：頭上空間不夠時，對話框改放到畫面下方，不擋臉
+  if (narrow && y < minY + 4) { bx = view.w / 2; by = panel.top - 44; }
+  bubble.classList.toggle('below', narrow && y < minY + 4);
+  bubble.style.left = bx + 'px';
+  bubble.style.top = by + 'px';
+  var tail = Math.max(18, Math.min(bw - 18, x - (bx - bw / 2)));
+  bubble.style.setProperty('--tail', tail + 'px');
+  var q = headPos.clone(); q.y += 0.16; q.x += 0.12; q.project(camera);
+  qEl.style.left = ((q.x * 0.5 + 0.5) * view.w) + 'px';
+  qEl.style.top = ((-q.y * 0.5 + 0.5) * view.h) + 'px';
+}
+
+function idleBrain(t) {
+  var now = performance.now();
+  if (state.busy || gesture) return;
+  var quiet = now - state.lastInput;
+  if (quiet > 9000 && now > idleLook.until + 5000 && Math.random() < 0.004) {
+    if (Math.random() < 0.55) {
+      idleLook = { until: now + 1800, x: -0.05, y: 0.75, z: 0.9 };
+    } else {
+      idleLook = { until: now + 1400, x: (Math.random() < 0.5 ? -1 : 1) * 1.2, y: 1.6, z: 0.8 };
+    }
+  }
+  if (quiet > 26000 && !idleBrain.asked) {
+    idleBrain.asked = true;
+    state.busy = true;
+    var my = ++token;
+    setExpr('hopeful');
+    say(LINES.idle).then(function () { if (my === token) { setExpr('neutral'); state.busy = false; } });
+  }
+  if (quiet < 2000) idleBrain.asked = false;
+}
+
+function frame() {
+  var dt = Math.min(0.1, clock.getDelta());
+  tAll += dt;
+  if (camAnim) {
+    camAnim.t += dt;
+    var k = ease(camAnim.t / camAnim.dur);
+    controls.target.lerpVectors(camAnim.fT, camAnim.tT, k);
+    camera.position.lerpVectors(camAnim.fP, camAnim.tP, k);
+    if (camAnim.t >= camAnim.dur) camAnim = null;
+  }
+  controls.update();
+  var look = applyPose(dt);
+  setJoints(tAll, look, dt);
+  idleBrain(tAll);
+  renderer.render(scene, camera);
+  positionOverlays();
+  requestAnimationFrame(frame);
+}
+
+window.budi = {
+  scene: playScene, expr: setExpr, gesture: startGesture, view: setView,
+  pose: function (p) { stance = p; }, g: function () { return gesture && gesture.name + " " + gesture.t.toFixed(2); }, J: J, E: E, cur: cur, camera: camera, controls: controls
+};
+
+/* ---------- 開場 ---------- */
+setView('full', true);
+press(viewBtns, viewBtns[0]);
+setExpr('focused');
+stance = Object.assign({}, BASE, READ);
+requestAnimationFrame(frame);
+(async function intro() {
+  var my = ++token;
+  state.busy = true;
+  await sleep(1500); if (my !== token) return;
+  stance = BASE;
+  setExpr('hopeful');
+  await sleep(700); if (my !== token) return;
+  setView('half');
+  press(viewBtns, viewBtns[1]);
+  setExpr('happy');
+  startGesture('wave');
+  press(sceneBtns, sceneBtns[0]);
+  await say(LINES.hello);
+  if (my !== token) return;
+  await sleep(800);
+  state.busy = false;
+  press(sceneBtns, null);
+  touch();
+})();
+})();
+</script>
+
+</body></html>

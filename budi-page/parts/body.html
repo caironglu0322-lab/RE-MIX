@@ -1,0 +1,163 @@
+
+<div id="stage" aria-label="Budi 站在工作桌旁，桌上的平板開著知識管理系統。可以拖曳旋轉視角。"></div>
+
+<header class="hdr card">
+  <div class="tag">單元二：偏誤與再校正 ｜ 作品 2-3</div>
+  <h1><span class="en">Budi</span> 的第一天上工</h1>
+  <p>來自印尼的新進員工，跟著他用母語查工廠 SOP。平板上是本地 AI 知識庫系統。</p>
+  <button class="safe-tag" id="safe-tag" type="button">🔒 資料不出廠 ›</button>
+</header>
+
+<div class="bubble off" id="bubble" aria-live="polite">
+  <div class="who">BUDI</div>
+  <div class="say" id="say"></div>
+  <div class="sub" id="sub"></div>
+</div>
+<div class="qmark off" id="qmark" aria-hidden="true">???</div>
+
+<div id="screen-wrap" class="hide"><div class="km" id="km" lang="id"></div></div>
+
+<div class="flat" id="flat">
+  <img src="__REF__" alt="Budi，手上拿著一本藍色手冊">
+  <div id="flat-host"></div>
+</div>
+
+<div class="tools card" id="tools" role="group" aria-label="鏡頭">
+  <button class="tool" type="button" data-view="both" aria-pressed="true">全景</button>
+  <button class="tool" type="button" data-view="tablet" aria-pressed="false">看平板</button>
+  <button class="tool" type="button" data-view="budi" aria-pressed="false">看 Budi</button>
+  <button class="tool zoom" type="button" id="zoom-btn">⤢<span class="lbl"> 放大平板</span></button>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="放大的平板畫面">
+  <div class="modal-inner">
+    <div class="modal-bar"><span>知識管理系統・展示重現</span><button class="btn-close" id="modal-close" type="button">關閉</button></div>
+    <div class="modal-host" id="modal-host"><div class="scaler" id="modal-scaler"></div></div>
+  </div>
+</div>
+
+<aside class="panel card" aria-label="作品資訊">
+  <div class="tabs" role="tablist" aria-label="資訊分頁">
+    <button class="tab" type="button" role="tab" id="tab-day" aria-controls="pane-day" aria-selected="true">Budi 的一天</button>
+    <button class="tab" type="button" role="tab" id="tab-how" aria-controls="pane-how" aria-selected="false" tabindex="-1">怎麼運作</button>
+    <button class="tab" type="button" role="tab" id="tab-fix" aria-controls="pane-fix" aria-selected="false" tabindex="-1">知識補完</button>
+    <button class="tab" type="button" role="tab" id="tab-safe" aria-controls="pane-safe" aria-selected="false" tabindex="-1">資安</button>
+  </div>
+  <div class="panel-body" id="panel-body">
+
+    <!-- 分頁一：Budi 的一天 -->
+    <div class="pane" id="pane-day" role="tabpanel" aria-labelledby="tab-day">
+      <section class="sec">
+        <div class="speak-row">
+          <span>Budi 說</span>
+          <div class="seg" id="speak-seg" role="radiogroup" aria-label="Budi 說話的語言">
+            <button type="button" role="radio" data-lang="id" aria-pressed="true" aria-checked="true">印尼文＋中文字幕</button>
+            <button type="button" role="radio" data-lang="zh" aria-pressed="false" aria-checked="false">中文</button>
+          </div>
+        </div>
+        <div class="now" id="now">
+          <div class="now-top"><span class="now-time" id="now-time">08:00</span><span class="now-count" id="now-count">1 / 8</span></div>
+          <h2 id="now-title"></h2>
+          <p class="story" id="now-story"></p>
+          <div class="todo" id="now-todo"></div>
+          <button class="btn btn-tab" id="open-tablet" type="button">打開平板操作</button>
+          <div class="now-btns">
+            <button class="btn" id="prev" type="button">上一步</button>
+            <button class="btn btn-main" id="next" type="button">下一步</button>
+          </div>
+        </div>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>今天的行程</span><small>點選可跳到任一段</small></h2>
+        <ol class="steps" id="steps"></ol>
+      </section>
+    </div>
+
+    <!-- 分頁二：系統怎麼運作 -->
+    <div class="pane" id="pane-how" role="tabpanel" aria-labelledby="tab-how" hidden>
+      <section class="sec">
+        <h2 class="sec-h"><span>一個問題怎麼被回答</span></h2>
+        <ol class="flow">
+          <li><b>用母語提問</b>打字、講話，或拍下機台照片。</li>
+          <li><b>先搜尋廠內知識庫</b>SOP、機台資料、品檢紀錄、老師傅補登的經驗。</li>
+          <li><b>挑出相關文件</b>平板上的「處理紀錄」會列出核對了幾筆、採用哪些來源。</li>
+          <li><b>只根據文件整理回答</b>找不到就直說查不到，不自己編。</li>
+          <li><b>附上來源，翻成母語</b>點來源編號，就能打開原始文件核對。</li>
+        </ol>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>用到的四項技術</span><small>點選看說明</small></h2>
+        <div class="chips" id="tech-chips">
+          <button class="chip" type="button" data-k="asr" aria-pressed="true"><small>ASR</small>語音轉文字</button>
+          <button class="chip" type="button" data-k="ocr" aria-pressed="false"><small>OCR</small>拍照讀字</button>
+          <button class="chip" type="button" data-k="rag" aria-pressed="false"><small>RAG</small>先查再答</button>
+          <button class="chip" type="button" data-k="tr" aria-pressed="false"><small>i18n</small>母語翻譯</button>
+        </div>
+        <div class="desc" id="tech-desc" aria-live="polite"></div>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>和傳統的新人訓練比較</span></h2>
+        <div class="rec-grid">
+          <div class="rec no"><b>以前</b><ul><li>中文紙本手冊</li><li>師傅口頭教一次</li><li>經驗跟著人離開</li></ul></div>
+          <div class="rec keep"><b>有了知識庫</b><ul><li>用母語提問、閱讀</li><li>答案附來源可回查</li><li>經驗留在廠內</li></ul></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 分頁三：知識補完（偏誤與再校正） -->
+    <div class="pane" id="pane-fix" role="tabpanel" aria-labelledby="tab-fix" hidden>
+      <section class="sec">
+        <h2 class="sec-h"><span>偏誤與再校正，在工廠裡長什麼樣子</span></h2>
+        <p class="prose">AI 的偏誤，可能是<b>沒有資料卻硬要回答</b>。工廠的偏誤，常常是<b>答案只存在老師傅腦中</b>。這套系統讓人來校正：查不到就說查不到，再由老師傅補上、主管審核。</p>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>17:20 那場警報之後</span></h2>
+        <ol class="flow">
+          <li><b>查不到就直說</b>AI 回答「知識庫沒有這筆紀錄」，並建議下一步。<br><em class="tg warn">不猜測</em></li>
+          <li><b>現場回報</b>Budi 記下機型、警報原文和發生情況。</li>
+          <li><b>老師傅補登</b>王師傅用語音說明處理經驗，系統轉成文字。<br><em class="tg up">語音轉文字</em></li>
+          <li><b>主管審核</b>品質主管確認內容正確才核准上線。</li>
+          <li><b>下一個人查得到</b>同一個問題再問一次，就有附來源的答案。<br><em class="tg keep">知識留在廠內</em></li>
+        </ol>
+        <button class="btn btn-main" id="jump-alarm" type="button" style="width:100%">到 17:20 看這一段</button>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>系統裡內建的測試對話</span></h2>
+        <ul class="cases">
+          <li><b>展示｜查無機台知識</b>問到知識庫沒有的機台時，AI 回答查無資料。</li>
+          <li><b>展示｜未提供聯絡資料</b>文件沒寫電話號碼時，AI 直接說明沒有，不編造。</li>
+          <li><b>展示｜AI 不取得管理權限</b>有人要求 AI 修改帳號或權限時，AI 會拒絕。</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- 分頁四：資安 -->
+    <div class="pane" id="pane-safe" role="tabpanel" aria-labelledby="tab-safe" hidden>
+      <section class="sec">
+        <h2 class="sec-h"><span>資料不出廠</span></h2>
+        <ul class="promise">
+          <li><span class="pi">01</span><span><b>本地部署</b>開源輕量模型和知識庫都跑在廠內主機，不呼叫外部 AI 服務。</span></li>
+          <li><span class="pi">02</span><span><b>提問與照片留在內網</b>員工問的問題、上傳的照片和回答，都不會送出公司。</span></li>
+          <li><span class="pi">03</span><span><b>角色權限</b>新進員工可以閱讀知識、上傳問題；上傳的內容要經主管審核才上線。</span></li>
+          <li><span class="pi">04</span><span><b>AI 沒有管理權限</b>AI 只能查資料，不能修改帳號或權限。</span></li>
+          <li><span class="pi">05</span><span><b>回答可回查</b>每段回答都附來源文件和版本，錯了能追到是哪一份。</span></li>
+        </ul>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>一次提問的資料流向</span></h2>
+        <ol class="flow">
+          <li><b>平板送出問題</b><em class="tg keep">廠內網路</em></li>
+          <li><b>廠內主機搜尋知識庫</b><em class="tg keep">留在廠內</em></li>
+          <li><b>本地模型整理回答</b><em class="tg keep">不連外部 API</em></li>
+          <li><b>回答＋來源回到平板</b><em class="tg keep">紀錄可稽核</em></li>
+        </ol>
+        <p class="prose">另一個好處是成本：不用按次付費給外部 AI 服務，長期使用比較省。</p>
+      </section>
+      <footer class="site-footer">
+        實際系統部署在公司內網，展場無法直接連線，這一頁依系統畫面重現操作流程；平板上的內容為示範資料。<br>
+        Budi 的對話由頁面預先寫好，不會連線到 AI。
+      </footer>
+    </div>
+
+  </div>
+</aside>
