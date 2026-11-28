@@ -1,0 +1,2961 @@
+<title>Budi 的第一天上工</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* 版面：3D 舞台占滿畫面（Budi＋工作桌上的平板），左上作品卡，右側四分頁面板（手機改為底部面板）。
+   深色系與 3-2、3-3 相同；平板裡的系統畫面用系統本身的淺色藍白配色。 */
+:root {
+  color-scheme: dark;
+  --bg-deep: #0a0e14;
+  --bg-mid: #162230;
+  --card: rgba(20, 28, 38, 0.92);
+  --line: rgba(138, 163, 176, 0.25);
+  --text: #f4f0ea;
+  --muted: #98a3b0;
+  --gold: #dcae7a;
+  --cyan: #56b6c2;
+  --green: #7bc88f;
+  --red: #ff9c8f;
+  --chip: rgba(255, 255, 255, 0.05);
+  --chip-line: rgba(255, 255, 255, 0.12);
+  --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI", Roboto, sans-serif;
+  --font-num: "Rajdhani", var(--font);
+  --panel-w: clamp(310px, 29vw, 370px);
+  --edge: 20px;
+  --sheet-h: 46dvh;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(95% 80% at 36% 40%, #23364a 0%, var(--bg-mid) 45%, var(--bg-deep) 100%);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+#stage { position: fixed; inset: 0; z-index: 1; }
+#stage canvas { display: block; outline: none; touch-action: none; }
+
+.card {
+  background: var(--card);
+  -webkit-backdrop-filter: blur(14px);
+          backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ---------- 作品卡 ---------- */
+.hdr {
+  position: fixed;
+  z-index: 10;
+  top: calc(var(--edge) + env(safe-area-inset-top, 0px));
+  left: calc(var(--edge) + env(safe-area-inset-left, 0px));
+  max-width: 380px;
+  padding: 12px 18px 14px;
+}
+.tag { font-size: 0.74rem; font-weight: 700; letter-spacing: 1px; color: var(--gold); margin-bottom: 4px; }
+.hdr h1 { font-size: 1.32rem; line-height: 1.3; }
+.hdr h1 .en { font-family: var(--font-num); letter-spacing: 0.02em; font-size: 1.12em; }
+.hdr p { font-size: 0.84rem; color: var(--muted); line-height: 1.6; margin-top: 4px; }
+.safe-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 9px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(123, 200, 143, 0.45);
+  background: rgba(123, 200, 143, 0.12);
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Budi 對話框 ---------- */
+.bubble {
+  position: fixed;
+  z-index: 9;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 40px));
+  padding: 10px 14px 11px;
+  border-radius: 14px;
+  background: #f6f2ea;
+  color: #18232c;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -100%);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: var(--tail, 50%);
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+}
+.bubble.off { opacity: 0; }
+.bubble.below::after, .bubble.docked::after { display: none; }
+.bubble.docked { transform: none; }
+.bubble .say { font-size: 0.98rem; font-weight: 650; line-height: 1.45; }
+.bubble .sub { font-size: 0.82rem; color: #4d5c66; line-height: 1.45; margin-top: 4px; }
+.bubble .sub:empty { display: none; }
+.bubble .who { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; color: #2f8f74; margin-bottom: 2px; }
+.qmark {
+  position: fixed;
+  z-index: 8;
+  left: 0;
+  top: 0;
+  font: 800 1.6rem/1 var(--font-num);
+  color: var(--gold);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  letter-spacing: 0.1em;
+}
+.qmark.off { opacity: 0; }
+
+/* ---------- 3D 平板上的系統畫面 ---------- */
+#screen-wrap {
+  position: fixed;
+  z-index: 4;
+  left: 0;
+  top: 0;
+  width: 720px;
+  height: 500px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+#screen-wrap.hide { visibility: hidden; }
+#screen-wrap.mini { cursor: zoom-in; }
+#screen-wrap.mini .km { pointer-events: none; }
+
+/* 放大平板 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(6, 10, 16, 0.78);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+}
+.modal[hidden], .btn[hidden] { display: none !important; }
+.modal-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.modal-bar { display: flex; align-items: center; gap: 10px; width: 100%; justify-content: space-between; }
+.modal-bar span { font-size: 0.82rem; color: var(--muted); }
+.modal-host { position: relative; border-radius: 16px; background: #1b2128; padding: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+.modal-host .scaler { transform-origin: 0 0; }
+.btn-close {
+  border: 1px solid var(--chip-line);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- 鏡頭工具列 ---------- */
+.tools {
+  position: fixed;
+  z-index: 11;
+  left: calc((100vw - var(--panel-w) - var(--edge)) / 2);
+  bottom: calc(var(--edge) + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+}
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tool[aria-pressed="true"] { background: rgba(86, 182, 194, 0.25); border-color: var(--cyan); }
+.tool.zoom { color: #bde8ee; border-color: rgba(86, 182, 194, 0.55); }
+
+/* ---------- 面板 ---------- */
+.panel {
+  position: fixed;
+  z-index: 12;
+  top: calc(var(--edge) + env(safe-area-inset-top, 0px));
+  right: calc(var(--edge) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--edge) + env(safe-area-inset-bottom, 0px));
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tabs { flex: none; display: flex; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--line); }
+.tab {
+  flex: 1;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 9px 2px 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); }
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 163, 176, 0.35) transparent;
+}
+.pane[hidden] { display: none !important; }
+.sec { padding: 14px 0 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.sec:last-child { border-bottom: 0; }
+.sec-h { display: flex; align-items: baseline; gap: 8px; font-size: 0.88rem; color: var(--gold); margin-bottom: 9px; }
+.sec-h span { flex: 1; }
+.sec-h small { font-size: 0.7rem; color: var(--muted); font-weight: 500; }
+.prose { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+.prose b { color: var(--text); }
+.prose + .prose { margin-top: 8px; }
+
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.seg button {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 6px 4px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: rgba(86, 182, 194, 0.22); color: var(--text); box-shadow: inset 0 0 0 1px rgba(86, 182, 194, 0.5); }
+.speak-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; font-size: 0.76rem; color: var(--muted); }
+
+/* 目前步驟 */
+.now {
+  margin-top: 12px;
+  padding: 12px 13px 13px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 3px solid var(--cyan);
+}
+.now-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.now-time { font: 700 1.05rem/1 var(--font-num); color: var(--gold); font-variant-numeric: tabular-nums; }
+.now-count { margin-left: auto; font: 600 0.78rem/1 var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.now h2 { font-size: 1rem; line-height: 1.4; margin-bottom: 6px; text-wrap: balance; }
+.now .story { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+.todo {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(86, 182, 194, 0.1);
+  border: 1px solid rgba(86, 182, 194, 0.3);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #d6f0f3;
+}
+.todo::before { content: "你可以"; flex: none; font-weight: 800; color: var(--cyan); }
+.todo.done { background: rgba(123, 200, 143, 0.1); border-color: rgba(123, 200, 143, 0.35); color: #cdeed5; }
+.todo.done::before { content: "完成"; color: var(--green); }
+.now-btns { display: flex; gap: 8px; margin-top: 12px; }
+.btn {
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--chip-line);
+  background: rgba(255, 255, 255, 0.06);
+}
+.btn-main { flex: 1; border-color: rgba(220, 174, 122, 0.55); background: rgba(220, 174, 122, 0.14); color: #f6dcae; }
+.btn-main.ready { background: rgba(220, 174, 122, 0.28); box-shadow: 0 0 0 3px rgba(220, 174, 122, 0.18); }
+.btn-tab { display: none; width: 100%; margin-top: 10px; border-color: rgba(86, 182, 194, 0.55); background: rgba(86, 182, 194, 0.14); color: #bde8ee; }
+.btn[disabled] { opacity: 0.4; cursor: default; }
+
+.steps { list-style: none; display: grid; gap: 4px; }
+.step {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--muted);
+}
+.step .t { font: 700 0.86rem/1 var(--font-num); color: var(--gold); opacity: 0.75; font-variant-numeric: tabular-nums; }
+.step b { font-size: 0.8rem; font-weight: 600; }
+.step i { font-style: normal; font-size: 0.72rem; text-align: center; }
+.step[aria-current="step"] { background: rgba(86, 182, 194, 0.14); border-color: rgba(86, 182, 194, 0.45); color: var(--text); }
+.step[aria-current="step"] .t { opacity: 1; }
+.step.done i { color: var(--green); }
+
+/* 系統怎麼運作 */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-line);
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] { color: var(--text); background: rgba(86, 182, 194, 0.2); border-color: var(--cyan); }
+.chip small { font: 700 0.7rem/1 var(--font-num); color: var(--gold); letter-spacing: 0.04em; }
+.desc {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--cyan);
+  font-size: 0.79rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.desc b { display: block; color: var(--text); font-size: 0.86rem; margin-bottom: 4px; }
+.desc em { font-style: normal; color: #bde8ee; }
+.flow { list-style: none; counter-reset: flow; }
+.flow li {
+  counter-increment: flow;
+  position: relative;
+  padding: 0 0 12px 30px;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.flow li::before {
+  content: counter(flow);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(86, 182, 194, 0.2);
+  color: var(--cyan);
+}
+.flow li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 9.5px;
+  top: 22px;
+  bottom: 2px;
+  width: 1px;
+  background: rgba(86, 182, 194, 0.35);
+}
+.flow b { display: block; font-size: 0.82rem; color: var(--text); }
+.tg { display: inline-block; margin-top: 3px; font-style: normal; font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+.tg.keep { color: var(--green); background: rgba(123, 200, 143, 0.12); border: 1px solid rgba(123, 200, 143, 0.4); }
+.tg.warn { color: #f6dcae; background: rgba(240, 180, 76, 0.12); border: 1px solid rgba(240, 180, 76, 0.4); }
+.tg.up { color: #bde8ee; background: rgba(86, 182, 194, 0.12); border: 1px solid rgba(86, 182, 194, 0.4); }
+.rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rec { border-radius: 8px; padding: 8px 10px; font-size: 0.75rem; color: var(--muted); }
+.rec b { display: block; font-size: 0.8rem; margin-bottom: 4px; }
+.rec ul { padding-left: 16px; line-height: 1.6; }
+.rec.no { background: rgba(255, 122, 89, 0.07); border: 1px solid rgba(255, 122, 89, 0.3); }
+.rec.no b { color: #ffb39c; }
+.rec.keep { background: rgba(123, 200, 143, 0.07); border: 1px solid rgba(123, 200, 143, 0.3); }
+.rec.keep b { color: var(--green); }
+.cases { list-style: none; display: grid; gap: 6px; }
+.cases li { padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.75rem; color: var(--muted); line-height: 1.55; }
+.cases b { display: block; font-size: 0.8rem; color: var(--text); }
+.promise { list-style: none; display: grid; gap: 6px; }
+.promise li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(123, 200, 143, 0.06);
+  border: 1px solid rgba(123, 200, 143, 0.2);
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.promise .pi {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  font: 700 0.7rem/1 var(--font-num);
+  color: var(--green);
+  background: rgba(123, 200, 143, 0.12);
+}
+.promise b { display: block; font-size: 0.82rem; color: var(--text); margin-bottom: 1px; }
+.site-footer { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 0.72rem; line-height: 1.7; color: var(--muted); }
+
+/* ---------- 沒有 3D 時 ---------- */
+.flat { display: none; }
+html.no3d #stage, html.no3d .tools { display: none; }
+html.no3d .flat {
+  position: fixed;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  top: 150px;
+  left: calc(var(--edge) + env(safe-area-inset-left, 0px));
+  right: calc(var(--panel-w) + var(--edge) * 2);
+  bottom: var(--edge);
+  overflow: auto;
+}
+html.no3d .flat img { width: 120px; border-radius: 12px; }
+
+/* =========================================================
+   平板裡的「知識管理系統」（重現系統的 Tailwind 藍白介面）
+   ========================================================= */
+.km {
+  --k-bg: #f9fafb; --k-card: #ffffff; --k-line: #e5e7eb; --k-line2: #d1d5db;
+  --k-ink: #111827; --k-ink2: #374151; --k-mute: #6b7280; --k-mute2: #9ca3af;
+  --k-blue: #2563eb; --k-blue7: #1d4ed8; --k-blue50: #eff6ff; --k-blue100: #dbeafe;
+  --k-red: #b91c1c; --k-red50: #fef2f2; --k-red100: #fecaca;
+  --k-green: #047857; --k-green50: #ecfdf5; --k-amber: #b45309; --k-amber50: #fffbeb;
+  position: relative;
+  width: 720px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--k-bg);
+  color: var(--k-ink);
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+.km * { box-sizing: border-box; }
+.km button { font: inherit; color: inherit; cursor: pointer; }
+.km button:focus-visible { outline: 2px solid var(--k-blue); outline-offset: 1px; }
+.km .pulse { animation: kmPulse 1.5s ease-in-out infinite; }
+@keyframes kmPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45); } 50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); } }
+
+/* 登入 */
+.k-login { flex: 1; display: grid; place-items: center; background: linear-gradient(160deg, #eff6ff 0%, #f9fafb 55%); }
+.k-lcard { width: 330px; background: var(--k-card); border: 1px solid var(--k-line); border-radius: 14px; padding: 20px 24px 18px; box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08); }
+.k-lhead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.k-logo { width: 30px; height: 30px; flex: none; border-radius: 8px; background: var(--k-blue); color: #fff; font-weight: 800; font-size: 11px; display: grid; place-items: center; letter-spacing: 0.02em; }
+.k-lhead b { display: block; font-size: 15px; }
+.k-lhead small { display: block; font-size: 11px; color: var(--k-mute); }
+.k-field { display: block; margin-bottom: 9px; }
+.k-field span { display: block; font-size: 11px; font-weight: 600; color: var(--k-ink2); margin-bottom: 3px; }
+.k-input { width: 100%; height: 32px; border: 1px solid var(--k-line2); border-radius: 7px; padding: 0 10px; display: flex; align-items: center; background: #fff; color: var(--k-ink); font-size: 12.5px; }
+.k-langs { display: flex; gap: 4px; }
+.k-langs button { flex: 1; height: 30px; border-radius: 7px; border: 1px solid var(--k-line2); background: #fff; font-size: 11.5px; color: var(--k-ink2); }
+.k-langs button.on { border-color: var(--k-blue); background: var(--k-blue50); color: var(--k-blue7); font-weight: 700; }
+.k-primary { display: block; width: 100%; height: 34px; margin-top: 12px; border: 0; border-radius: 8px; background: var(--k-blue); color: #fff !important; font-weight: 700; font-size: 13px; }
+.k-note { margin-top: 10px; font-size: 10.5px; color: var(--k-mute); text-align: center; }
+
+/* 系統外框 */
+.k-top { flex: none; height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #fff; border-bottom: 1px solid var(--k-line); }
+.k-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.k-brand small { display: block; font-size: 9px; color: var(--k-mute2); letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.2; }
+.k-brand b { display: block; font-size: 12.5px; line-height: 1.25; white-space: nowrap; }
+.k-nav { display: flex; gap: 2px; margin-left: 4px; }
+.k-nav button { border: 0; background: none; padding: 5px 8px; border-radius: 6px; color: #4b5563; font-size: 11.5px; white-space: nowrap; }
+.k-nav button.on { color: var(--k-blue); background: var(--k-blue50); font-weight: 650; }
+.k-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.k-lang { display: flex; padding: 2px; border-radius: 999px; background: #f3f4f6; }
+.k-lang button { border: 0; background: none; padding: 2px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; color: var(--k-mute); }
+.k-lang button.on { background: #fff; color: var(--k-blue7); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.k-user { display: flex; align-items: center; gap: 6px; padding: 2px 9px 2px 2px; border-radius: 999px; background: #f3f4f6; font-size: 10.5px; color: var(--k-ink2); line-height: 1.2; }
+.k-user .av { width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--k-blue7); font-weight: 700; font-size: 11px; display: grid; place-items: center; }
+.k-user.master .av { color: var(--k-amber); }
+.k-user small { display: block; color: var(--k-mute); font-size: 9.5px; }
+.k-body { flex: 1; min-height: 0; display: flex; }
+
+/* 儀表板 */
+.k-dash { flex: 1; padding: 16px 20px; overflow: auto; }
+.k-h1 { font-size: 19px; font-weight: 700; margin-bottom: 12px; }
+.k-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.k-stat { background: #fff; border-radius: 9px; box-shadow: 0 1px 3px rgba(17, 24, 39, 0.08); padding: 11px 13px; }
+.k-stat dt { font-size: 10.5px; color: var(--k-mute); }
+.k-stat dd { font-size: 14px; font-weight: 600; }
+.k-h2 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.k-quick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.k-qa { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--k-line2); border-radius: 9px; background: #fff; text-align: left; }
+.k-qa .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--k-blue50); color: var(--k-blue); display: grid; place-items: center; font-size: 15px; flex: none; }
+.k-qa b { display: block; font-size: 12px; font-weight: 600; }
+.k-qa small { display: block; font-size: 10.5px; color: var(--k-mute); }
+
+/* AI 助手 */
+.k-side { width: 170px; flex: none; display: flex; flex-direction: column; gap: 4px; padding: 10px 8px; background: #fff; border-right: 1px solid var(--k-line); overflow: hidden; }
+.k-new { border: 0; border-radius: 8px; background: var(--k-blue); color: #fff !important; font-weight: 650; font-size: 11.5px; padding: 7px; margin-bottom: 4px; }
+.k-hist { padding: 5px 7px; border-radius: 6px; font-size: 10.5px; color: var(--k-ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.k-hist.on { background: var(--k-blue50); color: var(--k-blue7); }
+.k-hist small { display: block; color: var(--k-mute2); font-size: 9px; }
+.k-chat { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.k-msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.k-empty { margin: auto; text-align: center; max-width: 420px; }
+.k-empty b { display: block; font-size: 15px; margin-bottom: 2px; }
+.k-empty p { font-size: 11.5px; color: var(--k-mute); margin-bottom: 10px; }
+.k-sugg { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.k-sugg button { border: 1px solid var(--k-blue100); background: var(--k-blue50); color: var(--k-blue7); border-radius: 999px; padding: 3px 9px; font-size: 10.5px; }
+.k-u { align-self: flex-end; max-width: 78%; }
+.k-u .meta { text-align: right; }
+.k-u .txt { background: var(--k-blue); color: #fff; padding: 7px 11px; border-radius: 12px 12px 3px 12px; }
+.meta { font-size: 9.5px; color: var(--k-mute2); margin-bottom: 2px; }
+.k-ai { display: flex; gap: 7px; max-width: 96%; }
+.k-ai .av { width: 26px; height: 26px; flex: none; border-radius: 8px; background: var(--k-blue50); color: var(--k-blue); font-size: 9.5px; font-weight: 800; display: grid; place-items: center; }
+.k-ai .card { flex: 1; min-width: 0; background: #fff; border: 1px solid var(--k-line); border-radius: 3px 12px 12px 12px; padding: 8px 11px 9px; }
+.k-log { list-style: none; margin-bottom: 7px; padding: 6px 9px; border-radius: 8px; background: var(--k-bg); border: 1px solid var(--k-line); font-size: 10.5px; color: var(--k-mute); }
+.k-log .lh { font-weight: 700; color: var(--k-ink2); margin-bottom: 2px; }
+.k-log li { padding-left: 14px; position: relative; }
+.k-log li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--k-mute2); }
+.k-log li.ok::before { background: #10b981; }
+.k-log li.run::before { background: var(--k-blue); animation: kmBlink 0.8s infinite; }
+@keyframes kmBlink { 50% { opacity: 0.2; } }
+.k-log .src-l { color: var(--k-blue7); padding-left: 26px; }
+.k-log .src-l::before { display: none; }
+.k-ans { font-size: 12px; animation: kmIn 0.4s ease; }
+@keyframes kmIn { from { opacity: 0; transform: translateY(4px); } }
+.k-ans p { margin-bottom: 4px; }
+.k-ans h4 { font-size: 11.5px; margin: 7px 0 3px; color: var(--k-ink); }
+.k-ans ul, .k-ans ol { padding-left: 17px; }
+.k-ans li { margin: 1px 0; }
+.k-ans .note { margin-top: 6px; padding: 5px 8px; border-radius: 6px; background: var(--k-amber50); color: var(--k-amber); font-size: 11px; }
+.k-ans .none { padding: 6px 9px; border-radius: 7px; background: var(--k-red50); border: 1px solid var(--k-red100); color: var(--k-red); font-weight: 600; margin-bottom: 4px; }
+.cite { display: inline-block; border: 0; background: var(--k-blue50); color: var(--k-blue7); border-radius: 4px; padding: 0 4px; margin-left: 2px; font-size: 9.5px; font-weight: 700; line-height: 15px; vertical-align: 1px; }
+.k-srcs { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--k-line); display: grid; gap: 4px; }
+.k-srcs > span { font-size: 10px; color: var(--k-mute); font-weight: 600; }
+.k-src { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border: 1px solid var(--k-blue100); background: var(--k-blue50); color: var(--k-blue7); border-radius: 6px; padding: 3px 8px; font-size: 10.5px; }
+.k-src b { font-size: 9.5px; }
+.k-src.new { border-color: #a7f3d0; background: var(--k-green50); color: var(--k-green); }
+.k-compose { flex: none; padding: 7px 12px 8px; background: #fff; border-top: 1px solid var(--k-line); }
+.k-box { display: flex; align-items: flex-end; gap: 6px; padding: 5px 6px 5px 9px; border: 1px solid var(--k-line2); border-radius: 10px; }
+.k-box textarea { flex: 1; border: 0; outline: none; resize: none; height: 34px; font: inherit; font-size: 12px; color: var(--k-ink); background: transparent; }
+.k-cam { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--k-line); background: #fff; font-size: 13px; }
+.k-send { height: 30px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--k-blue); color: #fff !important; font-weight: 650; font-size: 12px; }
+.k-send[disabled] { background: #93c5fd; cursor: default; }
+.k-fine { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 9.5px; color: var(--k-mute2); }
+
+/* 知識文件／知識庫 */
+.k-doc { flex: 1; padding: 14px 22px; overflow: auto; }
+.k-crumb { font-size: 10.5px; color: var(--k-mute); margin-bottom: 4px; }
+.k-doc h3 { font-size: 16px; margin-bottom: 6px; }
+.k-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.k-pill { font-size: 10px; padding: 1px 8px; border-radius: 999px; background: #f3f4f6; color: var(--k-ink2); }
+.k-pill.ok { background: var(--k-green50); color: var(--k-green); }
+.k-pill.wait { background: var(--k-amber50); color: var(--k-amber); }
+.k-dbody { background: #fff; border: 1px solid var(--k-line); border-radius: 9px; padding: 11px 14px; }
+.k-dbody li { margin: 3px 0 3px 16px; }
+.k-back { margin-top: 10px; border: 1px solid var(--k-line2); background: #fff; border-radius: 7px; padding: 5px 12px; font-size: 11.5px; }
+.k-list { display: grid; gap: 6px; }
+.k-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 1px solid var(--k-line); background: #fff; border-radius: 8px; padding: 7px 10px; font-size: 11.5px; }
+.k-row .k-pill { margin-left: auto; }
+
+/* 上傳知識（老師傅補登） */
+.k-up { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 14px; padding: 13px 18px; overflow: auto; }
+.k-up h3 { font-size: 15px; margin-bottom: 8px; }
+.k-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.k-types { display: flex; gap: 4px; }
+.k-types span { flex: 1; text-align: center; padding: 4px 0; border: 1px solid var(--k-line2); border-radius: 6px; font-size: 10.5px; background: #fff; }
+.k-types span.on { border-color: var(--k-blue); background: var(--k-blue50); color: var(--k-blue7); font-weight: 700; }
+.k-rec { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; padding: 6px 9px; border-radius: 8px; background: #fff; border: 1px solid var(--k-line); }
+.k-rec .dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; }
+.k-rec.live .dot { animation: kmBlink 0.9s infinite; }
+.k-wave { flex: 1; height: 22px; display: flex; align-items: center; gap: 2px; }
+.k-wave i { flex: 1; border-radius: 2px; background: #93c5fd; }
+.k-rec time { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--k-ink2); }
+.k-asr { min-height: 92px; padding: 8px 10px; border-radius: 8px; background: #fff; border: 1px solid var(--k-line); font-size: 11.5px; line-height: 1.6; color: var(--k-ink2); }
+.k-asr .caret { display: inline-block; width: 1px; height: 12px; background: var(--k-ink); vertical-align: -1px; animation: kmBlink 0.8s infinite; }
+.k-steps { list-style: none; display: grid; gap: 8px; margin-top: 4px; }
+.k-steps li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 6px; font-size: 11px; color: var(--k-mute2); }
+.k-steps li i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--k-line2); margin-top: 1px; }
+.k-steps li.ok { color: var(--k-ink2); }
+.k-steps li.ok i { border-color: #10b981; background: #10b981; }
+.k-steps li.now { color: var(--k-amber); font-weight: 600; }
+.k-steps li.now i { border-color: #f59e0b; }
+.k-steps small { display: block; font-size: 9.5px; color: var(--k-mute); font-weight: 400; }
+.k-banner { margin-bottom: 8px; padding: 5px 9px; border-radius: 7px; background: var(--k-amber50); color: var(--k-amber); font-size: 10.5px; }
+
+/* 手機放大時的窄版平板 */
+.km.compact .k-side, .km.compact .k-brand > div, .km.compact .k-user > span:last-child, .km.compact .k-fine span:first-child { display: none; }
+.km.compact .k-top { gap: 6px; padding: 0 8px; }
+.km.compact .k-nav { margin-left: 0; }
+.km.compact .k-nav button { padding: 5px 6px; font-size: 12px; }
+.km.compact .k-quick { grid-template-columns: 1fr; }
+.km.compact .k-stats { grid-template-columns: 1fr 1fr; }
+.km.compact .k-up { grid-template-columns: 1fr; }
+.km.compact .k-row2 { grid-template-columns: 1fr; }
+.km.compact .k-ans, .km.compact .k-u .txt { font-size: 13px; }
+.km.compact .k-log { font-size: 11px; }
+.km.compact .k-lcard { width: 380px; }
+
+@media (hover: hover) {
+  .chip:hover, .step:hover { color: var(--text); }
+  .tool:hover { background: rgba(122, 147, 160, 0.4); }
+  .seg button:hover { color: var(--text); }
+  .km .k-nav button:hover { color: var(--k-blue); }
+  .km .k-qa:hover, .km .k-row:hover { border-color: #93c5fd; }
+  .km .k-src:hover, .km .k-sugg button:hover { border-color: #93c5fd; }
+}
+@media (pointer: coarse) {
+  .tab, .seg button, .tool, .btn { min-height: 44px; }
+  .chip, .step { min-height: 40px; }
+}
+
+/* ---------- 手機與平板直向 ---------- */
+@media (max-width: 760px), (max-aspect-ratio: 1/1) {
+  :root { --edge: 10px; }
+  .hdr { right: calc(var(--edge) + env(safe-area-inset-right, 0px)); max-width: none; padding: 8px 12px 9px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+  .hdr .tag { grid-column: 1 / -1; font-size: 0.68rem; margin-bottom: 1px; }
+  .hdr h1 { font-size: 1rem; }
+  .hdr p { display: none; }
+  .safe-tag { margin-top: 0; }
+  .panel { top: auto; left: calc(var(--edge) + env(safe-area-inset-left, 0px)); width: auto; height: var(--sheet-h); border-radius: 16px; }
+  .tabs { padding: 2px 6px 0; }
+  .tab { font-size: 0.78rem; padding: 8px 2px 7px; }
+  .panel-body { padding: 0 12px 12px; }
+  .tools { left: auto; right: calc(var(--edge) + env(safe-area-inset-right, 0px)); transform: none; bottom: calc(var(--sheet-h) + var(--edge) + 8px + env(safe-area-inset-bottom, 0px)); padding: 4px; gap: 4px; }
+  .tool { height: 32px; padding: 0 10px; font-size: 0.74rem; }
+  .tool .lbl { display: none; }
+  .btn-tab { display: block; }
+  html.no3d .flat { top: 70px; right: var(--edge); bottom: calc(var(--sheet-h) + var(--edge) + 8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+
+<div id="stage" aria-label="Budi 站在工作桌旁，桌上的平板開著知識管理系統。可以拖曳旋轉視角。"></div>
+
+<header class="hdr card">
+  <div class="tag">單元二：偏誤與再校正 ｜ 作品 2-3</div>
+  <h1><span class="en">Budi</span> 的第一天上工</h1>
+  <p>來自印尼的新進員工，跟著他用母語查工廠 SOP。平板上是本地 AI 知識庫系統。</p>
+  <button class="safe-tag" id="safe-tag" type="button">🔒 資料不出廠 ›</button>
+</header>
+
+<div class="bubble off" id="bubble" aria-live="polite">
+  <div class="who">BUDI</div>
+  <div class="say" id="say"></div>
+  <div class="sub" id="sub"></div>
+</div>
+<div class="qmark off" id="qmark" aria-hidden="true">???</div>
+
+<div id="screen-wrap" class="hide"><div class="km" id="km" lang="id"></div></div>
+
+<div class="flat" id="flat">
+  <img src="data:image/jpeg;base64,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" alt="Budi，手上拿著一本藍色手冊">
+  <div id="flat-host"></div>
+</div>
+
+<div class="tools card" id="tools" role="group" aria-label="鏡頭">
+  <button class="tool" type="button" data-view="both" aria-pressed="true">全景</button>
+  <button class="tool" type="button" data-view="tablet" aria-pressed="false">看平板</button>
+  <button class="tool" type="button" data-view="budi" aria-pressed="false">看 Budi</button>
+  <button class="tool zoom" type="button" id="zoom-btn">⤢<span class="lbl"> 放大平板</span></button>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="放大的平板畫面">
+  <div class="modal-inner">
+    <div class="modal-bar"><span>知識管理系統・展示重現</span><button class="btn-close" id="modal-close" type="button">關閉</button></div>
+    <div class="modal-host" id="modal-host"><div class="scaler" id="modal-scaler"></div></div>
+  </div>
+</div>
+
+<aside class="panel card" aria-label="作品資訊">
+  <div class="tabs" role="tablist" aria-label="資訊分頁">
+    <button class="tab" type="button" role="tab" id="tab-day" aria-controls="pane-day" aria-selected="true">Budi 的一天</button>
+    <button class="tab" type="button" role="tab" id="tab-how" aria-controls="pane-how" aria-selected="false" tabindex="-1">怎麼運作</button>
+    <button class="tab" type="button" role="tab" id="tab-fix" aria-controls="pane-fix" aria-selected="false" tabindex="-1">知識補完</button>
+    <button class="tab" type="button" role="tab" id="tab-safe" aria-controls="pane-safe" aria-selected="false" tabindex="-1">資安</button>
+  </div>
+  <div class="panel-body" id="panel-body">
+
+    <!-- 分頁一：Budi 的一天 -->
+    <div class="pane" id="pane-day" role="tabpanel" aria-labelledby="tab-day">
+      <section class="sec">
+        <div class="speak-row">
+          <span>Budi 說</span>
+          <div class="seg" id="speak-seg" role="radiogroup" aria-label="Budi 說話的語言">
+            <button type="button" role="radio" data-lang="id" aria-pressed="true" aria-checked="true">印尼文＋中文字幕</button>
+            <button type="button" role="radio" data-lang="zh" aria-pressed="false" aria-checked="false">中文</button>
+          </div>
+        </div>
+        <div class="now" id="now">
+          <div class="now-top"><span class="now-time" id="now-time">08:00</span><span class="now-count" id="now-count">1 / 8</span></div>
+          <h2 id="now-title"></h2>
+          <p class="story" id="now-story"></p>
+          <div class="todo" id="now-todo"></div>
+          <button class="btn btn-tab" id="open-tablet" type="button">打開平板操作</button>
+          <div class="now-btns">
+            <button class="btn" id="prev" type="button">上一步</button>
+            <button class="btn btn-main" id="next" type="button">下一步</button>
+          </div>
+        </div>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>今天的行程</span><small>點選可跳到任一段</small></h2>
+        <ol class="steps" id="steps"></ol>
+      </section>
+    </div>
+
+    <!-- 分頁二：系統怎麼運作 -->
+    <div class="pane" id="pane-how" role="tabpanel" aria-labelledby="tab-how" hidden>
+      <section class="sec">
+        <h2 class="sec-h"><span>一個問題怎麼被回答</span></h2>
+        <ol class="flow">
+          <li><b>用母語提問</b>打字、講話，或拍下機台照片。</li>
+          <li><b>先搜尋廠內知識庫</b>SOP、機台資料、品檢紀錄、老師傅補登的經驗。</li>
+          <li><b>挑出相關文件</b>平板上的「處理紀錄」會列出核對了幾筆、採用哪些來源。</li>
+          <li><b>只根據文件整理回答</b>找不到就直說查不到，不自己編。</li>
+          <li><b>附上來源，翻成母語</b>點來源編號，就能打開原始文件核對。</li>
+        </ol>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>用到的四項技術</span><small>點選看說明</small></h2>
+        <div class="chips" id="tech-chips">
+          <button class="chip" type="button" data-k="asr" aria-pressed="true"><small>ASR</small>語音轉文字</button>
+          <button class="chip" type="button" data-k="ocr" aria-pressed="false"><small>OCR</small>拍照讀字</button>
+          <button class="chip" type="button" data-k="rag" aria-pressed="false"><small>RAG</small>先查再答</button>
+          <button class="chip" type="button" data-k="tr" aria-pressed="false"><small>i18n</small>母語翻譯</button>
+        </div>
+        <div class="desc" id="tech-desc" aria-live="polite"></div>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>和傳統的新人訓練比較</span></h2>
+        <div class="rec-grid">
+          <div class="rec no"><b>以前</b><ul><li>中文紙本手冊</li><li>師傅口頭教一次</li><li>經驗跟著人離開</li></ul></div>
+          <div class="rec keep"><b>有了知識庫</b><ul><li>用母語提問、閱讀</li><li>答案附來源可回查</li><li>經驗留在廠內</li></ul></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 分頁三：知識補完（偏誤與再校正） -->
+    <div class="pane" id="pane-fix" role="tabpanel" aria-labelledby="tab-fix" hidden>
+      <section class="sec">
+        <h2 class="sec-h"><span>偏誤與再校正，在工廠裡長什麼樣子</span></h2>
+        <p class="prose">AI 的偏誤，可能是<b>沒有資料卻硬要回答</b>。工廠的偏誤，常常是<b>答案只存在老師傅腦中</b>。這套系統讓人來校正：查不到就說查不到，再由老師傅補上、主管審核。</p>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>17:20 那場警報之後</span></h2>
+        <ol class="flow">
+          <li><b>查不到就直說</b>AI 回答「知識庫沒有這筆紀錄」，並建議下一步。<br><em class="tg warn">不猜測</em></li>
+          <li><b>現場回報</b>Budi 記下機型、警報原文和發生情況。</li>
+          <li><b>老師傅補登</b>王師傅用語音說明處理經驗，系統轉成文字。<br><em class="tg up">語音轉文字</em></li>
+          <li><b>主管審核</b>品質主管確認內容正確才核准上線。</li>
+          <li><b>下一個人查得到</b>同一個問題再問一次，就有附來源的答案。<br><em class="tg keep">知識留在廠內</em></li>
+        </ol>
+        <button class="btn btn-main" id="jump-alarm" type="button" style="width:100%">到 17:20 看這一段</button>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>系統裡內建的測試對話</span></h2>
+        <ul class="cases">
+          <li><b>展示｜查無機台知識</b>問到知識庫沒有的機台時，AI 回答查無資料。</li>
+          <li><b>展示｜未提供聯絡資料</b>文件沒寫電話號碼時，AI 直接說明沒有，不編造。</li>
+          <li><b>展示｜AI 不取得管理權限</b>有人要求 AI 修改帳號或權限時，AI 會拒絕。</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- 分頁四：資安 -->
+    <div class="pane" id="pane-safe" role="tabpanel" aria-labelledby="tab-safe" hidden>
+      <section class="sec">
+        <h2 class="sec-h"><span>資料不出廠</span></h2>
+        <ul class="promise">
+          <li><span class="pi">01</span><span><b>本地部署</b>開源輕量模型和知識庫都跑在廠內主機，不呼叫外部 AI 服務。</span></li>
+          <li><span class="pi">02</span><span><b>提問與照片留在內網</b>員工問的問題、上傳的照片和回答，都不會送出公司。</span></li>
+          <li><span class="pi">03</span><span><b>角色權限</b>新進員工可以閱讀知識、上傳問題；上傳的內容要經主管審核才上線。</span></li>
+          <li><span class="pi">04</span><span><b>AI 沒有管理權限</b>AI 只能查資料，不能修改帳號或權限。</span></li>
+          <li><span class="pi">05</span><span><b>回答可回查</b>每段回答都附來源文件和版本，錯了能追到是哪一份。</span></li>
+        </ul>
+      </section>
+      <section class="sec">
+        <h2 class="sec-h"><span>一次提問的資料流向</span></h2>
+        <ol class="flow">
+          <li><b>平板送出問題</b><em class="tg keep">廠內網路</em></li>
+          <li><b>廠內主機搜尋知識庫</b><em class="tg keep">留在廠內</em></li>
+          <li><b>本地模型整理回答</b><em class="tg keep">不連外部 API</em></li>
+          <li><b>回答＋來源回到平板</b><em class="tg keep">紀錄可稽核</em></li>
+        </ol>
+        <p class="prose">另一個好處是成本：不用按次付費給外部 AI 服務，長期使用比較省。</p>
+      </section>
+      <footer class="site-footer">
+        實際系統部署在公司內網，展場無法直接連線，這一頁依系統畫面重現操作流程；平板上的內容為示範資料。<br>
+        Budi 的對話由頁面預先寫好，不會連線到 AI。
+      </footer>
+    </div>
+
+  </div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+'use strict';
+/* =========================================================
+   Budi 的台詞（印尼文＋中文）
+   ========================================================= */
+var LINES = {
+  hello:    { id: 'Halo! Nama saya Budi. Hari ini hari pertama saya kerja di sini.', zh: '你好！我是 Budi，今天是我第一天上班。' },
+  login:    { id: 'Ini akun baru saya. Bisa bantu saya masuk? Saya mau pakai bahasa Indonesia.', zh: '這是我的新帳號，可以幫我登入嗎？我想用印尼文。' },
+  loginOk:  { id: 'Berhasil masuk! Terima kasih.', zh: '登入成功！謝謝你。' },
+  manual:   { id: 'Hmm… buku panduan ini semuanya bahasa Mandarin. Saya tidak mengerti…', zh: '嗯……這本手冊全是中文，我看不太懂耶。' },
+  help:     { id: 'Bisa bantu saya? Kita cari pakai tablet itu, yuk.', zh: '可以幫我嗎？我們用那台平板查查看。' },
+  found:    { id: 'Oh, begitu! JM150-DC itu mesin cetak dua warna!', zh: '原來如此！JM150-DC 是雙色射出成型機！' },
+  cncQ:     { id: 'Di catatan ini cuma tertulis DEMO-CNC-01…', zh: '便條上只寫了 DEMO-CNC-01……' },
+  cncA:     { id: 'Area A1, ya. Saya ke sana sekarang!', zh: '原來在 A1 區，我現在過去！' },
+  defectQ:  { id: 'Sampel ini ada goresan di tepinya. Apa saja yang harus saya tulis?', zh: '這個樣品邊緣有刮痕，回報要寫什麼？' },
+  defectA:  { id: 'Kode alat, waktu, deskripsi, foto, kontak. Siap!', zh: '設備代號、時間、描述、照片、聯絡人。了解！' },
+  handQ:    { id: 'Sebentar lagi ganti shift. Apa yang harus saya serahkan?', zh: '快換班了，我要交接哪些事？' },
+  handA:    { id: 'Oke, semuanya saya tulis di formulir serah terima.', zh: '好，我全部寫進交接表。' },
+  alarmQ:   { id: 'Layar JM150-DC menampilkan alarm…', zh: 'JM150-DC 的螢幕跳出警報了……' },
+  alarm:    { id: 'Catatannya tidak ada. Saya tanya teknisi senior dulu, ya.', zh: '查不到紀錄。我先去問老師傅好了。' },
+  master:   { id: 'Pak Wang merekam pengalamannya. Nanti saya cari lagi.', zh: '王師傅把經驗錄下來了，等一下我再查一次。' },
+  thanks:   { id: 'Ketemu! Terima kasih! Lain kali, teman lain juga bisa menemukannya.', zh: '查到了！謝謝你！下次別人遇到，也查得到了。' },
+  bye:      { id: 'Hari pertama selesai. Sampai besok!', zh: '第一天結束了，明天見！' },
+  poke1:    { id: 'Ya? Ada apa?', zh: '嗯？怎麼了？' },
+  poke2:    { id: 'Hehe, saya masih belajar.', zh: '嘿嘿，我還在學。' },
+  poke3:    { id: 'Mesin di sini besar sekali!', zh: '這裡的機器好大台！' },
+  book:     { id: 'Wah, buku ini tebal sekali…', zh: '哇，這本書好厚喔……' },
+  tablet:   { id: 'Ayo, kita pakai tablet ini!', zh: '來，我們用這台平板查！' },
+  sample:   { id: 'Lihat, ada goresan di sini.', zh: '你看，這裡有一道刮痕。' },
+  machine:  { id: 'Itu JM150-DC, mesin dua warna.', zh: '那台是 JM150-DC，雙色射出機。' },
+  idle:     { id: 'Kita lanjut?', zh: '我們繼續嗎？' }
+};
+
+/* =========================================================
+   平板介面文字（繁中／印尼文／越南文）
+   ========================================================= */
+var T = {
+  zh: {
+    langName: '繁體中文', app: '知識管理系統', appSub: '工廠知識管理與傳承系統', os: 'Knowledge OS',
+    account: '帳號', password: '密碼', language: '語言', login: '登入', demoNote: '新進員工展示帳號・實際系統部署在公司內網',
+    navDash: '儀表板', navChat: 'AI 助手', navUp: '上傳知識', navKb: '知識庫',
+    titleChat: 'AI 知識助手', titleUp: '上傳知識', titleKb: '知識庫',
+    roleNew: '新進員工', roleMaster: '資深技術員',
+    welcome: '歡迎回來，Budi！', myRole: '我的角色', prefLang: '偏好語言', status: '帳號狀態', active: '啟用中',
+    quick: '快速操作', qaChat: 'AI 助手', qaChatS: '用自己的語言提問', qaKb: '瀏覽知識庫', qaKbS: '查看所有知識資產',
+    qaUp: '上傳知識', qaUpS: '新增文件、影片、圖片或語音', qaMine: '個人上傳紀錄', qaMineS: '查看個人知識與審批結果',
+    newChat: '新對話', today: '今天', emptyT: '歡迎體驗智慧聊天', emptyP: '請從左側選擇既有對話，或直接輸入訊息開始新對話。',
+    you: '你', ai: 'AI 助手', send: '送出', placeholder: '輸入你的問題，或上傳機台照片',
+    fine1: '可直接上傳機台照片，不必填寫描述；每次最多三張，每張 5 MB。', fine2: 'AI 可能會產生錯誤資訊，請核對重要內容。',
+    logH: '處理紀錄', log1: '正在搜尋知識庫與機台資料…', log2: '已核對目前可用的資料：', log3: '採用來源：', log3none: '採用來源：無',
+    log4: '正在依來源整理回答…', log5: '回答完成，可點選引用核對來源。', log5none: '回答完成：知識庫中沒有相關資料。',
+    srcs: '參考來源', back: '返回對話', kbAll: '所有知識', version: '版本', approved: '已核准', pending: '待審核', machine: '關聯機台',
+    unknown: '展示版只收錄 Budi 今天會問的問題，請點選下方的建議問題。',
+    upBanner: '示範：這一段切換成王師傅的帳號。', upTitle: '標題', upMachine: '關聯機台', upType: '類型',
+    tDoc: '文件', tVideo: '影片', tImg: '圖片', tVoice: '語音', recording: '錄音中', recorded: '錄音完成',
+    asrH: '語音轉文字（繁體中文）', submit: '送出審核', reviewH: '審核進度',
+    st1: '上傳語音', st2: '語音轉文字', st3: '品質主管審核', st4: '核准上線', st3s: '等待主管確認', st4s: 'v1・可被 AI 引用',
+    again: '換回 Budi 的帳號，再查一次'
+  },
+  id: {
+    langName: 'Bahasa Indonesia', app: 'Sistem Manajemen Pengetahuan', appSub: 'Pengelolaan & pewarisan pengetahuan pabrik', os: 'Knowledge OS',
+    account: 'Akun', password: 'Kata sandi', language: 'Bahasa', login: 'Masuk', demoNote: 'Akun demo karyawan baru・sistem asli ada di jaringan internal',
+    navDash: 'Dasbor', navChat: 'Asisten AI', navUp: 'Unggah', navKb: 'Basis pengetahuan',
+    titleChat: 'Asisten Pengetahuan AI', titleUp: 'Unggah pengetahuan', titleKb: 'Basis pengetahuan',
+    roleNew: 'Karyawan baru', roleMaster: 'Teknisi senior',
+    welcome: 'Selamat datang kembali, Budi!', myRole: 'Peran saya', prefLang: 'Bahasa pilihan', status: 'Status akun', active: 'Aktif',
+    quick: 'Aksi cepat', qaChat: 'Asisten AI', qaChatS: 'Bertanya dengan bahasa sendiri', qaKb: 'Basis pengetahuan', qaKbS: 'Lihat semua aset pengetahuan',
+    qaUp: 'Unggah pengetahuan', qaUpS: 'Dokumen, video, gambar, atau suara', qaMine: 'Unggahan saya', qaMineS: 'Lihat pengetahuan & hasil persetujuan',
+    newChat: 'Obrolan baru', today: 'Hari ini', emptyT: 'Selamat mencoba obrolan pintar', emptyP: 'Pilih obrolan di kiri, atau ketik pesan untuk mulai.',
+    you: 'Anda', ai: 'Asisten AI', send: 'Kirim', placeholder: 'Ketik pertanyaan atau unggah foto mesin',
+    fine1: 'Bisa langsung unggah foto mesin tanpa deskripsi; maks. 3 foto, 5 MB per foto.', fine2: 'AI bisa keliru. Periksa kembali informasi penting.',
+    logH: 'Catatan proses', log1: 'Mencari di basis pengetahuan dan data mesin…', log2: 'Data yang diperiksa:', log3: 'Sumber yang dipakai:', log3none: 'Sumber yang dipakai: tidak ada',
+    log4: 'Menyusun jawaban dari sumber…', log5: 'Selesai. Klik kutipan untuk memeriksa sumber.', log5none: 'Selesai: tidak ada data terkait di basis pengetahuan.',
+    srcs: 'Sumber', back: 'Kembali ke obrolan', kbAll: 'Semua pengetahuan', version: 'Versi', approved: 'Disetujui', pending: 'Menunggu', machine: 'Mesin terkait',
+    unknown: 'Versi demo hanya berisi pertanyaan Budi hari ini. Silakan pilih pertanyaan yang disarankan di bawah.',
+    upBanner: 'Demo: bagian ini memakai akun Pak Wang.', upTitle: 'Judul', upMachine: 'Mesin terkait', upType: 'Jenis',
+    tDoc: 'Dokumen', tVideo: 'Video', tImg: 'Gambar', tVoice: 'Suara', recording: 'Merekam', recorded: 'Rekaman selesai',
+    asrH: 'Suara ke teks (bahasa Mandarin)', submit: 'Kirim untuk ditinjau', reviewH: 'Proses persetujuan',
+    st1: 'Unggah suara', st2: 'Suara ke teks', st3: 'Ditinjau kepala mutu', st4: 'Disetujui & aktif', st3s: 'Menunggu konfirmasi', st4s: 'v1・bisa dikutip AI',
+    again: 'Kembali ke akun Budi dan cari lagi'
+  },
+  vi: {
+    langName: 'Tiếng Việt', app: 'Hệ thống quản lý tri thức', appSub: 'Quản lý và truyền thừa tri thức nhà máy', os: 'Knowledge OS',
+    account: 'Tài khoản', password: 'Mật khẩu', language: 'Ngôn ngữ', login: 'Đăng nhập', demoNote: 'Tài khoản demo nhân viên mới・hệ thống thật nằm trong mạng nội bộ',
+    navDash: 'Bảng điều khiển', navChat: 'Trợ lý AI', navUp: 'Tải lên', navKb: 'Kho tri thức',
+    titleChat: 'Trợ lý tri thức AI', titleUp: 'Tải lên tri thức', titleKb: 'Kho tri thức',
+    roleNew: 'Nhân viên mới', roleMaster: 'Kỹ thuật viên lâu năm',
+    welcome: 'Chào mừng trở lại, Budi!', myRole: 'Vai trò', prefLang: 'Ngôn ngữ ưu tiên', status: 'Trạng thái', active: 'Đang hoạt động',
+    quick: 'Thao tác nhanh', qaChat: 'Trợ lý AI', qaChatS: 'Hỏi bằng ngôn ngữ của bạn', qaKb: 'Kho tri thức', qaKbS: 'Xem toàn bộ tài sản tri thức',
+    qaUp: 'Tải lên tri thức', qaUpS: 'Tài liệu, video, hình ảnh hoặc giọng nói', qaMine: 'Tải lên của tôi', qaMineS: 'Xem tri thức và kết quả duyệt',
+    newChat: 'Cuộc trò chuyện mới', today: 'Hôm nay', emptyT: 'Chào mừng đến với trò chuyện thông minh', emptyP: 'Chọn cuộc trò chuyện bên trái, hoặc nhập tin nhắn để bắt đầu.',
+    you: 'Bạn', ai: 'Trợ lý AI', send: 'Gửi', placeholder: 'Nhập câu hỏi hoặc tải ảnh máy lên',
+    fine1: 'Có thể tải ảnh máy lên mà không cần mô tả; tối đa 3 ảnh, mỗi ảnh 5 MB.', fine2: 'AI có thể sai. Hãy kiểm tra lại nội dung quan trọng.',
+    logH: 'Nhật ký xử lý', log1: 'Đang tìm trong kho tri thức và dữ liệu máy…', log2: 'Đã đối chiếu dữ liệu hiện có:', log3: 'Nguồn được dùng:', log3none: 'Nguồn được dùng: không có',
+    log4: 'Đang tổng hợp câu trả lời theo nguồn…', log5: 'Đã xong, bấm vào trích dẫn để đối chiếu nguồn.', log5none: 'Đã xong: kho tri thức không có dữ liệu liên quan.',
+    srcs: 'Nguồn tham khảo', back: 'Quay lại trò chuyện', kbAll: 'Tất cả tri thức', version: 'Phiên bản', approved: 'Đã duyệt', pending: 'Chờ duyệt', machine: 'Máy liên quan',
+    unknown: 'Bản demo chỉ có các câu hỏi của Budi hôm nay. Vui lòng chọn câu hỏi gợi ý bên dưới.',
+    upBanner: 'Demo: đoạn này dùng tài khoản của chú Vương.', upTitle: 'Tiêu đề', upMachine: 'Máy liên quan', upType: 'Loại',
+    tDoc: 'Tài liệu', tVideo: 'Video', tImg: 'Hình ảnh', tVoice: 'Giọng nói', recording: 'Đang ghi âm', recorded: 'Đã ghi âm',
+    asrH: 'Giọng nói thành chữ (tiếng Trung)', submit: 'Gửi duyệt', reviewH: 'Tiến độ duyệt',
+    st1: 'Tải giọng nói lên', st2: 'Chuyển giọng nói thành chữ', st3: 'Trưởng chất lượng duyệt', st4: 'Duyệt và đưa vào dùng', st3s: 'Chờ xác nhận', st4s: 'v1・AI có thể trích dẫn',
+    again: 'Đổi lại tài khoản Budi và hỏi lại'
+  }
+};
+
+/* =========================================================
+   知識庫文件（示範資料）
+   ========================================================= */
+var DOCS = {
+  mk6: { no: 3, title: '[DEMO] JM150-MK6 單色射出成型機 - 機台資料', machine: 'JM150-MK6',
+    zh: ['JM150-MK6：單色射出成型機。', '一次射出一種塑料，生產單色零件。', '與 JM150-DC 的手冊外觀相似，請以機台銘牌型號為準。'],
+    id: ['JM150-MK6: mesin cetak injeksi satu warna.', 'Menyuntikkan satu jenis plastik untuk komponen satu warna.', 'Buku panduannya mirip JM150-DC. Selalu cocokkan dengan pelat nama mesin.'],
+    vi: ['JM150-MK6: máy ép nhựa một màu.', 'Ép một loại nhựa để làm chi tiết một màu.', 'Sổ tay giống JM150-DC, hãy đối chiếu với bảng tên trên máy.'] },
+  dc: { no: 4, title: '[DEMO] JM150-DC 雙色射出成型機 - 機台資料', machine: 'JM150-DC',
+    zh: ['JM150-DC：雙色射出成型機。', '兩種塑料依序射入同一副模具，可生產軟硬雙色零件，例如電動工具手柄。'],
+    id: ['JM150-DC: mesin cetak injeksi dua warna.', 'Dua jenis plastik disuntikkan berurutan ke cetakan yang sama, misalnya untuk gagang perkakas listrik.'],
+    vi: ['JM150-DC: máy ép nhựa hai màu.', 'Hai loại nhựa lần lượt được ép vào cùng một khuôn, ví dụ tay cầm dụng cụ điện.'] },
+  cnc: { no: 9, title: '[DEMO] DEMO-CNC-01 機台與紀錄', machine: 'DEMO-CNC-01',
+    zh: ['DEMO-CNC-01 位於加工展示區 A1。', '用途：比對外殼模型、工件樣本與文件。', '展示期間不驅動刀具。'],
+    id: ['DEMO-CNC-01 berada di area pameran pemesinan A1.', 'Fungsi: membandingkan model casing, sampel benda kerja, dan dokumen.', 'Selama pameran, alat potong tidak dijalankan.'],
+    vi: ['DEMO-CNC-01 đặt tại khu trưng bày gia công A1.', 'Công dụng: đối chiếu mô hình vỏ, mẫu phôi và tài liệu.', 'Trong thời gian trưng bày, dao cắt không vận hành.'] },
+  cmm: { no: 5, title: '[DEMO] 三次元量測展示台 / Coordinate measurement exhibit - 機台資料', machine: 'DEMO-CMM-03',
+    zh: ['DEMO-CMM-03：三次元量測展示台。', '量測零件尺寸，結果寫入品檢紀錄。'],
+    id: ['DEMO-CMM-03: meja ukur tiga dimensi.', 'Mengukur dimensi komponen, hasilnya dicatat di catatan inspeksi.'],
+    vi: ['DEMO-CMM-03: bàn đo tọa độ ba chiều.', 'Đo kích thước chi tiết, kết quả ghi vào hồ sơ kiểm tra.'] },
+  qr: { no: 1, title: '[DEMO] 瑕疵回報流程 / Quality report', machine: '—',
+    zh: ['發現瑕疵時，回報表需填寫：設備代號、發現時間、問題描述、照片、聯絡人。', '回報編號格式為 DEMO-QA-日期-流水號。', '品質小組會在 1 個工作天內回覆追蹤編號。'],
+    id: ['Saat menemukan cacat, isi: kode alat, waktu ditemukan, deskripsi masalah, foto, kontak.', 'Format nomor laporan: DEMO-QA-tanggal-nomor urut.', 'Tim mutu membalas nomor pelacakan dalam 1 hari kerja.'],
+    vi: ['Khi phát hiện lỗi, điền: mã thiết bị, thời gian phát hiện, mô tả lỗi, ảnh, người liên hệ.', 'Định dạng mã báo cáo: DEMO-QA-ngày-số thứ tự.', 'Nhóm chất lượng phản hồi mã theo dõi trong 1 ngày làm việc.'] },
+  track: { no: 8, title: '[DEMO] 回報狀態與追蹤 / Report tracking', machine: '—',
+    zh: ['回報狀態分為：已收到、待補充、處理中、已結案。', '狀態為「待補充」時，品質小組會說明缺少哪些欄位。'],
+    id: ['Status laporan: Diterima, Perlu dilengkapi, Diproses, Selesai.', 'Jika "Perlu dilengkapi", tim mutu menjelaskan kolom yang kurang.'],
+    vi: ['Trạng thái: Đã nhận, Cần bổ sung, Đang xử lý, Đã đóng.', 'Khi "Cần bổ sung", nhóm chất lượng sẽ nói rõ còn thiếu mục nào.'] },
+  log: { no: 6, title: '[DEMO] 品檢紀錄 / Inspection log', machine: 'DEMO-CMM-03',
+    zh: ['品檢紀錄欄位：設備代號、量測日期、量測項目、結果、檢驗人。'],
+    id: ['Kolom catatan inspeksi: kode alat, tanggal ukur, item ukur, hasil, pemeriksa.'],
+    vi: ['Các cột hồ sơ kiểm tra: mã thiết bị, ngày đo, hạng mục đo, kết quả, người kiểm tra.'] },
+  hand: { no: 2, title: '[DEMO] 換班交接清單 / Shift handover', machine: '—',
+    zh: ['交接表需包含：當班進度、未完成事項、異常追蹤編號、待確認文件、下一班負責人。', '口頭交代後，兩班仍須一起確認表單內容。'],
+    id: ['Formulir serah terima: progres shift, pekerjaan belum selesai, nomor pelacakan masalah, dokumen yang perlu dikonfirmasi, penanggung jawab shift berikutnya.', 'Setelah penjelasan lisan, kedua shift tetap mengecek formulir bersama.'],
+    vi: ['Phiếu bàn giao gồm: tiến độ ca, việc chưa xong, mã theo dõi sự cố, tài liệu cần xác nhận, người phụ trách ca sau.', 'Sau khi dặn dò bằng lời, hai ca vẫn phải cùng kiểm tra phiếu.'] },
+  servo: { no: 12, title: '[師傅補登] JM150-DC 伺服過載警報處理經驗', machine: 'JM150-DC', fresh: true,
+    zh: ['上傳：王師傅（資深技術員）・審核：品質主管', '警報多半是射出時負載過大。', '處理：按停止 → 檢查模具卡料與頂針 → 確認射出速度與壓力 → 通知班長後重新啟動。', '不要自行拆卸伺服馬達。'],
+    id: ['Diunggah: Pak Wang (teknisi senior)・Ditinjau: kepala mutu', 'Alarm biasanya muncul karena beban injeksi terlalu besar.', 'Penanganan: stop → cek plastik tersangkut & pin ejektor → cek kecepatan dan tekanan injeksi → lapor kepala regu, lalu nyalakan ulang.', 'Jangan membongkar motor servo sendiri.'],
+    vi: ['Người tải lên: chú Vương (kỹ thuật viên lâu năm)・Duyệt: trưởng chất lượng', 'Cảnh báo thường do tải khi ép quá lớn.', 'Xử lý: dừng máy → kiểm tra kẹt nhựa và chốt đẩy → kiểm tra tốc độ, áp suất ép → báo tổ trưởng rồi khởi động lại.', 'Không tự tháo động cơ servo.'] }
+};
+
+/* =========================================================
+   Budi 今天的問題與回答（示範資料）
+   ========================================================= */
+var QA = {
+  machines: {
+    q: { zh: '請介紹目前現有的機台', id: 'Tolong perkenalkan mesin-mesin yang ada saat ini.', vi: 'Hãy giới thiệu các máy hiện có.' },
+    checked: 6, src: ['mk6', 'dc', 'cnc', 'cmm'],
+    a: {
+      zh: { lead: '知識庫目前收錄 4 台展示機台：', list: [['JM150-MK6｜單色射出成型機：一次射出一種塑料，生產單色零件。', 1], ['JM150-DC｜雙色射出成型機：兩種塑料射進同一副模具，可做出軟硬雙色的電動工具手柄。', 2], ['DEMO-CNC-01｜CNC 加工展示機：在加工展示區 A1，用來比對外殼模型與工件樣本。', 3], ['DEMO-CMM-03｜三次元量測展示台：量測零件尺寸，留下品檢紀錄。', 4]], note: '兩台射出成型機的型號只差最後幾碼，請以機台銘牌上的型號為準。' },
+      id: { lead: 'Saat ini ada 4 mesin pameran di basis pengetahuan:', list: [['JM150-MK6 | Mesin cetak injeksi satu warna: menyuntikkan satu jenis plastik untuk komponen satu warna.', 1], ['JM150-DC | Mesin cetak injeksi dua warna: dua jenis plastik masuk ke cetakan yang sama, misalnya gagang perkakas listrik keras-lunak.', 2], ['DEMO-CNC-01 | Mesin CNC pameran: di area pemesinan A1, untuk membandingkan model casing dan sampel benda kerja.', 3], ['DEMO-CMM-03 | Meja ukur tiga dimensi: mengukur dimensi komponen dan menyimpan catatan inspeksi.', 4]], note: 'Nomor model kedua mesin cetak hanya beda beberapa huruf terakhir. Cocokkan dengan pelat nama di mesin.' },
+      vi: { lead: 'Hiện kho tri thức có 4 máy trưng bày:', list: [['JM150-MK6 | Máy ép nhựa một màu: ép một loại nhựa để làm chi tiết một màu.', 1], ['JM150-DC | Máy ép nhựa hai màu: ép hai loại nhựa vào cùng một khuôn, ví dụ tay cầm dụng cụ điện có phần cứng và mềm.', 2], ['DEMO-CNC-01 | Máy CNC trưng bày: ở khu gia công A1, dùng để đối chiếu mô hình vỏ với mẫu phôi.', 3], ['DEMO-CMM-03 | Bàn đo tọa độ ba chiều: đo kích thước chi tiết và lưu hồ sơ kiểm tra.', 4]], note: 'Mã hai máy ép chỉ khác vài ký tự cuối. Hãy đối chiếu với bảng tên trên máy.' }
+    }
+  },
+  cnc: {
+    q: { zh: 'DEMO-CNC-01 放在哪裡？用途是什麼？', id: 'Di mana letak DEMO-CNC-01 dan apa fungsinya?', vi: 'DEMO-CNC-01 đặt ở đâu và dùng để làm gì?' },
+    checked: 3, src: ['cnc'],
+    a: {
+      zh: { list: [['位置：加工展示區 A1', 1], ['用途：比對外殼模型、工件樣本與文件', 1], ['注意：展示時不驅動刀具', 1]] },
+      id: { list: [['Lokasi: area pameran pemesinan A1', 1], ['Fungsi: membandingkan model casing, sampel benda kerja, dan dokumen', 1], ['Catatan: alat potong tidak dijalankan selama pameran', 1]] },
+      vi: { list: [['Vị trí: khu trưng bày gia công A1', 1], ['Công dụng: đối chiếu mô hình vỏ, mẫu phôi và tài liệu', 1], ['Lưu ý: dao cắt không vận hành khi trưng bày', 1]] }
+    }
+  },
+  defect: {
+    q: { zh: '發現瑕疵時，回報需要哪些資料？', id: 'Kalau menemukan cacat produk, data apa saja yang harus dilaporkan?', vi: 'Khi phát hiện lỗi sản phẩm, cần báo cáo những thông tin gì?' },
+    checked: 4, src: ['qr', 'track', 'cmm', 'log'],
+    a: {
+      zh: { secs: [['重點概覽', [['必填：設備代號、發現時間、問題描述、照片、聯絡人', 1], ['回報編號格式：DEMO-QA-日期-流水號', 1], ['品質小組會在 1 個工作天內回覆追蹤編號', 1]]],
+                   ['怎麼填', [['設備代號：機台上的編號，例如 DEMO-CMM-03', 3], ['發現時間：寫到日期和時間', 0], ['問題描述：瑕疵類型和位置，例如「邊緣刮痕」', 0], ['照片：拍清楚瑕疵；還沒有照片就先標「待補充」', 0], ['聯絡人：姓名和聯絡方式', 0]]],
+                   ['追蹤狀態', [['已收到 → 處理中 → 已結案；資料不足時會標成「待補充」', 2]]]] },
+      id: { secs: [['Ringkasan', [['Wajib: kode alat, waktu ditemukan, deskripsi masalah, foto, kontak', 1], ['Format nomor laporan: DEMO-QA-tanggal-nomor urut', 1], ['Tim mutu membalas nomor pelacakan dalam 1 hari kerja', 1]]],
+                   ['Cara mengisi', [['Kode alat: nomor di mesin, misalnya DEMO-CMM-03', 3], ['Waktu ditemukan: tulis tanggal dan jam', 0], ['Deskripsi: jenis dan letak cacat, misalnya "goresan di tepi"', 0], ['Foto: foto cacat dengan jelas; jika belum ada, tulis "menyusul"', 0], ['Kontak: nama dan cara menghubungi', 0]]],
+                   ['Status pelacakan', [['Diterima → Diproses → Selesai; jika data kurang, statusnya "Perlu dilengkapi"', 2]]]] },
+      vi: { secs: [['Tóm tắt', [['Bắt buộc: mã thiết bị, thời gian phát hiện, mô tả lỗi, ảnh, người liên hệ', 1], ['Định dạng mã báo cáo: DEMO-QA-ngày-số thứ tự', 1], ['Nhóm chất lượng phản hồi mã theo dõi trong 1 ngày làm việc', 1]]],
+                   ['Cách điền', [['Mã thiết bị: mã ghi trên máy, ví dụ DEMO-CMM-03', 3], ['Thời gian phát hiện: ghi rõ ngày và giờ', 0], ['Mô tả: loại lỗi và vị trí, ví dụ "trầy ở mép"', 0], ['Ảnh: chụp rõ chỗ lỗi; nếu chưa có thì ghi "bổ sung sau"', 0], ['Người liên hệ: họ tên và cách liên lạc', 0]]],
+                   ['Trạng thái theo dõi', [['Đã nhận → Đang xử lý → Đã đóng; nếu thiếu thông tin sẽ ghi "Cần bổ sung"', 2]]]] }
+    }
+  },
+  handover: {
+    q: { zh: '換班時應交接哪些內容？', id: 'Apa saja yang harus diserahterimakan saat ganti shift?', vi: 'Khi giao ca cần bàn giao những nội dung gì?' },
+    checked: 3, src: ['hand'],
+    a: {
+      zh: { lead: '交班前，請把這 5 項寫進交接表：', list: [['當班進度', 1], ['未完成事項', 1], ['異常追蹤編號', 1], ['待確認文件', 1], ['下一班負責人', 1]], note: '口頭交代後，兩班仍要一起確認表單內容。' },
+      id: { lead: 'Sebelum ganti shift, tulis 5 hal ini di formulir serah terima:', list: [['Progres shift ini', 1], ['Pekerjaan yang belum selesai', 1], ['Nomor pelacakan masalah', 1], ['Dokumen yang perlu dikonfirmasi', 1], ['Penanggung jawab shift berikutnya', 1]], note: 'Setelah penjelasan lisan, kedua shift tetap mengecek formulir bersama.' },
+      vi: { lead: 'Trước khi giao ca, hãy ghi 5 mục này vào phiếu bàn giao:', list: [['Tiến độ ca làm', 1], ['Việc chưa hoàn thành', 1], ['Mã theo dõi sự cố', 1], ['Tài liệu cần xác nhận', 1], ['Người phụ trách ca sau', 1]], note: 'Sau khi dặn dò bằng lời, hai ca vẫn phải cùng kiểm tra phiếu.' }
+    }
+  },
+  alarm: {
+    q: { zh: '廠內是否有 JM150-DC 出現 Servo Overload Alarm 的相關紀錄？', id: 'Apakah ada catatan di pabrik tentang alarm Servo Overload pada JM150-DC?', vi: 'Nhà máy có hồ sơ nào về cảnh báo Servo Overload trên máy JM150-DC không?' },
+    checked: 2, src: [], none: true,
+    a: {
+      zh: { none: '知識庫裡沒有 JM150-DC「Servo Overload Alarm」的處理紀錄。', lead: '我不會猜測處理方式。建議你：', list: [['記下機台型號、警報原文和發生情況', 0], ['請老師傅到現場確認', 0], ['確認後把經驗上傳成知識，下一位同事就查得到', 0]] },
+      id: { none: 'Tidak ada catatan penanganan "Servo Overload Alarm" untuk JM150-DC di basis pengetahuan.', lead: 'Saya tidak akan menebak cara menanganinya. Saran:', list: [['Catat model mesin, teks alarm, dan kondisinya', 0], ['Minta teknisi senior memeriksa langsung', 0], ['Setelah itu, unggah pengalamannya agar rekan berikutnya bisa menemukannya', 0]] },
+      vi: { none: 'Kho tri thức chưa có hồ sơ xử lý "Servo Overload Alarm" của JM150-DC.', lead: 'Tôi sẽ không đoán cách xử lý. Đề xuất:', list: [['Ghi lại mã máy, nội dung cảnh báo và tình huống', 0], ['Nhờ kỹ thuật viên lâu năm kiểm tra tại chỗ', 0], ['Sau đó tải kinh nghiệm lên để đồng nghiệp sau tra được', 0]] }
+    }
+  },
+  alarm2: {
+    q: null, checked: 3, src: ['servo'],
+    a: {
+      zh: { lead: '找到 1 筆老師傅補登、已審核的紀錄：', secs: [['處理步驟', [['先按停止，讓機台停下來', 1], ['檢查模具有沒有卡料、頂針有沒有卡住', 1], ['確認射出速度和壓力有沒有被調高', 1], ['排除後通知班長，再重新啟動', 1]]]], note: '不要自己拆伺服馬達，需要時請找設備課。' },
+      id: { lead: 'Ditemukan 1 catatan dari teknisi senior yang sudah disetujui:', secs: [['Langkah penanganan', [['Tekan stop dan hentikan mesin', 1], ['Periksa plastik tersangkut di cetakan atau pin ejektor yang macet', 1], ['Pastikan kecepatan dan tekanan injeksi tidak dinaikkan', 1], ['Setelah beres, lapor ke kepala regu, lalu nyalakan ulang', 1]]]], note: 'Jangan membongkar motor servo sendiri. Jika perlu, hubungi bagian peralatan.' },
+      vi: { lead: 'Tìm thấy 1 hồ sơ do kỹ thuật viên lâu năm bổ sung, đã được duyệt:', secs: [['Các bước xử lý', [['Nhấn dừng để máy ngừng', 1], ['Kiểm tra khuôn có kẹt nhựa, chốt đẩy có bị kẹt không', 1], ['Xác nhận tốc độ và áp suất ép không bị chỉnh cao', 1], ['Xử lý xong thì báo tổ trưởng rồi mới khởi động lại', 1]]]], note: 'Đừng tự tháo động cơ servo; khi cần hãy liên hệ bộ phận thiết bị.' }
+    }
+  }
+};
+QA.alarm2.q = QA.alarm.q;
+
+// 建議問題（取自系統的「歡迎體驗智慧聊天」畫面）
+var SUGG = ['machines', 'cnc', 'defect', 'handover', 'alarm'];
+
+// 王師傅的口述（語音轉文字後的原文）
+var MASTER_SAY = '這個警報多半是射出時負載太大。先按停止，看模具有沒有卡料、頂針有沒有卡住，再確認射出速度、壓力是不是被人調高。弄好先跟班長講，再重新開機。伺服馬達不要自己拆。';
+
+/* =========================================================
+   Budi 的一天：八個時段
+   ========================================================= */
+var STEPS = [
+  { time: '08:00', title: '報到，登入系統', story: '走進塑膠射出成型廠的第一天，帶班同事給了 Budi 一組新進員工帳號。他想用自己熟悉的印尼文看系統。', todo: '在平板上選擇語言，按「登入」。', done: '登入成功。系統會用 Budi 選的語言顯示。' },
+  { time: '08:15', title: '看不懂的手冊', story: '桌上的中文手冊翻到機台型號那頁。JM150-MK6 和 JM150-DC 只差幾個字母，Budi 不知道眼前是哪一台。', todo: '看 Budi 翻手冊。準備好就按「下一步」，陪他去平板查。', done: 'Budi 決定用平板查查看。' },
+  { time: '08:30', title: '第一次提問', story: 'Budi 想先知道廠裡有哪些機台、各自做什麼。', todo: '在平板上按「送出」。看 AI 先搜尋知識庫，再附上來源回答。', done: 'Budi 弄懂了兩台射出機的差別。' },
+  { time: '09:10', title: '找到機台', story: '同事遞來一張便條，上面只寫了「DEMO-CNC-01」。Budi 想知道要往哪裡走、到了要看什麼。', todo: '送出問題，再點回答下方的來源，打開原始文件核對。', done: 'Budi 知道要去加工展示區 A1。' },
+  { time: '13:40', title: '回報樣品瑕疵', story: 'Budi 把樣品轉到光線下，發現邊緣有一道刮痕。只寫「有刮痕」，品檢同事可能還得走回現場找。', todo: '送出問題，看回報要寫齊哪些資料。也可以點工作桌上的樣品。', done: 'Budi 把五項資料都寫進回報表。' },
+  { time: '16:50', title: '和下一班交接', story: '接班同事來了。回報已經送出，還有一份文件待確認，Budi 想把該交代的事寫齊。', todo: '送出問題，拿到交接清單。', done: '交接清單寫好了。' },
+  { time: '17:20', title: '查不到的警報', story: '巡線時，JM150-DC 的螢幕跳出「Servo Overload Alarm」。Budi 抄下機型和警報原文，想找找廠裡有沒有人遇過。', todo: '送出問題。知識庫裡沒有資料時，AI 會直說查不到，不會亂猜。', done: 'AI 回答查不到，Budi 去找老師傅。' },
+  { time: '17:40', title: '老師傅補上紀錄', story: '王師傅到現場處理完，用語音把經驗錄下來。系統把語音轉成文字，送品質主管審核。核准後，Budi 再查一次。', todo: '在平板上按「送出審核」，核准後換回 Budi 的帳號再查一次。', done: '同一個問題，現在查得到了。' }
+];
+
+var EXPR = {
+  neutral:  { bR: 0,    bL: 0,    tR: 0,    tL: 0,    lid: 1.0,   low: 0,   smile: 0.4,  open: 0,    tilt: 0,     q: 0, blush: 0.4 },
+  happy:    { bR: 0.35, bL: 0.35, tR: 0.1,  tL: 0.1,  lid: 0.97, low: 0.45, smile: 1,    open: 0.32, tilt: 0.05,  q: 0, blush: 0.95 },
+  confused: { bR: -0.3, bL: 0.85, tR: -0.2, tL: 0.3,  lid: 0.88, low: 0.1, smile: -0.35,open: 0.08, tilt: 0.13,  q: 1, blush: 0.35 },
+  focused:  { bR: -0.35,bL: -0.35,tR: -0.25,tL: -0.25,lid: 0.78, low: 0.25,smile: 0,    open: 0,    tilt: -0.03, q: 0, blush: 0.3 },
+  aha:      { bR: 1,    bL: 1,    tR: 0,    tL: 0,    lid: 1.15, low: 0,   smile: 0.45, open: 0.55, tilt: 0,     q: 0, blush: 0.7 },
+  worried:  { bR: 0.45, bL: 0.45, tR: 0.8,  tL: 0.8,  lid: 0.92, low: 0.15,smile: -0.7, open: 0.06, tilt: -0.06, q: 0, blush: 0.25 },
+  hopeful:  { bR: 0.6,  bL: 0.6,  tR: 0.45, tL: 0.45, lid: 1.02, low: 0.2, smile: 0.5,  open: 0.12, tilt: 0.08,  q: 0, blush: 0.8 }
+};
+
+
+/* =========================================================
+   共用狀態
+   ========================================================= */
+var $ = function (s) { return document.querySelector(s); };
+var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+var bubble = $('#bubble'), sayEl = $('#say'), subEl = $('#sub'), qEl = $('#qmark');
+var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+var state = {
+  lang: 'id',          // Budi 說話的語言
+  expr: 'neutral',
+  talking: 0,
+  busy: false,
+  lastInput: performance.now(),
+  pointer: null,
+  pointerAt: 0,
+  view: 'both'
+};
+var token = 0;
+var has3D = false;
+var TAB = null;        // 平板在 3D 裡的位置（3D 建好後填入）
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function touch() { state.lastInput = performance.now(); }
+function markExpr() {}
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function isNarrow() { return window.innerWidth <= 760 || window.innerWidth / window.innerHeight <= 1; }
+function press(group, el) {
+  group.forEach(function (b) {
+    var on = b === el;
+    b.setAttribute('aria-pressed', String(on));
+    if (b.hasAttribute('aria-checked')) b.setAttribute('aria-checked', String(on));
+  });
+}
+
+/* =========================================================
+   面板：分頁、說話語言、技術說明
+   ========================================================= */
+var tabs = $$('.tab');
+function showTab(id) {
+  tabs.forEach(function (t) {
+    var on = t.id === 'tab-' + id;
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+    $('#' + t.getAttribute('aria-controls')).hidden = !on;
+  });
+  $('#panel-body').scrollTop = 0;
+}
+tabs.forEach(function (t, i) {
+  t.addEventListener('click', function () { showTab(t.id.slice(4)); });
+  t.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+    n.focus(); n.click();
+  });
+});
+$('#safe-tag').addEventListener('click', function () { showTab('safe'); });
+$('#jump-alarm').addEventListener('click', function () { showTab('day'); goStep(6); });
+
+var speakBtns = $$('#speak-seg button');
+speakBtns.forEach(function (b) {
+  b.addEventListener('click', function () { press(speakBtns, b); state.lang = b.dataset.lang; });
+});
+
+var TECH = {
+  asr: ['語音轉文字（ASR）', '老師傅不必打字。對著平板把處理經驗說一遍，系統轉成文字，再送主管審核。17:40 那一段就是這樣補上紀錄的。'],
+  ocr: ['拍照讀字（OCR）', '對著機台銘牌或面板拍照，系統讀出型號和畫面上的文字。看不懂中文的新同事，<em>可以直接上傳照片提問</em>。'],
+  rag: ['先查再答（RAG）', 'AI 先在廠內知識庫找相關文件，只根據找到的內容回答，每一段都標上來源編號。<em>找不到就直說查不到</em>，不會自己編。'],
+  tr: ['母語翻譯', '同一份中文 SOP，Budi 可以用印尼文問、用印尼文讀；越南籍同事也能用越南文。平板右上角可以切換語言。']
+};
+var techBtns = $$('#tech-chips .chip');
+function showTech(k) {
+  press(techBtns, techBtns.filter(function (b) { return b.dataset.k === k; })[0]);
+  $('#tech-desc').innerHTML = '<b>' + TECH[k][0] + '</b>' + TECH[k][1];
+}
+techBtns.forEach(function (b) { b.addEventListener('click', function () { showTech(b.dataset.k); }); });
+showTech('asr');
+
+/* =========================================================
+   Budi 的對話框
+   ========================================================= */
+var bubbleTimer = 0, typeTimer = 0;
+function say(line) {
+  var lang = state.lang;
+  var main = lang === 'id' ? line.id : line.zh;
+  var sub = lang === 'id' ? line.zh : '';
+  clearTimeout(bubbleTimer); clearInterval(typeTimer);
+  sayEl.lang = lang === 'id' ? 'id' : 'zh-Hant';
+  subEl.textContent = sub;
+  bubble.classList.remove('off');
+  var est = lang === 'id' ? 420 + main.length * 58 : 380 + main.length * 180;
+  var chars = Array.from(main), shown = 0;
+  sayEl.textContent = '';
+  typeTimer = setInterval(function () {
+    shown++;
+    sayEl.textContent = chars.slice(0, shown).join('');
+    if (shown >= chars.length) clearInterval(typeTimer);
+  }, reduceMotion ? 1 : Math.max(18, est / chars.length));
+  return new Promise(function (resolve) {
+    state.talking = 1;
+    setTimeout(function () {
+      state.talking = 0;
+      sayEl.textContent = main;
+      bubbleTimer = setTimeout(function () { bubble.classList.add('off'); }, 3200);
+      resolve();
+    }, est);
+  });
+}
+
+/* ---------- 給故事用的 Budi 動作（沒有 3D 時只顯示對話框） ---------- */
+function bExpr(n) { state.expr = n; if (has3D) setExpr(n); else qEl.classList.add('off'); }
+function bGest(n) { if (has3D) startGesture(n); }
+function bLook(ms) { if (has3D && TAB) lookOverride = { x: TAB.c.x, y: TAB.c.y, z: TAB.c.z, until: performance.now() + ms }; }
+function bView(v) { markView(v); if (has3D) setView(v); }
+
+/* =========================================================
+   平板上的知識管理系統
+   ========================================================= */
+var kmEl = $('#km');
+var km = {
+  lang: 'id', screen: 'login', user: 'budi', msgs: [], input: '', prefill: null,
+  doc: null, docFrom: 'chat', approved: false, asked: [],
+  up: { phase: -1, sec: 0, text: '' }
+};
+var kmListeners = [];
+function kmEmit(name, data) { kmListeners.forEach(function (f) { f(name, data); }); }
+function t(k) { return T[km.lang][k]; }
+function nowStr() { var d = new Date(); return '2026/11/28 ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+
+var LANG_BTN = { zh: '繁體中文', id: 'Bahasa Indonesia', vi: 'Tiếng Việt' };
+var LANG_SHORT = { zh: '中', id: 'ID', vi: 'VI' };
+
+function langPills(cls) {
+  return Object.keys(LANG_BTN).map(function (l) {
+    return '<button type="button" class="' + (km.lang === l ? 'on' : '') + '" data-act="lang" data-v="' + l + '"' +
+      (cls === 'short' ? ' aria-label="' + LANG_BTN[l] + '"' : '') + '>' + (cls === 'short' ? LANG_SHORT[l] : LANG_BTN[l]) + '</button>';
+  }).join('');
+}
+
+function htmlLogin() {
+  return '<div class="k-login"><div class="k-lcard">' +
+    '<div class="k-lhead"><div class="k-logo">AI</div><div><b>' + t('app') + '</b><small>' + t('appSub') + '</small></div></div>' +
+    '<div class="k-field"><span>' + t('account') + '</span><div class="k-input">budi.new</div></div>' +
+    '<div class="k-field"><span>' + t('password') + '</span><div class="k-input">••••••••</div></div>' +
+    '<div class="k-field"><span>' + t('language') + '</span><div class="k-langs">' + langPills() + '</div></div>' +
+    '<button type="button" class="k-primary pulse" data-act="login">' + t('login') + '</button>' +
+    '<div class="k-note">' + t('demoNote') + '</div>' +
+    '</div></div>';
+}
+
+function htmlTop() {
+  var title = { dashboard: t('app'), chat: t('titleChat'), upload: t('titleUp'), doc: t('titleKb'), kb: t('titleKb') }[km.screen];
+  var navOn = { dashboard: 'dashboard', chat: 'chat', upload: 'upload', doc: 'kb', kb: 'kb' }[km.screen];
+  var nav = [['dashboard', 'navDash'], ['chat', 'navChat'], ['upload', 'navUp'], ['kb', 'navKb']].map(function (n) {
+    return '<button type="button" class="' + (navOn === n[0] ? 'on' : '') + '" data-act="nav" data-v="' + n[0] + '">' + t(n[1]) + '</button>';
+  }).join('');
+  var master = km.user === 'master';
+  return '<div class="k-top">' +
+    '<div class="k-brand"><div class="k-logo">AI</div><div><small>' + t('os') + '</small><b>' + title + '</b></div></div>' +
+    '<nav class="k-nav">' + nav + '</nav>' +
+    '<div class="k-right"><div class="k-lang">' + langPills('short') + '</div>' +
+    '<div class="k-user' + (master ? ' master' : '') + '"><span class="av">' + (master ? '王' : 'B') + '</span><span>' + (master ? '王師傅' : 'Budi') +
+    '<small>' + t(master ? 'roleMaster' : 'roleNew') + '</small></span></div></div>' +
+    '</div>';
+}
+
+function htmlDash() {
+  var qa = [['chat', '💬', 'qaChat', 'qaChatS'], ['kb', '📚', 'qaKb', 'qaKbS'], ['upload', '📤', 'qaUp', 'qaUpS'], ['kb', '🗂️', 'qaMine', 'qaMineS']];
+  return '<div class="k-dash">' +
+    '<div class="k-h1">' + t('welcome') + '</div>' +
+    '<dl class="k-stats">' +
+    '<div class="k-stat"><dt>' + t('myRole') + '</dt><dd>' + t('roleNew') + '</dd></div>' +
+    '<div class="k-stat"><dt>' + t('prefLang') + '</dt><dd>' + t('langName') + '</dd></div>' +
+    '<div class="k-stat"><dt>' + t('status') + '</dt><dd>' + t('active') + '</dd></div>' +
+    '</dl>' +
+    '<div class="k-h2">' + t('quick') + '</div>' +
+    '<div class="k-quick">' + qa.map(function (q, i) {
+      return '<button type="button" class="k-qa' + (i === 0 && STEP_KEYS[storyIdx] ? ' pulse' : '') + '" data-act="nav" data-v="' + q[0] + '"><span class="ic">' + q[1] + '</span><span><b>' + t(q[2]) + '</b><small>' + t(q[3]) + '</small></span></button>';
+    }).join('') + '</div>' +
+    '</div>';
+}
+
+function cite(key, n) {
+  if (!n) return '';
+  var d = QA[key].src[n - 1];
+  return '<button type="button" class="cite" data-act="doc" data-v="' + d + '">[' + n + ']</button>';
+}
+function htmlAnswer(key) {
+  var a = QA[key].a[km.lang], h = '';
+  if (a.none) h += '<div class="none">' + esc(a.none) + '</div>';
+  if (a.lead) h += '<p>' + esc(a.lead) + '</p>';
+  function list(items) { return '<ul>' + items.map(function (it) { return '<li>' + esc(it[0]) + cite(key, it[1]) + '</li>'; }).join('') + '</ul>'; }
+  if (a.list) h += list(a.list);
+  if (a.secs) a.secs.forEach(function (s) { h += '<h4>' + esc(s[0]) + '</h4>' + list(s[1]); });
+  if (a.note) h += '<div class="note">' + esc(a.note) + '</div>';
+  var src = QA[key].src;
+  if (src.length) {
+    h += '<div class="k-srcs"><span>' + t('srcs') + '</span>' + src.map(function (d, i) {
+      return '<button type="button" class="k-src' + (DOCS[d].fresh ? ' new' : '') + '" data-act="doc" data-v="' + d + '"><b>[' + (i + 1) + ']</b>' + esc(DOCS[d].title) + '</button>';
+    }).join('') + '</div>';
+  }
+  return '<div class="k-ans">' + h + '</div>';
+}
+function htmlLog(m) {
+  var Q = QA[m.key], p = m.phase, h = '<ul class="k-log"><div class="lh">' + t('logH') + '</div>';
+  h += '<li class="' + (p === 0 ? 'run' : 'ok') + '">' + t('log1') + '</li>';
+  if (p >= 1) h += '<li class="ok">' + t('log2') + ' ' + Q.checked + '</li>';
+  if (p >= 2) {
+    h += '<li class="ok">' + (Q.src.length ? t('log3') : t('log3none')) + '</li>';
+    Q.src.forEach(function (d, i) { h += '<li class="src-l">[' + (i + 1) + '] ' + esc(DOCS[d].title) + '</li>'; });
+  }
+  if (p >= 3) h += '<li class="' + (p === 3 ? 'run' : 'ok') + '">' + t('log4') + '</li>';
+  if (p >= 4) h += '<li class="ok">' + (Q.none ? t('log5none') : t('log5')) + '</li>';
+  return h + '</ul>';
+}
+function htmlSugg() {
+  return '<div class="k-sugg">' + SUGG.map(function (k) {
+    return '<button type="button" data-act="sugg" data-v="' + k + '">' + esc(QA[k].q[km.lang]) + '</button>';
+  }).join('') + '</div>';
+}
+function htmlMsgs() {
+  if (!km.msgs.length) {
+    return '<div class="k-empty"><b>' + t('emptyT') + '</b><p>' + t('emptyP') + '</p>' + htmlSugg() + '</div>';
+  }
+  return km.msgs.map(function (m) {
+    if (m.role === 'user') {
+      var txt = m.key !== 'unknown' ? QA[m.key].q[km.lang] : m.text;
+      return '<div class="k-u"><div class="meta">' + t('you') + '・' + m.time + '</div><div class="txt">' + esc(txt) + '</div></div>';
+    }
+    var body;
+    if (m.key === 'unknown') body = '<div class="k-ans"><p>' + t('unknown') + '</p>' + htmlSugg() + '</div>';
+    else body = htmlLog(m) + (m.phase >= 4 ? htmlAnswer(m.key) : '');
+    return '<div class="k-ai"><div class="av">AI</div><div class="card"><div class="meta">' + t('ai') + '・' + m.time + '</div>' + body + '</div></div>';
+  }).join('');
+}
+function htmlChat() {
+  var hist = km.asked.slice().reverse().map(function (k, i) {
+    var q = k === 'unknown' ? '…' : QA[k].q[km.lang];
+    return '<div class="k-hist' + (i === 0 ? ' on' : '') + '">' + esc(q) + '<small>' + t('today') + '</small></div>';
+  }).join('');
+  var demos = ['展示｜查無機台知識', '展示｜印尼文', '展示｜越南文', '展示｜AI 不取得管理權限'].map(function (s) {
+    return '<div class="k-hist">' + s + '<small>2026/11/27</small></div>';
+  }).join('');
+  var ready = km.prefill && km.input === QA[km.prefill].q[km.lang];
+  var busy = km.msgs.some(function (m) { return m.role === 'ai' && m.phase < 4; });
+  return '<aside class="k-side"><button type="button" class="k-new" data-act="newchat">＋ ' + t('newChat') + '</button>' + hist + demos + '</aside>' +
+    '<section class="k-chat"><div class="k-msgs" id="k-msgs">' + htmlMsgs() + '</div>' +
+    '<div class="k-compose"><div class="k-box">' +
+    '<textarea id="k-ta" rows="2" placeholder="' + t('placeholder') + '" aria-label="' + t('placeholder') + '">' + esc(km.input) + '</textarea>' +
+    '<button type="button" class="k-cam" aria-label="photo" title="' + t('fine1') + '">📷</button>' +
+    '<button type="button" class="k-send' + (ready && !busy ? ' pulse' : '') + '" data-act="send"' + (busy ? ' disabled' : '') + '>' + t('send') + '</button>' +
+    '</div><div class="k-fine"><span>' + t('fine1') + '</span><span>' + t('fine2') + '</span></div></div></section>';
+}
+function htmlDoc() {
+  var d = DOCS[km.doc];
+  return '<div class="k-doc"><div class="k-crumb">' + t('titleKb') + ' / ' + esc(d.title) + '</div>' +
+    '<h3>' + esc(d.title) + '</h3>' +
+    '<div class="k-meta"><span class="k-pill">' + t('version') + ' v' + (d.fresh ? 1 : 3) + '</span><span class="k-pill ok">' + t('approved') + '</span><span class="k-pill">' + t('machine') + '：' + esc(d.machine) + '</span><span class="k-pill">/knowledge/' + d.no + '</span></div>' +
+    '<div class="k-dbody"><ul>' + d[km.lang].map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></div>' +
+    '<button type="button" class="k-back" data-act="back">← ' + t(km.docFrom === 'kb' ? 'kbAll' : 'back') + '</button></div>';
+}
+function htmlKb() {
+  var keys = Object.keys(DOCS).filter(function (k) { return !DOCS[k].fresh || km.approved; });
+  return '<div class="k-doc"><h3>' + t('kbAll') + '</h3><div class="k-list">' + keys.map(function (k) {
+    var d = DOCS[k];
+    return '<button type="button" class="k-row" data-act="doc" data-v="' + k + '">📄 ' + esc(d.title) + '<span class="k-pill ok">' + t('approved') + '</span></button>';
+  }).join('') + '</div></div>';
+}
+var WAVE = Array.from({ length: 34 }, function (_, i) { return 25 + Math.round(70 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * 0.6))); });
+function htmlUpload() {
+  var u = km.up, p = u.phase;
+  if (km.user !== 'master') {
+    return '<div class="k-doc"><h3>' + t('titleUp') + '</h3><div class="k-dbody">' + t('qaUpS') + '</div></div>';
+  }
+  var mm = ('0' + Math.floor(u.sec / 60)).slice(-2) + ':' + ('0' + (u.sec % 60)).slice(-2);
+  function st(i, label, sub) {
+    var cls = p > i ? 'ok' : (p === i ? 'now' : '');
+    if (i === 3 && p >= 4) cls = 'ok';
+    return '<li class="' + cls + '"><i></i><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span></li>';
+  }
+  return '<div class="k-up"><div>' +
+    '<div class="k-banner">' + t('upBanner') + '</div>' +
+    '<h3>' + t('titleUp') + '</h3>' +
+    '<div class="k-row2"><div class="k-field"><span>' + t('upTitle') + '</span><div class="k-input">JM150-DC Servo Overload</div></div>' +
+    '<div class="k-field"><span>' + t('upMachine') + '</span><div class="k-input">JM150-DC</div></div></div>' +
+    '<div class="k-field"><span>' + t('upType') + '</span><div class="k-types"><span>' + t('tDoc') + '</span><span>' + t('tVideo') + '</span><span>' + t('tImg') + '</span><span class="on">🎙 ' + t('tVoice') + '</span></div></div>' +
+    '<div class="k-rec' + (p === 0 ? ' live' : '') + '"><span class="dot"></span><span>' + (p === 0 ? t('recording') : t('recorded')) + '</span>' +
+    '<div class="k-wave">' + WAVE.map(function (h, i) { return '<i style="height:' + (p === 0 && i > u.sec * 0.8 ? 8 : h) + '%"></i>'; }).join('') + '</div><time>' + mm + '</time></div>' +
+    '<div class="k-field"><span>' + t('asrH') + '</span><div class="k-asr" lang="zh-Hant">' + esc(u.text) + (p === 1 ? '<span class="caret"></span>' : '') + '</div></div>' +
+    (p >= 4
+      ? '<button type="button" class="k-primary pulse" data-act="again">' + t('again') + '</button>'
+      : '<button type="button" class="k-primary' + (p === 2 ? ' pulse' : '') + '" data-act="submit"' + (p !== 2 ? ' disabled style="opacity:.45"' : '') + '>' + t('submit') + '</button>') +
+    '</div><div><div class="k-h2">' + t('reviewH') + '</div><ol class="k-steps">' +
+    st(0, t('st1'), 'JM150-DC・00:42') + st(1, t('st2')) + st(3, t('st3'), p === 3 ? t('st3s') : '') + st(4, t('st4'), p >= 4 ? t('st4s') : '') +
+    '</ol></div></div>';
+}
+
+function renderKM() {
+  kmEl.lang = km.lang === 'zh' ? 'zh-Hant' : km.lang;
+  var h;
+  if (km.screen === 'login') h = htmlLogin();
+  else {
+    var body = { dashboard: htmlDash, chat: htmlChat, doc: htmlDoc, kb: htmlKb, upload: htmlUpload }[km.screen]();
+    h = htmlTop() + '<div class="k-body">' + body + '</div>';
+  }
+  kmEl.innerHTML = h;
+  var box = $('#k-msgs');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+function renderMsgs() {
+  var box = $('#k-msgs');
+  if (!box || km.screen !== 'chat') { renderKM(); return; }
+  box.innerHTML = htmlMsgs();
+  box.scrollTop = box.scrollHeight;
+  var send = kmEl.querySelector('.k-send');
+  var busy = km.msgs.some(function (m) { return m.role === 'ai' && m.phase < 4; });
+  if (send) { send.disabled = busy; send.classList.toggle('pulse', !busy && !!km.prefill && km.input === QA[km.prefill].q[km.lang]); }
+}
+
+function setPrefill(k) {
+  km.prefill = k;
+  km.input = k ? QA[k].q[km.lang] : '';
+}
+function kmAsk() {
+  var text = (km.input || '').trim();
+  if (!text) return;
+  var key = 'unknown';
+  if (km.prefill && text === QA[km.prefill].q[km.lang]) key = km.prefill;
+  else {
+    Object.keys(QA).forEach(function (k) {
+      if (QA[k].q && ['zh', 'id', 'vi'].some(function (l) { return QA[k].q[l] === text; })) key = k;
+    });
+  }
+  if (key === 'alarm2') key = 'alarm';
+  if (key === 'alarm' && km.approved) key = 'alarm2';
+  var time = nowStr().slice(-5);
+  km.msgs.push({ role: 'user', key: key, text: text, time: time });
+  var m = { role: 'ai', key: key, phase: key === 'unknown' ? 4 : 0, time: time };
+  km.msgs.push(m);
+  km.asked.push(key);
+  km.input = ''; km.prefill = null;
+  renderKM();
+  if (key === 'unknown') return;
+  var my = ++kmToken;
+  (function step() {
+    setTimeout(function () {
+      if (my !== kmToken) return;
+      m.phase++;
+      renderMsgs();
+      if (m.phase < 4) step();
+      else kmEmit('answer', key);
+    }, reduceMotion ? 60 : [700, 650, 900, 1100][m.phase]);
+  })();
+}
+var kmToken = 0;
+
+function startUpload() {
+  var my = ++kmToken;
+  km.up = { phase: 0, sec: 0, text: '' };
+  renderKM();
+  var chars = Array.from(MASTER_SAY);
+  var tick = setInterval(function () {
+    if (my !== kmToken) { clearInterval(tick); return; }
+    var u = km.up;
+    if (u.phase === 0) {
+      u.sec = Math.min(42, u.sec + 3);
+      if (u.sec >= 42) u.phase = 1;
+    } else if (u.phase === 1) {
+      var n = Array.from(u.text).length + 3;
+      u.text = chars.slice(0, n).join('');
+      if (n >= chars.length) { u.phase = 2; clearInterval(tick); kmEmit('transcribed'); }
+    }
+    if (km.screen === 'upload') renderKM();
+  }, reduceMotion ? 20 : 90);
+}
+
+/* ---------- 平板上的點擊 ---------- */
+kmEl.addEventListener('input', function (e) {
+  if (e.target.id === 'k-ta') {
+    km.input = e.target.value;
+    var send = kmEl.querySelector('.k-send');
+    if (send) send.classList.toggle('pulse', !!km.prefill && km.input === QA[km.prefill].q[km.lang]);
+  }
+});
+kmEl.addEventListener('keydown', function (e) {
+  if (e.target.id === 'k-ta' && e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    var send = kmEl.querySelector('.k-send');
+    if (send && !send.disabled) kmAsk();
+  }
+});
+kmEl.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-act]');
+  if (!b || b.disabled) return;
+  touch();
+  var act = b.dataset.act, v = b.dataset.v;
+  if (act === 'lang') {
+    var wasPrefill = km.prefill && km.input === QA[km.prefill].q[km.lang];
+    km.lang = v;
+    if (wasPrefill) km.input = QA[km.prefill].q[km.lang];
+    renderKM();
+    kmEmit('lang', v);
+  } else if (act === 'login') {
+    km.screen = 'dashboard'; renderKM(); kmEmit('login');
+  } else if (act === 'nav') {
+    km.screen = v; renderKM(); kmEmit('nav', v);
+  } else if (act === 'sugg') {
+    if (km.screen !== 'chat') km.screen = 'chat';
+    setPrefill(v); renderKM();
+    var ta = $('#k-ta'); if (ta && !isNarrow()) ta.focus();
+  } else if (act === 'send') {
+    kmAsk();
+  } else if (act === 'newchat') {
+    km.msgs = []; kmToken++; renderKM();
+  } else if (act === 'doc') {
+    km.docFrom = km.screen === 'kb' ? 'kb' : 'chat';
+    km.doc = v; km.screen = 'doc'; renderKM(); kmEmit('doc', v);
+  } else if (act === 'back') {
+    km.screen = km.docFrom; renderKM();
+  } else if (act === 'submit') {
+    km.up.phase = 3; renderKM(); kmEmit('submitted');
+    var my = kmToken;
+    setTimeout(function () {
+      if (my !== kmToken) return;
+      km.up.phase = 4; km.approved = true;
+      if (km.screen === 'upload') renderKM();
+      kmEmit('approved');
+    }, reduceMotion ? 200 : 2200);
+  } else if (act === 'again') {
+    km.user = 'budi'; km.screen = 'chat'; km.msgs = [];
+    setPrefill('alarm'); renderKM(); kmEmit('again');
+  }
+});
+
+/* =========================================================
+   放大平板
+   ========================================================= */
+var modal = $('#modal'), scaler = $('#modal-scaler'), wrap = $('#screen-wrap');
+function fitModal() {
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var compact = vw < 640;
+  // 手機：平板改成單欄、窄版，字才看得清楚
+  var kw = compact ? 440 : 720;
+  var s = Math.min((vw - 52) / kw, compact ? 1 : (vh - 120) / 500, 1.45);
+  var kh = compact ? Math.max(420, Math.min(760, (vh - 110) / s)) : 500;
+  kmEl.classList.toggle('compact', compact);
+  kmEl.style.width = kw + 'px';
+  kmEl.style.height = kh + 'px';
+  scaler.style.transform = 'scale(' + s + ')';
+  scaler.parentNode.style.width = (kw * s + 20) + 'px';
+  scaler.parentNode.style.height = (kh * s + 20) + 'px';
+  var box = $('#k-msgs'); if (box) box.scrollTop = box.scrollHeight;
+}
+function openModal() {
+  if (!modal.hidden) return;
+  kmEl.style.transform = '';
+  scaler.appendChild(kmEl);
+  fitModal();
+  modal.hidden = false;
+  $('#modal-close').focus();
+}
+function closeModal() {
+  if (modal.hidden) return;
+  kmEl.classList.remove('compact');
+  kmEl.style.width = ''; kmEl.style.height = '';
+  (has3D ? wrap : $('#flat-host')).appendChild(kmEl);
+  modal.hidden = true;
+  if (!has3D) fitFlat();
+}
+$('#modal-close').addEventListener('click', closeModal);
+modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+$('#zoom-btn').addEventListener('click', openModal);
+$('#open-tablet').addEventListener('click', openModal);
+wrap.addEventListener('click', function () { if (wrap.classList.contains('mini')) openModal(); });
+window.addEventListener('resize', function () { if (!modal.hidden) fitModal(); if (!has3D) fitFlat(); });
+
+/* ---------- 鏡頭按鈕 ---------- */
+var toolBtns = $$('.tool[data-view]');
+function markView(v) { press(toolBtns, toolBtns.filter(function (b) { return b.dataset.view === v; })[0]); }
+toolBtns.forEach(function (b) { b.addEventListener('click', function () { touch(); bView(b.dataset.view); }); });
+
+/* =========================================================
+   故事：Budi 的一天
+   ========================================================= */
+var STEP_KEYS = [null, null, 'machines', 'cnc', 'defect', 'handover', 'alarm', null];
+var BEFORE = [null, null, 'tablet', 'cncQ', 'defectQ', 'handQ', 'alarmQ', 'master'];
+var AFTER = { machines: ['found', 'aha', 'nod'], cnc: ['cncA', 'happy', 'nod'], defect: ['defectA', 'happy', 'thumbs'], handover: ['handA', 'happy', 'nod'], alarm: ['alarm', 'worried', 'shrug'], alarm2: ['thanks', 'happy', 'thumbs'] };
+var storyIdx = 0;
+var stepDone = STEPS.map(function () { return false; });
+
+var stepList = $('#steps');
+STEPS.forEach(function (s, i) {
+  var li = document.createElement('li');
+  li.innerHTML = '<button type="button" class="step" data-i="' + i + '"><span class="t">' + s.time + '</span><b>' + s.title + '</b><i aria-hidden="true"></i></button>';
+  stepList.appendChild(li);
+});
+var stepBtns = $$('.step');
+stepBtns.forEach(function (b) { b.addEventListener('click', function () { goStep(+b.dataset.i); }); });
+$('#prev').addEventListener('click', function () { if (storyIdx > 0) goStep(storyIdx - 1); });
+$('#next').addEventListener('click', function () { goStep(storyIdx < STEPS.length - 1 ? storyIdx + 1 : 0, true); });
+
+function renderStep() {
+  var s = STEPS[storyIdx];
+  $('#now-time').textContent = s.time;
+  $('#now-count').textContent = (storyIdx + 1) + ' / ' + STEPS.length;
+  $('#now-title').textContent = s.title;
+  $('#now-story').textContent = s.story;
+  var todo = $('#now-todo');
+  todo.textContent = stepDone[storyIdx] ? s.done : s.todo;
+  todo.classList.toggle('done', stepDone[storyIdx]);
+  $('#prev').disabled = storyIdx === 0;
+  var last = storyIdx === STEPS.length - 1;
+  var next = $('#next');
+  next.textContent = last ? (stepDone[storyIdx] ? '重新開始這一天' : '從頭開始') : '下一步：' + STEPS[storyIdx + 1].time + ' ' + STEPS[storyIdx + 1].title;
+  next.classList.toggle('ready', stepDone[storyIdx]);
+  $('#open-tablet').hidden = storyIdx === 1;
+  stepBtns.forEach(function (b, i) {
+    if (i === storyIdx) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    b.classList.toggle('done', stepDone[i]);
+    b.querySelector('i').textContent = stepDone[i] ? '✓' : '';
+  });
+}
+function finish(i) {
+  stepDone[i] = true;
+  if (i === storyIdx) renderStep();
+}
+
+function goStep(i, fromNext) {
+  touch();
+  var my = ++token;
+  if (fromNext && i === 0) {
+    // 重新開始一天
+    stepDone = STEPS.map(function () { return false; });
+    km.msgs = []; km.asked = []; km.lang = 'id'; km.approved = false;
+  }
+  storyIdx = i;
+  kmToken++;
+  if (i < 7) { km.approved = false; km.user = 'budi'; }
+  km.msgs = km.msgs.filter(function (m) { return m.role === 'user' || m.phase >= 4; });
+  if (i === 0) { km.screen = 'login'; km.prefill = null; km.input = ''; }
+  else if (i === 1) { km.screen = 'dashboard'; }
+  else if (i === 7) { km.user = 'master'; km.screen = 'upload'; startUpload(); }
+  else { km.screen = 'chat'; km.msgs = []; setPrefill(STEP_KEYS[i]); }
+  renderKM();
+  renderStep();
+  bubble.classList.add('off');
+  perform(i, my);
+}
+
+async function perform(i, my) {
+  function alive() { return my === token; }
+  state.busy = true;
+  if (i === 0) {
+    bView('both');
+    bExpr('happy'); bGest('wave');
+    await say(LINES.hello); if (!alive()) return;
+    bExpr('hopeful'); bLook(2600);
+    await say(LINES.login); if (!alive()) return;
+  } else if (i === 1) {
+    bView('budi');
+    bExpr('focused'); bGest('read');
+    await sleep(1700); if (!alive()) return;
+    bExpr('confused');
+    var p = say(LINES.manual);
+    await sleep(900); if (!alive()) return;
+    bGest('scratch');
+    await p; if (!alive()) return;
+    await sleep(500); if (!alive()) return;
+    bExpr('hopeful'); bGest('point');
+    await say(LINES.help); if (!alive()) return;
+    finish(1);
+  } else {
+    bView(i === 7 ? 'tablet' : 'tablet');
+    bExpr(i === 6 ? 'worried' : 'hopeful');
+    if (i === 2) bGest('point');
+    bLook(3000);
+    await say(LINES[BEFORE[i]]); if (!alive()) return;
+  }
+  state.busy = false;
+  bExpr('neutral');
+}
+
+kmListeners.push(function (name, data) {
+  var my = token;
+  function alive() { return my === token; }
+  if (name === 'login' && storyIdx === 0) {
+    finish(0);
+    token++; my = token;
+    bExpr('happy'); bGest('nod');
+    say(LINES.loginOk).then(function () { if (alive()) bExpr('neutral'); });
+  } else if (name === 'answer') {
+    var r = AFTER[data];
+    if (!r) return;
+    if (STEP_KEYS[storyIdx] === data || (storyIdx === 7 && data === 'alarm2')) finish(storyIdx);
+    token++; my = token;
+    state.busy = true;
+    bExpr(r[1]); bGest(r[2]);
+    say(LINES[r[0]]).then(function () {
+      if (!alive()) return;
+      state.busy = false;
+      if (data !== 'alarm2') bExpr('neutral');
+    });
+  } else if (name === 'approved' && storyIdx === 7) {
+    bExpr('happy'); bGest('nod');
+  } else if (name === 'again' && storyIdx === 7) {
+    bExpr('hopeful'); bLook(2500);
+  } else if (name === 'transcribed' && storyIdx === 7) {
+    bLook(1500);
+  }
+});
+
+/* ---------- 沒有 3D 時：平板畫面平放在頁面上 ---------- */
+function fitFlat() {
+  var host = $('#flat-host');
+  var w = host.parentNode.clientWidth - 8;
+  var s = Math.min(1, w / 720);
+  host.style.width = (720 * s) + 'px';
+  host.style.height = (500 * s) + 'px';
+  kmEl.style.transformOrigin = '0 0';
+  kmEl.style.transform = 'scale(' + s + ')';
+}
+function enterNo3D() {
+  document.documentElement.classList.add('no3d');
+  $('#flat-host').appendChild(kmEl);
+  fitFlat();
+  bubble.classList.add('docked');
+  var place = function () {
+    var r = $('#flat img').getBoundingClientRect();
+    bubble.style.left = (r.right + 12) + 'px';
+    bubble.style.top = (r.top) + 'px';
+  };
+  place();
+  window.addEventListener('resize', place);
+  goStep(0);
+}
+
+/* =========================================================
+   3D
+   ========================================================= */
+var stage = $('#stage');
+var ok = !!window.THREE;
+var renderer;
+if (ok) {
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) { ok = false; }
+}
+if (!ok) { enterNo3D(); return; }
+has3D = true;
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
+camera.position.set(0.35, 1.5, 2.1);
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.55;
+controls.maxDistance = 5;
+controls.minPolarAngle = 0.75;
+controls.maxPolarAngle = 1.78;
+controls.rotateSpeed = 0.7;
+controls.target.set(0, 1.3, 0);
+
+/* ---------- 燈光 ---------- */
+scene.add(new THREE.HemisphereLight(0xcfe0f5, 0x2a2219, 0.62));
+var key = new THREE.DirectionalLight(0xfff0de, 1.75);
+key.position.set(1.3, 2.8, 2.3);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.left = -1.2; key.shadow.camera.right = 1.2;
+key.shadow.camera.top = 2.2; key.shadow.camera.bottom = -0.4;
+key.shadow.camera.near = 0.5; key.shadow.camera.far = 7;
+key.shadow.bias = -0.0012;
+key.shadow.normalBias = 0.02;
+scene.add(key);
+var rim = new THREE.DirectionalLight(0x7fd6c6, 1.05);
+rim.position.set(-1.9, 2.1, -1.7);
+scene.add(rim);
+var fill = new THREE.DirectionalLight(0xffd6b0, 0.38);
+fill.position.set(-1.6, 1.2, 1.9);
+scene.add(fill);
+
+/* ---------- 材質 ---------- */
+function col(h) { return new THREE.Color(h).convertSRGBToLinear(); }
+function mat(h, rough, extra) {
+  var m = new THREE.MeshStandardMaterial({ color: col(h), roughness: rough == null ? 0.7 : rough, metalness: 0 });
+  if (extra) Object.keys(extra).forEach(function (k) { m[k] = extra[k]; });
+  return m;
+}
+var M = {
+  skin: mat('#a46c46', 0.6, { emissive: col('#3a1a0a'), emissiveIntensity: 0.14 }),
+  skinShade: mat('#86563a', 0.62),
+  lip: mat('#7d3b33', 0.5),
+  hair: mat('#16110e', 0.72),
+  brow: mat('#1b1512', 0.85),
+  shirt: mat('#4d6577', 0.86),
+  shirtDark: mat('#3d5262', 0.88),
+  stripe: mat('#c9d2d6', 0.4),
+  pants: mat('#2a3038', 0.9),
+  shoe: mat('#1c1d20', 0.55),
+  sole: mat('#2f3134', 0.85),
+  belt: mat('#1d1c1b', 0.5),
+  sclera: mat('#fbf8f2', 0.3),
+  iris: new THREE.MeshStandardMaterial({ color: col('#5b3520'), roughness: 0.2 }),
+  pupil: new THREE.MeshBasicMaterial({ color: 0x050403 }),
+  glint: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+  bookCover: mat('#2f5d86', 0.6),
+  page: mat('#efe9dc', 0.9),
+  mouthIn: new THREE.MeshBasicMaterial({ color: 0xffffff })
+};
+
+/* ---------- 幾何工具 ---------- */
+function capsule(r1, r2, len, seg) {
+  seg = seg || 20;
+  var pts = [], n = 8, i, a;
+  for (i = 0; i <= n; i++) { a = -Math.PI / 2 + (Math.PI / 2) * (i / n); pts.push(new THREE.Vector2(Math.max(0.0001, r2 * Math.cos(a)), -len + r2 * Math.sin(a))); }
+  for (i = 0; i <= n; i++) { a = (Math.PI / 2) * (i / n); pts.push(new THREE.Vector2(Math.max(0.0001, r1 * Math.cos(a)), r1 * Math.sin(a))); }
+  return new THREE.LatheGeometry(pts, seg);
+}
+function mesh(geo, m, parent, x, y, z, cast) {
+  var o = new THREE.Mesh(geo, m);
+  o.position.set(x || 0, y || 0, z || 0);
+  o.castShadow = cast !== false;
+  o.receiveShadow = true;
+  if (parent) parent.add(o);
+  return o;
+}
+function sph(r, ws, hs) { return new THREE.SphereGeometry(r, ws || 32, hs || 24); }
+function grp(parent, x, y, z) { var g = new THREE.Group(); g.position.set(x || 0, y || 0, z || 0); if (parent) parent.add(g); return g; }
+function canvasTex(w, h, draw) {
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  var t = new THREE.CanvasTexture(c);
+  t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = 4;
+  return t;
+}
+var CJK = '"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif';
+
+/* =========================================================
+   建立 Budi
+   ========================================================= */
+var J = {};            // 關節
+var budi = grp(scene);
+budi.name = 'budi';
+
+J.hips = grp(budi, 0, 0.94, 0);
+// 骨盆與褲子
+(function () {
+  var p = [[0.150, -0.13], [0.160, -0.08], [0.163, -0.02], [0.158, 0.04], [0.152, 0.08]].map(function (v) { return new THREE.Vector2(v[0], v[1]); });
+  var m = mesh(new THREE.LatheGeometry(p, 32), M.pants, J.hips);
+  m.scale.z = 0.7;
+  var belt = mesh(new THREE.TorusGeometry(0.153, 0.012, 8, 40), M.belt, J.hips, 0, 0.065, 0);
+  belt.rotation.x = Math.PI / 2; belt.scale.y = 0.7;
+  var buckle = mesh(new THREE.BoxGeometry(0.04, 0.026, 0.008), mat('#9a9a92', 0.35, { metalness: 0.6 }), J.hips, 0, 0.065, 0.108);
+})();
+
+J.spine = grp(J.hips, 0, 0.05, 0);
+var torso;
+(function () {
+  var prof = [[0.148, -0.02], [0.152, 0.06], [0.163, 0.16], [0.176, 0.26], [0.180, 0.33], [0.172, 0.39], [0.150, 0.425], [0.105, 0.448], [0.062, 0.46]];
+  var p = prof.map(function (v) { return new THREE.Vector2(v[0], v[1]); });
+  torso = mesh(new THREE.LatheGeometry(p, 40), M.shirt, J.spine);
+  torso.scale.z = 0.64;
+  // 肩膀
+  [-1, 1].forEach(function (s) {
+    var sh = mesh(sph(0.064), M.shirt, J.spine, s * 0.168, 0.405, -0.005);
+    sh.scale.set(1, 0.82, 0.86);
+  });
+  // 領子
+  var collar = mesh(new THREE.TorusGeometry(0.066, 0.016, 10, 36, Math.PI * 1.5), M.shirtDark, J.spine, 0, 0.452, -0.004);
+  collar.rotation.x = Math.PI / 2;
+  collar.rotation.z = Math.PI * 0.25 + Math.PI;
+  collar.scale.set(1, 0.82, 1);
+  // 領口兩片
+  [-1, 1].forEach(function (s) {
+    var flap = mesh(new THREE.BoxGeometry(0.05, 0.05, 0.006), M.shirtDark, J.spine, s * 0.03, 0.425, 0.068);
+    flap.rotation.z = s * 0.75; flap.rotation.x = -0.35;
+  });
+  // V 領內的皮膚
+  var v = mesh(new THREE.CircleGeometry(0.028, 3), M.skin, J.spine, 0, 0.432, 0.067, false);
+  v.rotation.z = -Math.PI / 2; v.rotation.x = -0.35; v.scale.set(1.25, 0.9, 1);
+  // 鈕扣
+  [0.08, 0.18, 0.28, 0.37].forEach(function (y) {
+    var r = 0.152 + (y > 0.2 ? 0.024 : 0.012) * 1;
+    mesh(sph(0.0065, 10, 8), mat('#d9d4c8', 0.4), J.spine, 0, y, r * 0.64 + 0.003, false);
+  });
+  // 前襟線
+  var placket = mesh(new THREE.BoxGeometry(0.016, 0.36, 0.004), M.shirtDark, J.spine, 0, 0.23, 0.108, false);
+  placket.rotation.x = -0.06;
+  // 右胸口袋
+  var pk = mesh(new THREE.BoxGeometry(0.07, 0.075, 0.006), M.shirtDark, J.spine, -0.078, 0.29, 0.101, false);
+  pk.rotation.y = -0.38;
+  // 名牌
+  var badgeTex = canvasTex(256, 140, function (g, w, h) {
+    g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2f8f74'; g.fillRect(0, 0, w, 30);
+    g.fillStyle = '#ffffff'; g.font = '700 19px ' + CJK; g.textBaseline = 'middle';
+    g.fillText('新進員工  PEGAWAI BARU', 12, 16);
+    g.fillStyle = '#18232c'; g.font = '800 48px "Rajdhani",' + CJK;
+    g.fillText('Budi', 12, 74);
+    g.fillStyle = '#4d5c66'; g.font = '600 20px ' + CJK;
+    g.fillText('射出成型課・Day 1', 12, 116);
+  });
+  var badge = mesh(new THREE.PlaneGeometry(0.076, 0.042), new THREE.MeshStandardMaterial({ map: badgeTex, roughness: 0.4 }), J.spine, 0.082, 0.302, 0.1035, false);
+  badge.rotation.y = 0.4;
+})();
+
+// 脖子與頭
+J.neck = grp(J.spine, 0, 0.455, -0.004);
+mesh(capsule(0.05, 0.055, 0.075, 20), M.skin, J.neck, 0, 0.07, 0);
+J.head = grp(J.neck, 0, 0.058, 0.006);
+var H = grp(J.head, 0, 0.14, 0); // 頭部中心
+H.scale.setScalar(1.3);           // 卡通比例：頭比較大
+var face = {};
+var SK = { x: 0.1, y: 0.11, z: 0.105 }; // 頭殼橢球半徑
+// 頭殼表面上的點與法線（給腮紅貼在臉上）
+function skullPoint(x, y, lift) {
+  var z = SK.z * Math.sqrt(Math.max(0, 1 - Math.pow(x / SK.x, 2) - Math.pow(y / SK.y, 2)));
+  var n = new THREE.Vector3(x / (SK.x * SK.x), y / (SK.y * SK.y), z / (SK.z * SK.z)).normalize();
+  return { p: new THREE.Vector3(x, y, z).addScaledVector(n, lift), n: n };
+}
+(function () {
+  var skull = mesh(sph(1, 48, 36), M.skin, H);
+  skull.scale.set(SK.x, SK.y, SK.z);
+  // 圓圓的臉頰與小下巴
+  var jaw = mesh(sph(0.082, 48, 36), M.skin, H, 0, -0.036, 0.004);
+  jaw.scale.set(1.0, 0.9, 0.96);
+  // 耳朵
+  [-1, 1].forEach(function (s) {
+    var ear = mesh(sph(0.027, 20, 16), M.skin, H, s * 0.1, -0.01, -0.008);
+    ear.scale.set(0.42, 1, 0.64);
+    ear.rotation.y = s * 0.3;
+    var inner = mesh(sph(0.015, 14, 10), M.skinShade, H, s * 0.107, -0.011, -0.004, false);
+    inner.scale.set(0.3, 0.85, 0.5);
+  });
+  // 小圓鼻頭
+  var tip = mesh(sph(0.0105, 20, 16), M.skin, H, 0, -0.022, 0.1035, false);
+  tip.scale.set(1.25, 0.9, 0.85);
+  // 大眼睛
+  var ER = 0.024;
+  function cap(r, ang, m) {
+    var g = new THREE.SphereGeometry(r, 32, 12, 0, Math.PI * 2, 0, ang);
+    g.rotateX(Math.PI / 2);
+    return new THREE.Mesh(g, m);
+  }
+  face.eyes = [];
+  face.upper = []; face.lower = [];
+  [-1, 1].forEach(function (s) {
+    var base = grp(H, s * 0.041, 0.002, 0.077);
+    var eye = grp(base);
+    mesh(sph(ER, 32, 24), M.sclera, eye, 0, 0, 0, false);
+    eye.add(cap(ER + 0.00015, 0.66, M.iris));   // 黑眼珠
+    eye.add(cap(ER + 0.0003, 0.33, M.pupil));   // 瞳孔
+    // 兩個反光點：一大一小
+    [[0.006, 0.0068, 0.0042], [-0.0045, -0.0052, 0.0019]].forEach(function (g) {
+      var gl = mesh(new THREE.CircleGeometry(g[2], 16), M.glint, eye, g[0], g[1], 0, false);
+      gl.position.z = Math.sqrt(ER * ER - g[0] * g[0] - g[1] * g[1]) + 0.0006;
+      gl.rotation.order = 'YXZ';
+      gl.rotation.y = Math.asin(g[0] / ER);
+      gl.rotation.x = -Math.asin(g[1] / ER);
+    });
+    face.eyes.push(eye);
+    var up = mesh(new THREE.SphereGeometry(ER * 1.055, 32, 14, 0, Math.PI * 2, 0, Math.PI / 2), M.skin, base, 0, 0, 0, false);
+    var lo = mesh(new THREE.SphereGeometry(ER * 1.035, 32, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), M.skin, base, 0, 0, 0, false);
+    // 上眼線（卡通感的粗線）
+    var lash = mesh(new THREE.TorusGeometry(ER * 1.065, 0.0017, 6, 32, Math.PI), M.brow, up, 0, 0, 0, false);
+    lash.rotation.x = Math.PI / 2;
+    face.upper.push(up); face.lower.push(lo);
+  });
+  // 眉毛（細、帶弧度）
+  face.brows = [];
+  [-1, 1].forEach(function (s) {
+    var g = grp(H, s * 0.043, 0.046, 0.088);
+    var R = 0.034, arc = 0.78;
+    var geo = new THREE.TorusGeometry(R, 0.0032, 8, 20, arc);
+    geo.rotateZ(Math.PI / 2 - arc / 2);
+    geo.translate(0, -R, 0);
+    var b = mesh(geo, M.brow, g, 0, 0, 0, false);
+    b.scale.set(1, 1, 0.6);
+    b.rotation.z = s * -0.12;
+    g.userData.s = s;
+    g.rotation.y = s * 0.38;
+    face.brows.push(g);
+  });
+  // 腮紅（柔邊，濃淡跟著表情）
+  var blushTex = canvasTex(64, 64, function (g, w, h) {
+    var gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    gr.addColorStop(0, 'rgba(255,120,120,0.9)');
+    gr.addColorStop(0.55, 'rgba(255,120,120,0.45)');
+    gr.addColorStop(1, 'rgba(255,120,120,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  });
+  face.blushM = new THREE.MeshBasicMaterial({ map: blushTex, transparent: true, depthWrite: false, opacity: 0.4 });
+  [-1, 1].forEach(function (s) {
+    var sp = skullPoint(s * 0.06, -0.026, 0.0018);
+    var bl = mesh(new THREE.CircleGeometry(0.016, 24), face.blushM, H, sp.p.x, sp.p.y, sp.p.z, false);
+    bl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), sp.n);
+    bl.scale.set(1.25, 0.8, 1);
+    bl.renderOrder = 2;
+  });
+  // 頭髮：沿頭型長出來，前額髮際、側分、後腦到頸部
+  var hairTex = canvasTex(256, 256, function (g, w, h) {
+    g.fillStyle = '#17120f'; g.fillRect(0, 0, w, h);
+    for (var i = 0; i < 900; i++) {
+      var x = (i * 97) % w, y = (i * 53) % h, l = 10 + (i % 7) * 4;
+      g.strokeStyle = i % 3 ? 'rgba(70,58,50,0.35)' : 'rgba(5,4,3,0.5)';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + ((i % 5) - 2), y + l); g.stroke();
+    }
+  });
+  var hairM = new THREE.MeshStandardMaterial({ map: hairTex, roughness: 0.62, color: 0xffffff });
+  var hg = new THREE.SphereGeometry(1, 72, 54);
+  var pos = hg.attributes.position, v = new THREE.Vector3();
+  for (var i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    var x = v.x, y = v.y, z = v.z;
+    var line = -0.05 + 0.72 * z + 0.28 * Math.abs(x) * (1 - Math.abs(z));
+    // 太陽穴兩側稍微往後
+    line += 0.08 * Math.exp(-Math.pow((Math.abs(x) - 0.6) / 0.18, 2)) * Math.max(0, z);
+    var side = Math.abs(x) > 0.86 && z > -0.1 && z < 0.34 && y > -0.26 && y < 0.25;  // 鬢角
+    var isHair = y > line || side;
+    var r;
+    if (isHair) {
+      var vol = 1.07 + 0.055 * Math.max(0, y) * (0.55 + 0.45 * Math.max(0, z));
+      vol += 0.012 * Math.sin(x * 23 + z * 7) * Math.sin(y * 19) ;
+      vol -= 0.022 * Math.exp(-Math.pow((x - 0.38) / 0.07, 2)) * Math.max(0, y - 0.2); // 側分線
+      vol += 0.03 * Math.exp(-Math.pow((x + 0.1) / 0.35, 2)) * Math.max(0, z - 0.2) * Math.max(0, y - 0.3) * 3; // 前額蓬起
+      if (side && !(y > line)) vol = 1.012;
+      r = vol;
+    } else {
+      r = 0.93;
+    }
+    pos.setXYZ(i, x * r, y * r, z * r);
+  }
+  hg.computeVertexNormals();
+  var hair = mesh(hg, hairM, H, 0, 0.002, -0.002);
+  hair.scale.set(SK.x, SK.y, SK.z);
+})();
+
+// 嘴巴（每次表情改變時重建）
+var mouthG = grp(H, 0, -0.056, 0.0955);
+var mouthTex = canvasTex(64, 64, function (g, w, h) {
+  var gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#3a1612'); gr.addColorStop(1, '#5c211d');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#ebe5d8'; g.fillRect(0, 0, w, 20);
+  g.fillStyle = 'rgba(120,100,90,0.5)';
+  for (var i = 1; i < 6; i++) g.fillRect(i * w / 6, 0, 1, 20);
+  g.fillStyle = '#8c3a33'; g.beginPath(); g.ellipse(w / 2, h + 6, w * 0.32, 18, 0, 0, Math.PI * 2); g.fill();
+});
+M.mouthIn.map = mouthTex;
+M.mouthIn.color = new THREE.Color(0xffffff);
+var mouthParts = null, mouthKey = '';
+function buildMouth(open, smile) {
+  var k = open.toFixed(3) + '|' + smile.toFixed(3);
+  if (k === mouthKey) return;
+  mouthKey = k;
+  if (mouthParts) mouthParts.forEach(function (m) { mouthG.remove(m); m.geometry.dispose(); });
+  var w = 0.0155 + Math.max(0, smile) * 0.004 - open * 0.002;
+  var cy = smile * 0.0068;
+  var upMid = 0.0012 + open * 0.0036;
+  var loMid = -0.0012 - open * 0.017 - Math.max(0, smile) * 0.0035;
+  function curve(mid, n) {
+    var pts = [];
+    for (var i = 0; i <= n; i++) {
+      var x = -w + (2 * w) * (i / n), u = x / w;
+      var y = cy + (1 - u * u) * (mid - cy);
+      pts.push(new THREE.Vector3(x, y, -u * u * 0.0065));
+    }
+    return pts;
+  }
+  var up = curve(upMid, 8), lo = curve(loMid, 8);
+  var upT = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(up), 24, 0.0024, 6, false);
+  var loT = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lo), 24, 0.003, 6, false);
+  var parts = [new THREE.Mesh(upT, M.lip), new THREE.Mesh(loT, M.lip)];
+  if (upMid - loMid > 0.0035) {
+    var shape = new THREE.Shape();
+    shape.moveTo(up[0].x, up[0].y);
+    for (var i = 1; i < up.length; i++) shape.lineTo(up[i].x, up[i].y);
+    for (i = lo.length - 1; i >= 0; i--) shape.lineTo(lo[i].x, lo[i].y);
+    var sg = new THREE.ShapeGeometry(shape);
+    var pos = sg.attributes.position, uv = sg.attributes.uv;
+    for (i = 0; i < pos.count; i++) {
+      var x = pos.getX(i), y = pos.getY(i), u2 = x / w;
+      var top = cy + (1 - u2 * u2) * (upMid - cy), bot = cy + (1 - u2 * u2) * (loMid - cy);
+      uv.setXY(i, (x + w) / (2 * w), 1 - (top - y) / Math.max(0.0001, top - bot));
+      pos.setZ(i, -u2 * u2 * 0.0065 - 0.0012);
+    }
+    parts.push(new THREE.Mesh(sg, M.mouthIn));
+  }
+  parts.forEach(function (m) { mouthG.add(m); });
+  mouthParts = parts;
+}
+
+// 手臂
+function buildArm(s) {
+  var sh = grp(J.spine, s * 0.178, 0.405, -0.006);
+  sh.userData.baseY = 0.405;
+  var sleeve = mesh(capsule(0.056, 0.05, 0.15, 24), M.shirt, sh);
+  var hem = mesh(new THREE.TorusGeometry(0.049, 0.007, 8, 28), M.shirtDark, sh, 0, -0.17, 0);
+  hem.rotation.x = Math.PI / 2;
+  var band = mesh(new THREE.TorusGeometry(0.0545, 0.0055, 6, 28), M.stripe, sh, 0, -0.085, 0, false);
+  band.rotation.x = Math.PI / 2;
+  mesh(capsule(0.042, 0.038, 0.27, 20), M.skin, sh, 0, -0.02, 0);
+  var el = grp(sh, 0, -0.285, 0);
+  mesh(capsule(0.039, 0.031, 0.235, 20), M.skin, el);
+  var wr = grp(el, 0, -0.258, 0);
+  // 手
+  var hand = grp(wr);
+  var palm = mesh(sph(0.042, 20, 16), M.skin, hand, 0, -0.045, 0);
+  palm.scale.set(0.5, 1.05, 0.95);
+  var knuck = grp(hand, 0, -0.08, 0);
+  var idx = grp(knuck, 0, 0, 0.022);
+  mesh(capsule(0.0105, 0.0095, 0.048, 10), M.skin, idx);
+  var fing = grp(knuck, 0, 0, -0.008);
+  var f = mesh(capsule(0.012, 0.011, 0.045, 12), M.skin, fing);
+  f.scale.set(0.95, 1, 2.3);
+  var th = grp(hand, -s * 0.012, -0.035, 0.03);
+  var thm = mesh(capsule(0.011, 0.01, 0.035, 10), M.skin, th);
+  th.rotation.x = -0.55;
+  return { sh: sh, el: el, wr: wr, hand: hand, idx: idx, fing: fing, th: th, s: s };
+}
+var armL = buildArm(1), armR = buildArm(-1);
+J.lSh = armL.sh; J.lEl = armL.el; J.lWr = armL.wr;
+J.rSh = armR.sh; J.rEl = armR.el; J.rWr = armR.wr;
+
+// 腿
+function buildLeg(s) {
+  var hip = grp(J.hips, s * 0.088, -0.05, 0);
+  mesh(capsule(0.086, 0.066, 0.4, 24), M.pants, hip);
+  var kn = grp(hip, 0, -0.43, 0);
+  mesh(capsule(0.067, 0.058, 0.36, 22), M.pants, kn);
+  var an = grp(kn, 0, -0.39, 0);
+  var shoe = mesh(sph(0.056, 24, 18), M.shoe, an, 0, -0.022, 0.035);
+  shoe.scale.set(0.95, 0.62, 1.85);
+  var sole = mesh(new THREE.BoxGeometry(0.096, 0.016, 0.205), M.sole, an, 0, -0.053, 0.035);
+  return { hip: hip, kn: kn, an: an };
+}
+var legL = buildLeg(1), legR = buildLeg(-1);
+J.lHip = legL.hip; J.lKn = legL.kn; J.lAn = legL.an;
+J.rHip = legR.hip; J.rKn = legR.kn; J.rAn = legR.an;
+
+// 手冊（拿在左手）
+var book = grp(J.spine);
+var bookParts = {};
+(function () {
+  var W = 0.17, Hh = 0.235, T = 0.012;
+  var coverTex = canvasTex(256, 352, function (g, w, h) {
+    g.fillStyle = '#2f5d86'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#e4d9c0'; g.fillRect(0, 54, w, 4);
+    g.font = '800 30px ' + CJK; g.fillStyle = '#f4efe4'; g.textBaseline = 'top';
+    g.fillText('射出成型機', 22, 82);
+    g.fillText('操作手冊', 22, 120);
+    g.font = '700 34px "Rajdhani",' + CJK; g.fillStyle = '#e8c98f';
+    g.fillText('JM150', 22, 172);
+    g.font = '500 16px ' + CJK; g.fillStyle = 'rgba(244,239,228,0.75)';
+    g.fillText('MK6 / DC 共用版', 22, 214);
+    g.fillText('第 3 版・內部文件', 22, 300);
+  });
+  var pageTex = canvasTex(256, 352, function (g, w, h) {
+    g.fillStyle = '#efe9dc'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2b2b2b'; g.font = '700 18px ' + CJK; g.textBaseline = 'top';
+    g.fillText('第四章 模溫設定', 20, 22);
+    g.fillStyle = 'rgba(40,40,40,0.55)';
+    for (var y = 58; y < h - 20; y += 15) {
+      var len = 150 + ((y * 37) % 60);
+      g.fillRect(20, y, len, 6);
+    }
+  });
+  var coverM = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.6 });
+  var pageM = new THREE.MeshStandardMaterial({ map: pageTex, roughness: 0.9 });
+  // 兩半，以書脊（x=0）為軸
+  function half(dir) {
+    var g = grp(book);
+    var c = mesh(new THREE.BoxGeometry(W, Hh, 0.004), M.bookCover, g, W / 2, 0, dir * (T / 2 + 0.002));
+    var p = mesh(new THREE.BoxGeometry(W - 0.008, Hh - 0.01, T / 2), M.page, g, W / 2, 0, dir * T / 4);
+    return { g: g, cover: c, pages: p };
+  }
+  bookParts.front = half(1);
+  bookParts.back = half(-1);
+  var face1 = mesh(new THREE.PlaneGeometry(W - 0.002, Hh - 0.002), coverM, bookParts.front.g, W / 2, 0, T / 2 + 0.0042, false);
+  var inner = mesh(new THREE.PlaneGeometry(W - 0.012, Hh - 0.014), pageM, bookParts.back.g, W / 2, 0, 0.0002 + 0.0001, false);
+  inner.position.z = 0.0003;
+  bookParts.inner = inner;
+  var spine = mesh(new THREE.BoxGeometry(0.008, Hh, T + 0.008), M.bookCover, book, 0, 0, 0);
+})();
+
+
+
+/* =========================================================
+   場景：地板、工作桌、平板、樣品、背景的 JM150-DC
+   ========================================================= */
+budi.position.set(0.34, 0, -0.04);
+budi.rotation.y = -0.3;
+
+(function () {
+  var R = 1.3;
+  var plate = mesh(new THREE.CylinderGeometry(R, R, 0.03, 6), mat('#14302c', 0.85), scene, -0.08, -0.015, 0.02, false);
+  plate.rotation.y = Math.PI / 6;
+  var edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(R, R, 0.03, 6)), new THREE.LineBasicMaterial({ color: col('#4fb393'), transparent: true, opacity: 0.5 }));
+  edge.position.set(-0.08, -0.015, 0.02); edge.rotation.y = Math.PI / 6;
+  scene.add(edge);
+  var sh = new THREE.Mesh(new THREE.CircleGeometry(3.2, 48), new THREE.ShadowMaterial({ opacity: 0.32 }));
+  sh.rotation.x = -Math.PI / 2; sh.position.y = 0.001; sh.receiveShadow = true;
+  scene.add(sh);
+  var glow = mesh(new THREE.RingGeometry(R + 0.04, R + 0.7, 6), new THREE.MeshBasicMaterial({ color: col('#4fb393'), transparent: true, opacity: 0.05, depthWrite: false }), scene, -0.08, 0.002, 0.02, false);
+  glow.rotation.x = -Math.PI / 2; glow.rotation.z = Math.PI / 6;
+})();
+key.shadow.camera.left = -1.6; key.shadow.camera.right = 1.4;
+key.shadow.camera.updateProjectionMatrix();
+
+// 工作桌
+var bench = grp(scene, -0.5, 0, 0.14);
+bench.rotation.y = 0.22;
+(function () {
+  var steel = mat('#4a5763', 0.42, { metalness: 0.35 });
+  var leg = mat('#2b3138', 0.6, { metalness: 0.4 });
+  mesh(new THREE.BoxGeometry(0.92, 0.04, 0.56), steel, bench, 0, 0.86, 0);
+  mesh(new THREE.BoxGeometry(0.92, 0.014, 0.014), mat('#d6a645', 0.5), bench, 0, 0.846, 0.282, false);
+  [[-0.42, -0.24], [0.42, -0.24], [-0.42, 0.24], [0.42, 0.24]].forEach(function (p) {
+    mesh(new THREE.BoxGeometry(0.04, 0.84, 0.04), leg, bench, p[0], 0.42, p[1]);
+  });
+  mesh(new THREE.BoxGeometry(0.86, 0.02, 0.5), leg, bench, 0, 0.18, 0);
+  // 層架上的零件盒
+  [['#2f6f9f', -0.28], ['#d07a2e', -0.02], ['#2f6f9f', 0.24]].forEach(function (b) {
+    mesh(new THREE.BoxGeometry(0.2, 0.11, 0.3), mat(b[0], 0.7), bench, b[1], 0.245, 0.02);
+  });
+})();
+
+// 工業平板（橘色防撞角）
+var tabG = grp(bench, -0.06, 0.88, 0.03);
+(function () {
+  var dark = mat('#1d2329', 0.35, { metalness: 0.4 });
+  mesh(new THREE.BoxGeometry(0.17, 0.014, 0.13), dark, tabG, 0, 0.007, -0.02);
+  var arm = mesh(new THREE.BoxGeometry(0.035, 0.17, 0.022), dark, tabG, 0, 0.09, -0.05);
+  arm.rotation.x = -0.32;
+})();
+var tg = grp(tabG, 0, 0.215, -0.02);
+tg.rotation.x = -0.34;
+(function () {
+  mesh(new THREE.BoxGeometry(0.44, 0.31, 0.02), mat('#20262c', 0.4, { metalness: 0.3 }), tg, 0, 0, 0);
+  var bump = mat('#e0852e', 0.6);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (c) {
+    mesh(new THREE.BoxGeometry(0.05, 0.05, 0.03), bump, tg, c[0] * 0.205, c[1] * 0.14, 0);
+  });
+  var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.412, 0.286), new THREE.MeshBasicMaterial({ color: 0x0b1118 }));
+  scr.position.z = 0.0102;
+  tg.add(scr);
+})();
+scene.updateMatrixWorld(true);
+TAB = {
+  g: tg,
+  c: new THREE.Vector3(0, 0, 0.0103).applyMatrix4(tg.matrixWorld),
+  n: new THREE.Vector3(0, 0, 1).transformDirection(tg.matrixWorld),
+  corners: [[-0.206, 0.143], [0.206, 0.143], [-0.206, -0.143], [0.206, -0.143]].map(function (p) {
+    return new THREE.Vector3(p[0], p[1], 0.0103).applyMatrix4(tg.matrixWorld);
+  })
+};
+
+// 樣品：JM150-DC 做的雙色手柄，邊緣有一道刮痕
+var sample = grp(bench, 0.27, 0.905, 0.1);
+sample.rotation.y = 0.7;
+(function () {
+  var body = mesh(capsule(0.024, 0.021, 0.15, 18), mat('#3a3f45', 0.5), sample, 0, 0, 0);
+  body.rotation.z = Math.PI / 2; body.position.x = 0.075;
+  var grip = mesh(capsule(0.0275, 0.0275, 0.07, 18), mat('#e07a2e', 0.75), sample, 0, 0, 0);
+  grip.rotation.z = Math.PI / 2; grip.position.x = 0.02;
+  var scratch = mesh(new THREE.BoxGeometry(0.045, 0.0025, 0.003), new THREE.MeshBasicMaterial({ color: 0xf4efe6 }), sample, -0.06, 0.0205, 0.006, false);
+  scratch.rotation.y = 0.25;
+})();
+
+// 背景：JM150-DC 雙色射出成型機
+var machine = grp(scene, -0.35, 0, -1.75);
+machine.rotation.y = 0.08;
+var MACH = {};
+(function () {
+  var frameM = mat('#22384a', 0.7);
+  var cover = mat('#5d6a74', 0.6);
+  mesh(new THREE.BoxGeometry(2.6, 0.72, 0.85), frameM, machine, 0, 0.36, 0);
+  mesh(new THREE.BoxGeometry(1.5, 0.46, 0.62), cover, machine, 0.35, 0.95, 0);
+  mesh(new THREE.BoxGeometry(0.85, 0.95, 0.8), frameM, machine, -0.82, 1.08, 0);
+  var hop = mesh(new THREE.CylinderGeometry(0.17, 0.06, 0.34, 20), cover, machine, 0.85, 1.36, 0);
+  var hop2 = mesh(new THREE.CylinderGeometry(0.12, 0.17, 0.08, 20), mat('#e07a2e', 0.6), machine, 0.55, 1.26, 0.12);
+  // 控制面板
+  var panel = grp(machine, 1.05, 1.15, 0.44);
+  mesh(new THREE.BoxGeometry(0.38, 0.3, 0.05), mat('#1b2025', 0.5), panel, 0, 0, 0);
+  MACH.panelCanvas = document.createElement('canvas');
+  MACH.panelCanvas.width = 256; MACH.panelCanvas.height = 192;
+  MACH.panelTex = new THREE.CanvasTexture(MACH.panelCanvas);
+  MACH.panelTex.encoding = THREE.sRGBEncoding;
+  var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.33, 0.25), new THREE.MeshBasicMaterial({ map: MACH.panelTex }));
+  scr.position.z = 0.0255;
+  panel.add(scr);
+  // 銘牌
+  var plateTex = canvasTex(256, 64, function (g, w, h) {
+    g.fillStyle = '#d7dadc'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#1b2025'; g.font = '700 30px "Rajdhani",' + CJK; g.textBaseline = 'middle';
+    g.fillText('JM150-DC', 12, 24);
+    g.font = '600 15px ' + CJK; g.fillStyle = '#4d5c66';
+    g.fillText('雙色射出成型機', 12, 49);
+  });
+  var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1), new THREE.MeshStandardMaterial({ map: plateTex, roughness: 0.4 }));
+  plate.position.set(-0.3, 0.52, 0.426);
+  machine.add(plate);
+  // 三色燈
+  var tower = grp(machine, 1.22, 1.45, 0.3);
+  mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.25, 8), mat('#222', 0.5), tower, 0, -0.13, 0);
+  function lamp(y, c) {
+    var m = new THREE.MeshStandardMaterial({ color: col(c), emissive: col(c), emissiveIntensity: 0.15, roughness: 0.3 });
+    mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.06, 16), m, tower, 0, y, 0, false);
+    return m;
+  }
+  MACH.green = lamp(0.03, '#3ccf6e');
+  MACH.amber = lamp(0.095, '#f0b44c');
+  MACH.red = lamp(0.16, '#ff4d4d');
+})();
+MACH.alarm = null;
+function drawPanel(alarm, blink) {
+  var g = MACH.panelCanvas.getContext('2d'), w = 256, h = 192;
+  g.fillStyle = alarm ? (blink ? '#4a0d0d' : '#2a0909') : '#0c1a14'; g.fillRect(0, 0, w, h);
+  g.fillStyle = alarm ? '#ff6b6b' : '#4ade80';
+  g.font = '700 26px "Rajdhani",' + CJK; g.textBaseline = 'top';
+  g.fillText(alarm ? 'ALARM' : 'RUN', 14, 12);
+  g.font = '600 18px "Rajdhani",' + CJK; g.fillStyle = '#d6e2ea';
+  g.fillText('JM150-DC', 14, 48);
+  if (alarm) {
+    g.fillStyle = '#ffb3ab'; g.font = '700 22px "Rajdhani",' + CJK;
+    g.fillText('SERVO OVERLOAD', 14, 92);
+    g.font = '500 15px ' + CJK; g.fillStyle = '#ffd6d2';
+    g.fillText('E-217  伺服過載', 14, 128);
+  } else {
+    g.font = '500 16px ' + CJK; g.fillStyle = '#9ae6b4';
+    g.fillText('Cycle 28.4 s', 14, 92);
+    g.fillText('Shot 1,286', 14, 118);
+  }
+  MACH.panelTex.needsUpdate = true;
+}
+function updateMachine(t) {
+  var alarm = storyIdx === 6 || (storyIdx === 7 && !km.approved);
+  var blink = Math.floor(t * 2.4) % 2 === 0;
+  var key2 = alarm + '|' + (alarm ? blink : '');
+  if (key2 !== MACH.alarm) { MACH.alarm = key2; drawPanel(alarm, blink); }
+  MACH.green.emissiveIntensity = alarm ? 0.05 : 1.2;
+  MACH.red.emissiveIntensity = alarm ? (blink ? 2.2 : 0.2) : 0.08;
+}
+
+/* =========================================================
+   姿勢系統（手臂用反向運動學：指定手腕位置，自動算肩與肘）
+   ========================================================= */
+var JOINT_KEYS = ['hips', 'spine', 'neck', 'head', 'lWr', 'rWr', 'lHip', 'lKn', 'lAn', 'rHip', 'rKn', 'rAn'];
+JOINT_KEYS.forEach(function (k) { J[k].rotation.order = 'YXZ'; });
+
+// 閱讀時手冊的朝向：書頁朝向眼睛，左右攤開
+var READ_ROT = (function () {
+  var n = new THREE.Vector3(0, 0.86, -0.51).normalize();
+  var zA = new THREE.Vector3(1, 0, 0);
+  var yA = new THREE.Vector3().crossVectors(zA, n).normalize();
+  var m = new THREE.Matrix4().makeBasis(n, yA, zA);
+  var e = new THREE.Euler().setFromRotationMatrix(m, 'XYZ');
+  return [e.x, e.y, e.z];
+})();
+
+// 站姿：左手把手冊夾在前臂上
+var BASE = {
+  hips: [0, 0, 0], spine: [-0.02, 0, 0], neck: [0, 0, 0], head: [0, 0, 0],
+  lT: [0.15, 0.1, 0.25], lP: [1, -0.3, -0.8], lWr: [0, 0, 0],
+  rT: [-0.215, -0.11, 0.05], rP: [-0.25, 0, -1], rWr: [0, 0.2, 0],
+  lHip: [0.0, 0, 0.035], lKn: [0.03, 0, 0], lAn: [-0.03, 0, -0.035],
+  rHip: [0.0, -0.12, -0.03], rKn: [0.02, 0, 0], rAn: [-0.02, 0.1, 0.03],
+  lCurl: 0.8, rCurl: 0.35, rIdx: 0.3, lThumb: 0.2, rThumb: 0, bookOpen: 0, shrug: 0,
+  bOff: [0.0, 0.04, 0.0], bAbs: 0, bAbsP: [0, 0.24, 0.3], bR: [0, 0.9, 0]
+};
+// 翻閱手冊：雙手在胸前打開書
+var READ = {
+  lT: [0.14, 0.17, 0.25], lP: [1, -1, -0.4], lWr: [0.3, -0.9, 0],
+  rT: [-0.14, 0.17, 0.25], rP: [-1, -1, -0.4], rWr: [0.3, 0.9, 0],
+  head: [0.4, 0, 0], neck: [0.12, 0, 0],
+  lCurl: 0.45, rCurl: 0.4, rIdx: 0.3, bookOpen: 1,
+  bAbs: 1, bAbsP: [0, 0.235, 0.3], bR: READ_ROT
+};
+
+var cur = {};
+function copyPose(src, dst) { Object.keys(src).forEach(function (k) { dst[k] = Array.isArray(src[k]) ? src[k].slice() : src[k]; }); }
+copyPose(BASE, cur);
+
+var gesture = null; // { name, t, dur, fn, cb }
+var stance = BASE;
+var lookOverride = null;
+
+function lerpPose(a, b, t) {
+  var o = {};
+  Object.keys(b).forEach(function (k) {
+    if (Array.isArray(b[k])) {
+      var av = a[k] || BASE[k];
+      o[k] = [av[0] + (b[k][0] - av[0]) * t, av[1] + (b[k][1] - av[1]) * t, av[2] + (b[k][2] - av[2]) * t];
+    } else {
+      var an = a[k] == null ? BASE[k] : a[k];
+      o[k] = an + (b[k] - an) * t;
+    }
+  });
+  return o;
+}
+function ease(t) { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); }
+function env(t, a, b, d) { return ease(t / a) * (1 - ease((t - (d - b)) / b)); }
+
+var GESTURES = {
+  wave: { dur: 2.8, fn: function (t) {
+    var w = env(t, 0.45, 0.55, 2.8);
+    var osc = Math.sin((t - 0.45) * Math.PI * 2 * 1.9) * ease((t - 0.35) / 0.3);
+    return { w: w, pose: { rT: [-0.38 + osc * 0.045, 0.62, 0.08], rP: [-1, -0.4, 0], rWr: [0, -1.5, osc * 0.35], rCurl: 0, rIdx: 0, rThumb: 0, head: [-0.02, 0, -0.06], spine: [-0.03, 0, 0.03] } };
+  } },
+  read: { dur: 3.6, fn: function (t) {
+    var w = env(t, 0.7, 0.7, 3.6);
+    var flip = Math.max(0, Math.sin((t - 1.3) * 2.4)) * ease((t - 1.3) / 0.2) * (1 - ease((t - 2.6) / 0.3));
+    var p = Object.assign({}, READ);
+    p.rT = [-0.14 + flip * 0.08, 0.17 + flip * 0.06, 0.25 + flip * 0.03];
+    return { w: w, pose: p, look: 'book' };
+  } },
+  scratch: { dur: 2.6, fn: function (t) {
+    var w = env(t, 0.5, 0.6, 2.6);
+    var osc = Math.sin(t * 15) * ease((t - 0.45) / 0.2);
+    return { w: w, pose: { rT: [-0.115, 0.7 + osc * 0.012, -0.03 + osc * 0.008], rP: [-1, 0.5, 0.4], rWr: [0.2, 0.4, -0.3], rCurl: 0.6, rIdx: 0.55, head: [0.06, 0.12, 0.14], neck: [0, 0.05, 0.06] } };
+  } },
+  point: { dur: 3.0, fn: function (t) {
+    var w = env(t, 0.5, 0.6, 3.0);
+    return { w: w, pose: { rT: [-0.62, 0.4, 0.3], rP: [0, -1, -0.3], rWr: [0, -1.4, 0], rCurl: 1, rIdx: 0, rThumb: 0.15, spine: [-0.02, -0.16, 0] }, look: t < 1.7 ? 'point' : null };
+  } },
+  nod: { dur: 1.6, fn: function (t) {
+    var w = env(t, 0.15, 0.3, 1.6);
+    var n = Math.sin(t * Math.PI * 2 * 1.6) * 0.16 * (1 - ease(t / 1.6));
+    return { w: w, pose: { head: [n + 0.04, 0, 0], neck: [n * 0.4, 0, 0] }, additive: true };
+  } },
+  thumbs: { dur: 2.8, fn: function (t) {
+    var w = env(t, 0.5, 0.6, 2.8);
+    var bob = Math.sin(t * 5) * 0.012 * ease((t - 0.5) / 0.2);
+    return { w: w, pose: { rT: [-0.17, 0.2 + bob, 0.3], rP: [-0.7, -1, 0], rWr: [0, -1.5, 0], rCurl: 1, rIdx: 1, rThumb: 1, head: [-0.03, 0, -0.07], spine: [-0.04, 0, 0.02] } };
+  } },
+  shrug: { dur: 2.4, fn: function (t) {
+    var w = env(t, 0.45, 0.6, 2.4);
+    return { w: w, pose: { shrug: 1, rT: [-0.34, 0.04, 0.22], rP: [-0.3, -0.4, -1], rWr: [0, -1.5, 0], rCurl: 0.1, rIdx: 0.05, lT: [0.3, 0.07, 0.25], lP: [0.3, -0.4, -1], head: [0.06, 0, -0.14], neck: [0.03, 0, -0.04] } };
+  } },
+  readScratch: null
+};
+
+function startGesture(name, cb) {
+  if (name === 'readScratch') { startGesture('read', cb); return; }
+  var g = GESTURES[name];
+  if (!g) return;
+  if (gesture && gesture.cb) { var old = gesture.cb; gesture.cb = null; old(); }
+  gesture = { name: name, t: 0, dur: g.dur, fn: g.fn, cb: cb || null };
+}
+
+/* ---------- 兩節手臂的反向運動學 ---------- */
+var IK = { A: 0.285, B: 0.258 };
+var _S = new THREE.Vector3(), _T = new THREE.Vector3(), _D = new THREE.Vector3(), _P = new THREE.Vector3(),
+    _E = new THREE.Vector3(), _W = new THREE.Vector3(), _u = new THREE.Vector3(), _f = new THREE.Vector3(),
+    _x = new THREE.Vector3(), _y = new THREE.Vector3(), _m = new THREE.Matrix4();
+function solveArm(arm, T, P) {
+  var a = IK.A, b = IK.B;
+  _S.copy(arm.sh.position);
+  _T.set(T[0], T[1], T[2]);
+  _D.subVectors(_T, _S);
+  var d = Math.min(a + b - 0.002, Math.max(0.08, _D.length()));
+  _D.normalize();
+  _P.set(P[0], P[1], P[2]);
+  _P.addScaledVector(_D, -_P.dot(_D));
+  if (_P.lengthSq() < 1e-6) _P.set(0, 0, -1).addScaledVector(_D, -_D.z);
+  _P.normalize();
+  var ca = (a * a + d * d - b * b) / (2 * a * d);
+  var al = Math.acos(Math.max(-1, Math.min(1, ca)));
+  _E.copy(_S).addScaledVector(_D, a * Math.cos(al)).addScaledVector(_P, a * Math.sin(al));
+  _W.copy(_S).addScaledVector(_D, d);
+  _u.subVectors(_E, _S).normalize();
+  _f.subVectors(_W, _E);
+  _f.addScaledVector(_u, -_f.dot(_u));
+  if (_f.lengthSq() < 1e-8) _f.copy(_P).negate();
+  _f.normalize();
+  _y.copy(_u).negate();
+  _x.crossVectors(_y, _f).normalize();
+  _m.makeBasis(_x, _y, _f);
+  arm.sh.quaternion.setFromRotationMatrix(_m);
+  var cb = (a * a + b * b - d * d) / (2 * a * b);
+  var beta = Math.acos(Math.max(-1, Math.min(1, cb)));
+  arm.el.rotation.set(-(Math.PI - beta), 0, 0);
+  return _W;
+}
+
+/* ---------- 表情 ---------- */
+var E = Object.assign({}, EXPR.neutral), Etgt = Object.assign({}, EXPR.neutral);
+function setExpr(name) {
+  if (!EXPR[name]) return;
+  state.expr = name;
+  Etgt = Object.assign({}, EXPR[name]);
+  markExpr(name);
+}
+
+/* =========================================================
+   視線
+   ========================================================= */
+var raycaster = new THREE.Raycaster();
+var ndc = new THREE.Vector2();
+var gaze = { hy: 0, hp: 0, ey: 0, ep: 0, sy: 0, sp: 0 };
+var sacc = { x: 0, y: 0, next: 0 };
+var tmpV = new THREE.Vector3(), headPos = new THREE.Vector3();
+var blink = { t: 0, next: 1.5, dur: 0.16, dbl: false };
+var idleLook = { until: 0, x: 0, y: 0 };
+
+renderer.domElement.addEventListener('pointermove', function (e) {
+  var r = renderer.domElement.getBoundingClientRect();
+  state.pointer = { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 };
+  state.pointerAt = performance.now();
+  var hit = pick(e);
+  renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
+});
+renderer.domElement.addEventListener('pointerleave', function () { state.pointer = null; });
+
+var downAt = null;
+renderer.domElement.addEventListener('pointerdown', function (e) { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; touch(); });
+renderer.domElement.addEventListener('pointerup', function (e) {
+  if (!downAt) return;
+  var moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+  var quick = performance.now() - downAt.t < 450;
+  downAt = null;
+  if (moved > 6 || !quick) return;
+  var hit = pick(e);
+  if (hit) poke(hit);
+});
+
+/* =========================================================
+   動畫
+   ========================================================= */
+var clock = new THREE.Clock();
+var tAll = 0;
+function damp(a, b, k, dt) { return a + (b - a) * (1 - Math.exp(-k * dt)); }
+function noise(t, s) { return Math.sin(t * 1.3 + s) * 0.5 + Math.sin(t * 0.71 + s * 2.1) * 0.35 + Math.sin(t * 2.3 + s * 0.7) * 0.15; }
+
+function applyPose(dt) {
+  // 目標姿勢 = 站姿 + 動作
+  var target = {};
+  copyPose(stance, target);
+  Object.keys(BASE).forEach(function (k) { if (target[k] == null) target[k] = Array.isArray(BASE[k]) ? BASE[k].slice() : BASE[k]; });
+  var look = null;
+  if (gesture) {
+    gesture.t += dt;
+    var r = gesture.fn(gesture.t);
+    look = r.look || null;
+    if (r.additive) {
+      Object.keys(r.pose).forEach(function (k) {
+        var v = r.pose[k];
+        if (Array.isArray(v)) target[k] = [target[k][0] + v[0] * r.w, target[k][1] + v[1] * r.w, target[k][2] + v[2] * r.w];
+        else target[k] += v * r.w;
+      });
+    } else {
+      var blended = lerpPose(target, r.pose, r.w);
+      Object.keys(blended).forEach(function (k) { target[k] = blended[k]; });
+    }
+    if (gesture.t >= gesture.dur) { var cb = gesture.cb; gesture = null; if (cb) cb(); }
+  }
+  var kArm = gesture ? 11 : 6;
+  Object.keys(target).forEach(function (k) {
+    var kk = /^(l|r)(T|P|Wr)$/.test(k) ? kArm : 7;
+    if (Array.isArray(target[k])) {
+      for (var i = 0; i < 3; i++) cur[k][i] = damp(cur[k][i], target[k][i], kk, dt);
+    } else cur[k] = damp(cur[k], target[k], kk, dt);
+  });
+  return look;
+}
+
+function setJoints(t, look, dt) {
+  // 呼吸與重心
+  var br = Math.sin(t * 1.55);
+  var sway = reduceMotion ? 0 : noise(t * 0.35, 1.7);
+  JOINT_KEYS.forEach(function (k) {
+    J[k].rotation.set(cur[k][0], cur[k][1], cur[k][2]);
+  });
+  J.hips.position.x = sway * 0.012;
+  J.hips.position.y = 0.94 - Math.abs(sway) * 0.004;
+  J.hips.rotation.z += sway * 0.025;
+  J.spine.rotation.z += -sway * 0.03;
+  J.spine.rotation.x += br * 0.012;
+  torso.scale.x = 1 + br * 0.008;
+  torso.scale.z = 0.64 * (1 + br * 0.018);
+  J.lSh.position.y = J.lSh.userData.baseY + br * 0.003 + cur.shrug * 0.032;
+  J.rSh.position.y = J.rSh.userData.baseY + br * 0.003 + cur.shrug * 0.032;
+  J.lHip.rotation.z -= sway * 0.02; J.rHip.rotation.z -= sway * 0.02;
+  var wl = solveArm(armL, cur.lT, cur.lP).clone();
+  solveArm(armR, cur.rT, cur.rP);
+
+  // 手指
+  [[armL, cur.lCurl, cur.lCurl, cur.lThumb], [armR, cur.rCurl, cur.rIdx, cur.rThumb]].forEach(function (a) {
+    var arm = a[0], s = arm.s;
+    arm.fing.rotation.set(0, 0, -s * a[1] * 1.6);
+    arm.idx.rotation.set(0, 0, -s * a[2] * 1.5);
+    arm.th.rotation.set(-0.55 + a[3] * 0.3, 0, -s * (0.25 - a[3] * 0.25) + s * a[3] * 2.6);
+  });
+
+  // 手冊
+  var ba = cur.bAbs;
+  book.position.set(
+    (wl.x + cur.bOff[0]) * (1 - ba) + cur.bAbsP[0] * ba,
+    (wl.y + cur.bOff[1]) * (1 - ba) + cur.bAbsP[1] * ba,
+    (wl.z + cur.bOff[2]) * (1 - ba) + cur.bAbsP[2] * ba);
+  book.rotation.set(cur.bR[0], cur.bR[1], cur.bR[2]);
+  var op = cur.bookOpen;
+  bookParts.front.g.rotation.y = -op * 1.35;
+  bookParts.back.g.rotation.y = op * 1.35;
+  bookParts.inner.visible = op > 0.05;
+
+  // 視線
+  H.getWorldPosition(headPos);
+  var now = performance.now();
+  var T;
+  if (lookOverride && now < lookOverride.until) {
+    T = tmpV.set(lookOverride.x, lookOverride.y, lookOverride.z);
+  } else if (look === 'book') {
+    book.getWorldPosition(tmpV); tmpV.y += 0.05;
+    T = tmpV;
+  } else if (look === 'point') {
+    T = tmpV.copy(TAB.c);
+  } else if (now < idleLook.until) {
+    T = tmpV.set(idleLook.x, idleLook.y, 0.9);
+  } else if (state.pointer && now - state.pointerAt < 3500) {
+    raycaster.setFromCamera(state.pointer, camera);
+    var d = camera.position.distanceTo(headPos);
+    T = tmpV.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, d * 0.92);
+  } else {
+    T = tmpV.copy(camera.position);
+  }
+  if (t > sacc.next) {
+    sacc.x = (Math.random() - 0.5) * 0.06; sacc.y = (Math.random() - 0.5) * 0.04;
+    sacc.next = t + 0.6 + Math.random() * 2.2;
+  }
+  var dx = T.x - headPos.x, dy = T.y - headPos.y, dz = T.z - headPos.z;
+  var hz = Math.sqrt(dx * dx + dz * dz);
+  var yaw = Math.atan2(dx, dz), pitch = Math.atan2(-dy, hz);
+  yaw -= budi.rotation.y;
+  if (yaw > Math.PI) yaw -= Math.PI * 2; if (yaw < -Math.PI) yaw += Math.PI * 2;
+  var behind = Math.abs(yaw) > 1.9;
+  if (behind) { yaw = 0; pitch = 0; }
+  yaw = Math.max(-1.1, Math.min(1.1, yaw));
+  pitch = Math.max(-0.45, Math.min(0.6, pitch));
+  var poseHeadP = cur.head[0];
+  var gy = gesture && gesture.name === 'read' ? 0.15 : 1;
+  gaze.hy = damp(gaze.hy, yaw * 0.62 * gy, 3.2, dt);
+  gaze.hp = damp(gaze.hp, (pitch * 0.5) * gy, 3.2, dt);
+  gaze.sy = damp(gaze.sy, yaw * 0.18 * gy, 2.2, dt);
+  J.spine.rotation.y += gaze.sy;
+  J.neck.rotation.y += gaze.hy * 0.35;
+  J.head.rotation.y += gaze.hy * 0.65;
+  J.head.rotation.x += gaze.hp;
+  J.head.rotation.z += E.tilt;
+  // 頭部微動
+  if (!reduceMotion) {
+    J.head.rotation.x += noise(t * 0.6, 4.1) * 0.02;
+    J.head.rotation.y += noise(t * 0.5, 7.3) * 0.025;
+  }
+  var headYaw = gaze.sy + gaze.hy;
+  var eyeY = Math.max(-0.42, Math.min(0.42, yaw - headYaw + sacc.x));
+  var eyeP = Math.max(-0.32, Math.min(0.38, pitch - gaze.hp - poseHeadP * 0.85 + sacc.y));
+  if (behind) { eyeY = 0; eyeP = 0; }
+  gaze.ey = damp(gaze.ey, eyeY, 22, dt);
+  gaze.ep = damp(gaze.ep, eyeP, 22, dt);
+  face.eyes.forEach(function (e) { e.rotation.set(gaze.ep, gaze.ey, 0, 'YXZ'); });
+
+  // 眨眼
+  blink.t += dt;
+  var bAmt = 0;
+  if (blink.t > blink.next) {
+    var p = (blink.t - blink.next) / blink.dur;
+    bAmt = p < 0.45 ? p / 0.45 : 1 - (p - 0.45) / 0.55;
+    if (p >= 1) {
+      if (blink.dbl) { blink.dbl = false; blink.next = blink.t + 0.12; }
+      else { blink.next = blink.t + 1.8 + Math.random() * 4.2; blink.dbl = Math.random() < 0.2; }
+      bAmt = 0;
+    }
+  }
+  bAmt = Math.max(0, Math.min(1, bAmt));
+
+  // 表情插值
+  Object.keys(Etgt).forEach(function (k) { E[k] = damp(E[k], Etgt[k], 7, dt); });
+  var lid = E.lid * (1 - bAmt);
+  var upTh = 1.45 - lid * 2.17 + Math.max(0, gaze.ep) * 0.55;
+  var loTh = 0.78 - E.low * 0.42 - Math.max(0, -gaze.ep) * 0.3;
+  face.upper.forEach(function (u) { u.rotation.x = Math.min(1.5, upTh); });
+  face.lower.forEach(function (l) { l.rotation.x = loTh; });
+  face.brows.forEach(function (b) {
+    var s = b.userData.s;
+    var raise = s < 0 ? E.bR : E.bL, tilt = s < 0 ? E.tR : E.tL;
+    b.position.y = 0.046 + raise * 0.009 + (state.talking ? Math.max(0, Math.sin(t * 5.3)) * 0.0018 : 0);
+    b.rotation.z = (s < 0 ? 1 : -1) * tilt * 0.3;
+  });
+  var talk = 0;
+  if (state.talking) {
+    talk = Math.max(0, Math.sin(t * 17) * 0.6 + Math.sin(t * 9.3) * 0.4) * (0.5 + 0.5 * Math.abs(Math.sin(t * 2.7)));
+  }
+  buildMouth(Math.min(1, E.open + talk * 0.42), E.smile - talk * 0.15);
+  face.blushM.opacity = Math.max(0, Math.min(1, E.blush));
+  qEl.classList.toggle('off', E.q < 0.5);
+}
+
+
+/* =========================================================
+   點擊 3D 物件：Budi、手冊、平板、樣品、機台
+   ========================================================= */
+var pickables = [budi, tg, sample, machine];
+function pick(e) {
+  var r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  var hits = raycaster.intersectObjects(pickables, true);
+  if (!hits.length) return null;
+  var o = hits[0].object;
+  while (o) {
+    if (o === book) return 'book';
+    if (o === tg) return 'tablet';
+    if (o === sample) return 'sample';
+    if (o === machine) return 'machine';
+    if (o === budi) return 'budi';
+    o = o.parent;
+  }
+  return null;
+}
+var pokeN = 0;
+async function poke(kind) {
+  if (kind === 'tablet' && isNarrow()) { openModal(); return; }
+  var my = ++token;
+  state.busy = true; touch();
+  var line, ex, gs;
+  if (kind === 'book') { line = LINES.book; ex = 'confused'; gs = 'read'; }
+  else if (kind === 'tablet') { line = LINES.tablet; ex = 'hopeful'; gs = 'point'; }
+  else if (kind === 'sample') { line = LINES.sample; ex = 'worried'; gs = 'point'; }
+  else if (kind === 'machine') { line = LINES.machine; ex = 'aha'; gs = 'nod'; }
+  else {
+    var opts = [[LINES.poke1, 'hopeful', 'nod'], [LINES.poke2, 'happy', null], [LINES.poke3, 'aha', null]];
+    var p = opts[pokeN++ % opts.length];
+    line = p[0]; ex = p[1]; gs = p[2];
+  }
+  bExpr(ex);
+  if (gs) bGest(gs);
+  await say(line);
+  if (my !== token) return;
+  await sleep(700);
+  if (my !== token) return;
+  bExpr('neutral');
+  state.busy = false;
+}
+
+/* =========================================================
+   鏡頭
+   ========================================================= */
+controls.minAzimuthAngle = -0.8;
+controls.maxAzimuthAngle = 0.6;
+controls.maxDistance = 6;
+controls.minDistance = 0.45;
+var view = { w: 1, h: 1, ox: 0, oy: 0, fx: 0, fy: 0, fw: 1, fh: 1 };
+var V3 = THREE.Vector3;
+function hdrCut() {
+  // 電腦版：作品卡蓋住左上角，看平板時把畫面往下移開
+  if (isNarrow()) return 0;
+  return $('.hdr').getBoundingClientRect().bottom;
+}
+function tabletDist() {
+  var tanH = Math.tan(camera.fov * Math.PI / 360);
+  var hFit = 0.155 / (tanH * (view.fh - hdrCut()) / view.h);
+  var wFit = 0.22 / (tanH * view.fw / view.h);
+  return Math.max(hFit, wFit) * 1.34;
+}
+var VIEWS = {
+  both: function () { return { t: new V3(-0.12, 0.98, 0.05), dir: new V3(0.12, 0.2, 1), d: isNarrow() ? 5.0 : 4.0 }; },
+  budi: function () { return { t: new V3(0.32, 1.38, -0.04), dir: new V3(-0.22, 0.12, 1), d: isNarrow() ? 3.0 : 2.35 }; },
+  tablet: function () {
+    var d = tabletDist(), dir = TAB.n.clone().normalize();
+    var up = new V3(0, 1, 0).addScaledVector(dir, -dir.y).normalize();
+    var perPx = 2 * d * Math.tan(camera.fov * Math.PI / 360) / view.h;
+    return { t: TAB.c.clone().addScaledVector(up, hdrCut() / 2 * perPx), dir: dir, d: d };
+  }
+};
+var camAnim = null;
+function setView(name, instant) {
+  state.view = name;
+  var v = VIEWS[name]();
+  var toT = v.t;
+  var toP = toT.clone().add(v.dir.normalize().multiplyScalar(v.d));
+  if (instant || reduceMotion) { controls.target.copy(toT); camera.position.copy(toP); controls.update(); return; }
+  camAnim = { t: 0, dur: 1.3, fT: controls.target.clone(), tT: toT, fP: camera.position.clone(), tP: toP };
+}
+
+function resize() {
+  var w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  var narrow = isNarrow();
+  var panel = $('.panel').getBoundingClientRect();
+  var hdr = $('.hdr').getBoundingClientRect();
+  if (narrow) {
+    view.fx = 0; view.fw = w;
+    view.fy = hdr.bottom; view.fh = Math.max(120, panel.top - hdr.bottom);
+  } else {
+    view.fx = 0; view.fw = panel.left; view.fy = 0; view.fh = h;
+  }
+  view.ox = w / 2 - (view.fx + view.fw / 2);
+  view.oy = h / 2 - (view.fy + view.fh / 2);
+  view.w = w; view.h = h;
+  camera.setViewOffset(w, h, view.ox, view.oy, w, h);
+  camera.fov = narrow ? 36 : 30;
+  camera.updateProjectionMatrix();
+  if (!camAnim && state.view) setView(state.view, true);
+}
+window.addEventListener('resize', resize);
+
+/* =========================================================
+   把系統畫面貼到 3D 平板上（四個角投影 → CSS matrix3d）
+   ========================================================= */
+function solve8(A, b) {
+  var n = 8, i, j, k;
+  for (i = 0; i < n; i++) A[i].push(b[i]);
+  for (i = 0; i < n; i++) {
+    var max = i;
+    for (k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[max][i])) max = k;
+    var tmp = A[i]; A[i] = A[max]; A[max] = tmp;
+    if (Math.abs(A[i][i]) < 1e-12) return null;
+    for (k = i + 1; k < n; k++) {
+      var f = A[k][i] / A[i][i];
+      for (j = i; j <= n; j++) A[k][j] -= f * A[i][j];
+    }
+  }
+  var x = new Array(n);
+  for (i = n - 1; i >= 0; i--) {
+    var s = A[i][n];
+    for (j = i + 1; j < n; j++) s -= A[i][j] * x[j];
+    x[i] = s / A[i][i];
+  }
+  return x;
+}
+function homography(w, h, P) {
+  var S = [[0, 0], [w, 0], [0, h], [w, h]], A = [], b = [];
+  for (var i = 0; i < 4; i++) {
+    var sx = S[i][0], sy = S[i][1], dx = P[i][0], dy = P[i][1];
+    A.push([sx, sy, 1, 0, 0, 0, -sx * dx, -sy * dx]); b.push(dx);
+    A.push([0, 0, 0, sx, sy, 1, -sx * dy, -sy * dy]); b.push(dy);
+  }
+  var x = solve8(A, b);
+  if (!x) return null;
+  return 'matrix3d(' + [x[0], x[3], 0, x[6], x[1], x[4], 0, x[7], 0, 0, 1, 0, x[2], x[5], 0, 1].map(function (v) { return v.toFixed(8); }).join(',') + ')';
+}
+var _pv = new THREE.Vector3(), _cv = new THREE.Vector3(), lastMat = '';
+function positionScreen() {
+  if (!modal.hidden) { wrap.classList.add('hide'); return; }
+  _cv.copy(camera.position).sub(TAB.c);
+  var facing = _cv.dot(TAB.n) > 0.02;
+  var pts = [], ok2 = facing;
+  for (var i = 0; i < 4 && ok2; i++) {
+    _pv.copy(TAB.corners[i]).applyMatrix4(camera.matrixWorldInverse);
+    if (_pv.z > -0.05) { ok2 = false; break; }
+    _pv.copy(TAB.corners[i]).project(camera);
+    pts.push([(_pv.x * 0.5 + 0.5) * view.w, (-_pv.y * 0.5 + 0.5) * view.h]);
+  }
+  if (!ok2) { wrap.classList.add('hide'); return; }
+  var m = homography(720, 500, pts);
+  if (!m) { wrap.classList.add('hide'); return; }
+  wrap.classList.remove('hide');
+  if (m !== lastMat) { wrap.style.transform = m; lastMat = m; }
+  var wpx = Math.hypot(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]);
+  wrap.classList.toggle('mini', isNarrow() || wpx < 720 * 0.6);
+}
+
+/* =========================================================
+   對話框跟著 Budi
+   ========================================================= */
+function positionOverlays() {
+  H.getWorldPosition(headPos);
+  var top = headPos.clone(); top.y += 0.24;
+  top.project(camera);
+  var x = (top.x * 0.5 + 0.5) * view.w, y = (-top.y * 0.5 + 0.5) * view.h;
+  var narrow = isNarrow();
+  var hdr = $('.hdr').getBoundingClientRect();
+  var panel = $('.panel').getBoundingClientRect();
+  var bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+  var right = narrow ? view.w : panel.left;
+  var off = x < view.fx + 10 || x > right - 10 || y > view.fy + view.fh;
+  var docked = off;
+  var bx, by;
+  if (docked) {
+    // Budi 不在畫面上（例如看平板時），對話框停在左下角
+    bx = 16 + (narrow ? 0 : 4);
+    by = (narrow ? panel.top - 12 : view.h - 74) - bh;
+    if (!narrow) by = Math.max(hdr.bottom + 12, by);
+  } else {
+    var minX = 12 + bw / 2, maxX = right - 12 - bw / 2;
+    var minY = (narrow ? hdr.bottom : 12) + 10 + bh;
+    bx = Math.max(minX, Math.min(maxX, x + (narrow ? 0 : 50)));
+    by = Math.max(minY, Math.min(view.h - 40, y));
+    if (!narrow && by - bh < hdr.bottom + 6) bx = Math.min(maxX, Math.max(bx, hdr.right + 14 + bw / 2));
+    if (narrow && y < minY + 4) { bx = view.w / 2; by = panel.top - 54; }
+  }
+  bubble.classList.toggle('docked', docked);
+  bubble.classList.toggle('below', !docked && narrow && y < (hdr.bottom + 14 + bh));
+  bubble.style.left = bx + 'px';
+  bubble.style.top = by + 'px';
+  if (!docked) {
+    var tail = Math.max(18, Math.min(bw - 18, x - (bx - bw / 2)));
+    bubble.style.setProperty('--tail', tail + 'px');
+  }
+  var q = headPos.clone(); q.y += 0.2; q.x += 0.13; q.project(camera);
+  qEl.style.left = ((q.x * 0.5 + 0.5) * view.w) + 'px';
+  qEl.style.top = ((-q.y * 0.5 + 0.5) * view.h) + 'px';
+  if (off) qEl.classList.add('off');
+}
+
+function idleBrain() {
+  var now = performance.now();
+  if (state.busy || gesture) return;
+  var quiet = now - state.lastInput;
+  if (quiet > 9000 && now > idleLook.until + 5000 && Math.random() < 0.004) {
+    if (Math.random() < 0.5) {
+      lookOverride = { x: TAB.c.x, y: TAB.c.y, z: TAB.c.z, until: now + 1800 };
+      idleLook = { until: now + 1800, x: 0, y: 0 };
+    } else {
+      idleLook = { until: now + 1400, x: (Math.random() < 0.5 ? -1 : 1) * 1.2, y: 1.6, z: 0.8 };
+    }
+  }
+  if (quiet > 30000 && !idleBrain.asked) {
+    idleBrain.asked = true;
+    var my = ++token;
+    state.busy = true;
+    bExpr('hopeful');
+    say(LINES.idle).then(function () { if (my === token) { bExpr('neutral'); state.busy = false; } });
+  }
+  if (quiet < 2000) idleBrain.asked = false;
+}
+
+function frame() {
+  var dt = Math.min(0.1, clock.getDelta());
+  tAll += dt;
+  if (camAnim) {
+    camAnim.t += dt;
+    var k = ease(camAnim.t / camAnim.dur);
+    controls.target.lerpVectors(camAnim.fT, camAnim.tT, k);
+    camera.position.lerpVectors(camAnim.fP, camAnim.tP, k);
+    if (camAnim.t >= camAnim.dur) camAnim = null;
+  }
+  controls.update();
+  var look = applyPose(dt);
+  setJoints(tAll, look, dt);
+  idleBrain();
+  updateMachine(tAll);
+  renderer.render(scene, camera);
+  camera.updateMatrixWorld();
+  positionScreen();
+  positionOverlays();
+  requestAnimationFrame(frame);
+}
+controls.addEventListener('start', function () { camAnim = null; touch(); });
+
+window.budi = {
+  step: goStep, expr: setExpr, gesture: startGesture, view: setView, km: km, cur: cur,
+  camera: camera, controls: controls, g: function () { return gesture && gesture.name; }
+};
+
+/* ---------- 開場 ---------- */
+wrap.appendChild(kmEl);
+resize();
+setView('both', true);
+requestAnimationFrame(frame);
+goStep(0);
+
+})();
+</script>
